@@ -194,23 +194,78 @@ This is the shape the competition write-up should describe: a scripted CLI pass
 for the test sweep.
 
 ```powershell
-kiro-cli chat --v3 --no-interactive --output-format stream-json --trust-tools=read_file,grep_search "Review the last commit for scientific honesty. Report any unit, confidence or conservation problem with file and line."
+kiro-cli chat --v3 --no-interactive --trust-workspace --trust-all-tools --output-format stream-json "Review the last commit for scientific honesty. Report any unit, confidence or conservation problem with file and line."
 ```
 
 `--output-format stream-json` emits one JSON object per line, which is what
 makes the output scriptable rather than something you have to scrape off a
 terminal.
 
-The same thing in CI:
+### The flags that matter
+
+| Flag | What it does |
+| ---- | ------------ |
+| `--no-interactive` | Never expect input. Required by `stream-json`. |
+| `--trust-workspace` | Skips the "Trust this workspace?" prompt for that launch. Hooks, agents, MCP servers and workflows from the folder load without asking. The decision is **not** saved. |
+| `--trust-all-tools` | The model may run any tool without asking for confirmation. |
+| `--trust-tools=fs_read,fs_write` | Trust only this set. V3 tool IDs are `fs_read`, `fs_write` and so on. |
+| `--agent <name>` | Start with a specific agent profile. |
+| `--mode spec` | Run the V3 agent in spec mode. |
+| `--effort <level>` | `low`, `medium`, `high`, `xhigh` or `max`. |
+| `--cloud --repo owner/name` | Run the session in a Kiro cloud sandbox against a repository. |
+
+**Without `--trust-tools` or `--trust-all-tools`, a headless run cannot use any
+tool that needs approval.** It fails with:
+
+```
+The permission request failed before it was answered, so this call did not run; the user did not reject it.
+```
+
+That message reads like a rejection, but nobody was there to answer. In an
+interactive session the same call pauses for approval instead.
+
+### The event stream
+
+`stream-json` emits **ACP events**, one self-describing JSON object per line.
+The event kinds seen in a real run:
+
+| Event | Carries |
+| ----- | ------- |
+| `runStarted` | The ACP payload schema and engine version |
+| `sessionUpdate` | Everything below |
+| `runFinished` | The end of the run |
+
+Inside `sessionUpdate`, the `update.sessionUpdate` field distinguishes:
+`available_commands_update` (the agent roster, each with its origin),
+`session_info_update` (hook events, steering inclusion, context usage, turn
+completion), `tool_call` and `tool_call_update` (the tool traffic),
+`agent_message_chunk` (the reply) and `agent_thought_chunk`.
+
+Two of these are worth reading in a script:
+
+```js
+// The agent roster, with where each profile came from
+for (const c of update.availableCommands ?? []) {
+  console.log(c._meta.kiro.resource.source.origin, c.name); // workspace | bundled | user
+}
+
+// Hooks that actually fired
+const hook = update._meta?.kiro?.hook;
+if (hook) console.log(hook.name, hook.status, hook.actionType);
+```
+
+A `hook_update` with `status: "completed"` and `actionType: "runCommand"` is
+proof that a hook ran, not just that a hook file exists.
+
+### The same thing in CI
 
 ```yaml
-- run: kiro-cli chat --v3 --no-interactive --trust-all-tools "Run the test suite and report failures"
+- run: kiro-cli chat --v3 --no-interactive --trust-all-tools --output-format stream-json "Run the test suite and report failures"
   env:
     KIRO_API_KEY: ${{ secrets.KIRO_API_KEY }}
 ```
 
-A `KIRO_API_KEY` is issued from the Kiro portal. Note that V3 uses internal tool
-IDs in `--trust-tools`, while CLI 2.x uses its own tool names.
+A `KIRO_API_KEY` is issued from the Kiro portal.
 
 ## 7. Connecting an outside agent to Kiro
 
@@ -236,6 +291,10 @@ kiro-cli settings acp.agentEngine v3
 ```
 
 `v3` needs CLI 2.36 or later; `v2` is the default otherwise.
+
+**A persistent server.** `kiro-cli serve` starts a WebSocket server for the
+v3 engine, which is the third option: leave it running and connect to it
+repeatedly instead of paying process start-up on every call.
 
 ## 8. Kiro Crew
 

@@ -10,7 +10,7 @@
  * The point is not to sandbox the agent. It is to stop one irreversible
  * command from silently destroying work that exists only in this checkout.
  */
-import { readEvent, eventCommand } from './hook-event.mjs';
+import { readEvent, eventCommand, logEvent } from './hook-event.mjs';
 
 const BLOCKED = [
   {
@@ -50,7 +50,10 @@ const BLOCKED = [
   },
 ];
 
-const command = eventCommand(readEvent());
+const event = readEvent();
+logEvent('guard-destructive-shell', event);
+
+const command = eventCommand(event);
 if (!command) process.exit(0);
 
 // `rm -rf` inside node_modules or .next is build detritus, not work.
