@@ -100,8 +100,10 @@ Then sign in and check the install:
 
 ```powershell
 kiro-cli login
-kiro-cli doctor
+kiro-cli diagnostic
 ```
+
+`kiro-cli doctor` was removed in 2.37.0; `kiro-cli diagnostic` replaced it.
 
 ### 4.2 Open the project
 
@@ -147,8 +149,9 @@ Switch with `/agent swap <name>`. The lead can run them in parallel; press
 | `verify-on-stop`          | Agent Stop   | Runs `npm run verify` and feeds the result back to the agent |
 
 The scripts are in `scripts/hook-*.mjs`. A hook command that exits 0 has its
-stdout added to the agent's context. A non-zero exit is reported as an error,
-and on a Pre Tool Use trigger it **blocks** the tool call.
+stdout added to the agent's context. **To block a tool call, exit 2.** Any
+other non-zero code is reported as a warning and the command still runs, so a
+guard that exits 1 refuses in words and then lets the command through.
 
 ### 4.6 Models
 

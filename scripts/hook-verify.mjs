@@ -3,14 +3,15 @@
  * Kiro hook: run the verification suite when the agent finishes its turn.
  *
  * Trigger: Agent Stop (IDE and CLI)
- * Contract: exit 0  -> stdout is added to the agent's context.
- *           exit != 0 -> stderr is sent to the agent as an error.
+ * Contract:
+ *   exit 0 -> stdout is added to the agent's context.
+ *   exit 2 -> stderr is returned to the agent as an error.
  *
  * The point is to make "the tests still pass" a fact the agent knows, rather
  * than a claim it makes. It runs the same command a human would run.
  */
 import { spawnSync } from 'node:child_process';
-import { readEvent } from './hook-event.mjs';
+import { readEvent, HOOK_EXIT } from './hook-event.mjs';
 
 // Drain the event payload so the hook process never leaves the writer blocked.
 readEvent();
@@ -35,10 +36,10 @@ if (result.status === 0) {
   const summary =
     testFiles && testCount ? `${testCount} tests across ${testFiles} files` : 'all checks passed';
   console.log(`npm run verify passed: typecheck, lint and ${summary}.`);
-  process.exit(0);
+  process.exit(HOOK_EXIT.SUCCESS);
 }
 
 const lines = combined.trim().split('\n');
 const tail = lines.slice(-40).join('\n');
 console.error(`npm run verify failed.\n${tail}`);
-process.exit(result.status ?? 1);
+process.exit(HOOK_EXIT.BLOCK);

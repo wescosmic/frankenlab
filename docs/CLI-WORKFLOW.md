@@ -45,6 +45,11 @@ irm 'https://cli.kiro.dev/install.ps1' | iex
 Windows needs Windows 11 and Windows Terminal or PowerShell. Command Prompt
 will not do.
 
+On Windows the installer writes to `%LOCALAPPDATA%\Kiro-Cli\` and adds it to
+the **user** PATH. Open a new terminal afterwards, or the shell will not find
+the binary. The installer's closing message can name a different directory
+than the one it actually used, so confirm with `kiro-cli diagnostic`.
+
 **macOS (Homebrew):**
 
 ```bash
@@ -61,8 +66,12 @@ Then sign in and check the install:
 
 ```powershell
 kiro-cli login
-kiro-cli doctor
+kiro-cli diagnostic
 ```
+
+`kiro-cli doctor` was removed in 2.37.0. `kiro-cli diagnostic` is the
+replacement and prints the version, the resolved CLI path, the host and the
+cloud rollout flags.
 
 The CLI auto-updates in the background. `kiro-cli update` updates it on demand
 (`--non-interactive` to skip the prompt).
@@ -116,6 +125,37 @@ For scale, Auto is 1.0x, Claude Sonnet 5.5 is 1.3x, Claude Opus 5.5 is 2.0x and
 GPT-5.6 Sol is 4.4x. MiniMax M2.5 is described by Kiro as near-Opus quality at
 a quarter of the cost, which makes it a sensible default for a 4,000-credit
 build.
+
+The list your account actually gets is shorter than the published catalogue.
+Verified on Kiro CLI 2.37.0 with this account:
+
+```
+auto                 1.00x    Models chosen by task
+claude-sonnet-4.5    1.30x
+claude-haiku-4.5     0.40x
+deepseek-3.2         0.25x    Experimental preview
+minimax-m2.5         0.25x    MiniMax M2.5
+minimax-m2.1         0.15x    Experimental preview
+glm-5                0.50x
+qwen3-coder-next     0.05x    Experimental preview
+```
+
+MiniMax M2.5 is there at 0.25x and is the cheapest strong option. Qwen3 Coder
+Next is cheaper still at 0.05x, but it is an experimental preview and it is
+aimed at code rather than at the whole task. `auto` at 1.0x is the default and
+spends four times what M2.5 costs.
+
+To make M2.5 the default for every session:
+
+```powershell
+kiro-cli settings chat.defaultModel minimax-m2.5
+```
+
+That writes to `~/.kiro/settings/cli.json`, so it is global rather than
+workspace-scoped. `kiro-cli settings chat.defaultModel` reads it back.
+
+A turn of ordinary work on M2.5 cost **0.397 credits**, with 12.6% of the
+context used. The 4,000-credit request is not the constraint it looks like.
 
 **MiniMax M3 was not in the catalogue as of the models page dated 24 October
 2026.** The list is served live, so check `--list-models` on your own account
@@ -183,10 +223,78 @@ guardian is asked before it writes into an engine.
 | `guard-destructive-shell`| Pre Tool Use | Blocks force push, hard reset, `git clean`, `rm -rf` of the repo |
 | `verify-on-stop`         | Agent Stop   | Runs `npm run verify` and feeds the result back to the agent |
 
-A hook command that exits 0 has its stdout added to the agent's context. A
-command that exits non-zero sends its stderr to the agent as an error, and on
-a Pre Tool Use trigger it **blocks the tool call**. The scripts behind these
-hooks are in `scripts/hook-*.mjs`.
+A hook command that exits 0 has its stdout added to the agent's context. The
+scripts behind these hooks are in `scripts/hook-*.mjs`.
+
+### Hook exit codes, and the trap in them
+
+A hook communicates through its **exit code**, and the codes are not "zero or
+non-zero":
+
+| Code | Behaviour |
+| ---- | --------- |
+| `0` | Hook succeeded. stdout is added to the agent's context. |
+| **`2`** | **PreToolUse only: the tool call is BLOCKED**, and stderr goes to the agent. |
+| anything else | The hook "failed". stderr is shown as a **warning** and the tool still runs. |
+
+**Exiting 1 blocks nothing.** This is the trap. A guard hook that exits 1
+prints its refusal to the agent and then lets the command through anyway. The
+hooks documentation page says that "any other exit code" blocks the call; the
+exit-code reference says only `2` does. The exit-code reference is right, and
+it was verified here.
+
+With exit 1, the command ran:
+
+```
+HEAD is now at 7df3bc8 Harden the Kiro hook payload reader
+```
+
+With exit 2, the tool call failed and the agent reported:
+
+> Blocked by: PreToolUse hook with exit code 2 (block). According to the hook
+> rules, I'm forbidden from retrying this invocation.
+
+### The payload the hook receives
+
+The event arrives as JSON on the hook's **stdin**:
+
+```json
+{
+  "session_id": "sess_...",
+  "hook_event_name": "PreToolUse",
+  "cwd": "C:\\...\\frankenlab",
+  "tool_name": "execute_pwsh",
+  "tool_input": {
+    "command": "git status --short",
+    "description": "Show git status in short format",
+    "cwd": null,
+    "run_in_background": false,
+    "timeout": null
+  }
+}
+```
+
+Two Windows-specific details: the payload arrives with a **UTF-8 BOM**, so
+strip it before `JSON.parse`, and the shell tool is named **`execute_pwsh`**.
+
+The guard hook appends every event it sees to `scripts/hook-payload.log`.
+That file is gitignored, and it is the fastest way to find out what a hook
+actually received when one misbehaves.
+
+### Proving a hook fired
+
+A hook file existing proves nothing. The ACP stream carries the evidence: a
+`session_info_update` whose `_meta.kiro.hook` names the hook, its status and
+its action type.
+
+```js
+const hook = update._meta?.kiro?.hook;
+if (hook) console.log(hook.name, hook.status, hook.actionType);
+// guard-destructive-shell completed runCommand
+```
+
+The same stream shows steering being included and workspace agents registering,
+so one headless run verifies the whole `.kiro/` setup at once.
 
 ## 6. The scripted one-shot pass
 
@@ -333,10 +441,16 @@ the same pool as the IDE** before you commit the whole build to one surface.
 | `/spec` finds nothing | Wrong directory | `cd` into the repository root |
 | A saved model is unavailable | The catalogue changed, or your tier differs | `/model` and pick another |
 | The first prompt fails on an agent that pins a model | The `model` field must match a live model ID | Leave `model` unset, or check `--list-models` first |
-| A hook does nothing | It must exit 0 to succeed | Our scripts exit 0 on success and non-zero to block |
+| A hook does nothing | It must exit 0 to succeed | Our scripts exit 0 on success and 2 to block |
+| A guard hook says no but the command runs anyway | It exited 1, which is a warning, not a block | Exit 2. See the exit-code table above |
 | A hook cannot find `npm` | Hooks run in the project root with your PATH | Our hooks call `node scripts/...` directly |
+| The hook payload will not parse | It arrives with a UTF-8 BOM on Windows | Strip the BOM before `JSON.parse` |
 | Windows quoting problems | Command Prompt is not supported | Use PowerShell or Windows Terminal |
 | `kiro-cli` not found after install | PATH has not refreshed | Open a new terminal |
+| The installer names a directory that does not exist | Its closing message can be wrong | Check `%LOCALAPPDATA%\Kiro-Cli\`, or run `kiro-cli diagnostic` |
+| `kiro-cli doctor` says the command was removed | Removed in 2.37.0 | Use `kiro-cli diagnostic` |
+| A headless tool call fails with "permission request failed before it was answered" | `--no-interactive` has nobody to ask | Add `--trust-all-tools` or `--trust-tools=...` |
+| The agent claims a hook blocked something | It may be misreading a permission failure | Read the `hook_update` event, not the agent's summary |
 
 ## 11. Keep notes for the write-up
 

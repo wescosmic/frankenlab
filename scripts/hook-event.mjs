@@ -11,6 +11,21 @@ import { readFileSync, appendFileSync } from 'node:fs';
 import path from 'node:path';
 
 /**
+ * Hook exit codes, from the Kiro exit-code reference.
+ *
+ *   0  -> hook succeeded, stdout is added to the agent's context
+ *   2  -> PreToolUse: the tool call is BLOCKED and stderr goes to the agent
+ *   *  -> the hook failed, stderr is shown as a warning and the tool still runs
+ *
+ * Exiting 1 does not block anything. That is the trap: a guard hook that
+ * exits 1 reports its refusal and then lets the command through.
+ */
+export const HOOK_EXIT = {
+  SUCCESS: 0,
+  BLOCK: 2,
+};
+
+/**
  * @returns {Record<string, unknown> | null}
  */
 export function readEvent() {

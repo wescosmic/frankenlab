@@ -3,14 +3,13 @@
  * Kiro hook: block destructive shell commands.
  *
  * Trigger: Pre Tool Use (IDE and CLI)
- * Contract: exit 0  -> the tool call proceeds.
- *           exit != 0 -> the tool invocation is blocked and stderr reaches the
- *                        agent.
- *
- * The point is not to sandbox the agent. It is to stop one irreversible
- * command from silently destroying work that exists only in this checkout.
+ * Contract:
+ *   exit 0 -> the tool call proceeds.
+ *   exit 2 -> the tool call is BLOCKED and stderr reaches the agent.
+ *   any other code -> the hook "failed", stderr is only a warning and the
+ *                     tool call proceeds. Never use 1 to block.
  */
-import { readEvent, eventCommand, logEvent } from './hook-event.mjs';
+import { readEvent, eventCommand, logEvent, HOOK_EXIT } from './hook-event.mjs';
 
 const BLOCKED = [
   {
@@ -54,7 +53,7 @@ const event = readEvent();
 logEvent('guard-destructive-shell', event);
 
 const command = eventCommand(event);
-if (!command) process.exit(0);
+if (!command) process.exit(HOOK_EXIT.SUCCESS);
 
 // `rm -rf` inside node_modules or .next is build detritus, not work.
 const isBuildDetritus = /\brm\s+-[a-z]*r[a-z]*f[a-z]*\s+[^\n]*(node_modules|\.next|dist|coverage)\b/.test(
@@ -70,7 +69,7 @@ for (const rule of BLOCKED) {
       `Reason: ${rule.reason}\n` +
       'If this is genuinely required, run it yourself outside the agent session.',
   );
-  process.exit(1);
+  process.exit(HOOK_EXIT.BLOCK);
 }
 
-process.exit(0);
+process.exit(HOOK_EXIT.SUCCESS);
