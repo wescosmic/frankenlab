@@ -17,6 +17,7 @@ import type {
   ComponentDefinition,
   ConnectionRule,
   DisciplineEngine,
+  Observation,
   Quantity,
 } from '../../kernel/types';
 import { quantity } from '../../kernel/units';
@@ -26,11 +27,25 @@ export interface SubstrateState extends Record<string, unknown> {
   readonly boundWater: number;
   readonly outputs: Record<string, Quantity>;
   readonly __initialised?: boolean;
+  /** True once the medium has dried past the wilting point. */
+  readonly __wilting?: boolean;
+  /** The value of `__wilting` before the last step, for transition detection. */
+  readonly __prev_wilting?: boolean;
   readonly __param_field_capacity?: number;
   readonly __param_wilting_point?: number;
   readonly __param_percolation_rate?: number;
   readonly __param_retention_rate?: number;
 }
+
+/**
+ * How far above the wilting point the medium must come before it counts as
+ * recovered.
+ *
+ * Without a deadband, a medium sitting right on the threshold reports that it
+ * dried out and that it recovered in the same hour, which is both confusing
+ * and false.
+ */
+const RECOVERY_MARGIN = 0.08;
 
 /** Published-ish property values for the substrates we ship. */
 export const SUBSTRATE_PRESETS = {
@@ -293,11 +308,22 @@ export const substrateBehavior: ComponentBehavior<SubstrateState> = {
     const fromBound = Math.min(bound, drawn - fromFree);
     bound = Math.max(0, bound - fromBound);
 
+    const available = plantAvailable(preset, free + bound);
+
+    // Hysteresis. Once the medium is wilted it stays wilted until the
+    // available water is clearly back above the wilting point. Without the
+    // deadband, a medium hovering at the threshold flips twice an hour and
+    // the timeline reports that it dried out and recovered in the same minute.
+    const wasWilting = s.__wilting ?? false;
+    const isWilting = available <= 0 ? true : available >= RECOVERY_MARGIN ? false : wasWilting;
+
     const next: SubstrateState & { __initialised?: boolean } = {
       ...s,
       freeWater: free,
       boundWater: bound,
       __initialised: true,
+      __prev_wilting: wasWilting,
+      __wilting: isWilting,
     };
 
     return {
@@ -307,9 +333,40 @@ export const substrateBehavior: ComponentBehavior<SubstrateState> = {
         free,
         bound,
         total: free + bound,
-        available: plantAvailable(preset, free + bound),
+        available,
       }),
     };
+  },
+
+  observe(state, context) {
+    const s = state as SubstrateState;
+    const observations: Observation[] = [];
+    const wasWilting = s.__prev_wilting;
+    const isWilting = s.__wilting ?? false;
+
+    // The medium dried past the wilting point.
+    if (wasWilting === false && isWilting === true) {
+      observations.push({
+        time: context.time,
+        componentId: context.componentId,
+        severity: 'warning',
+        code: 'materials.wilting',
+        message: 'The medium dried past the point where the plant can draw water.',
+      });
+    }
+
+    // The medium came back above the wilting point.
+    if (wasWilting === true && isWilting === false) {
+      observations.push({
+        time: context.time,
+        componentId: context.componentId,
+        severity: 'success',
+        code: 'materials.recovered',
+        message: 'The medium has recovered above the wilting point.',
+      });
+    }
+
+    return observations;
   },
 };
 

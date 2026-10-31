@@ -172,6 +172,15 @@ export interface ComponentBehavior<S = ComponentState> {
    * computed function of state rather than a stored value.
    */
   outputs?(state: S, context: StepContext): Readonly<Record<string, Quantity>>;
+  /**
+   * Report observations from this component's behaviour.
+   *
+   * The kernel collects what a behaviour reports and never interprets it. A
+   * behaviour reports what happened in its own discipline; the kernel does not
+   * know what any of it means. The observations are timestamped and tagged
+   * with the component id by the kernel.
+   */
+  observe?(state: S, context: StepContext): readonly Observation[];
 }
 
 /** Arbitrary per-component state. Structure is owned by the discipline. */

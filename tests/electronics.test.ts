@@ -153,7 +153,7 @@ describe('the electronics is load-bearing', () => {
 });
 
 describe('the alert', () => {
-  it('fires for sand, later for loam, and never for clay', () => {
+  it('fires for sand first, then loam, then clay, and never for hydrogel', () => {
     const sand = firstAlertDay(run(createBioCircuit({ substrate: 'sandy' })));
     const loam = firstAlertDay(run(createBioCircuit({ substrate: 'loamy' })));
     const clay = firstAlertDay(run(createBioCircuit({ substrate: 'clay' })));
@@ -161,10 +161,26 @@ describe('the alert', () => {
 
     expect(sand).not.toBeNull();
     expect(loam).not.toBeNull();
-    expect(clay).toBeNull();
+    expect(clay).not.toBeNull();
     expect(hydrogel).toBeNull();
 
+    // The medium that holds its water keeps the probe high for longest, so the
+    // alert arrives latest. That ordering is the whole point of the coupling.
     expect(sand!).toBeLessThan(loam!);
+    expect(loam!).toBeLessThan(clay!);
+  });
+
+  it('holds the clay alert off past the day the sand has already alarmed', () => {
+    // Clay does eventually dry out and trip the alert, but only after the
+    // twenty-one-day run in this experiment would have ended. An earlier
+    // version of this test claimed clay never alarmed at all. That was an
+    // artefact of a fourteen-day window, not a fact about clay.
+    const clayAt21Days = firstAlertDay(run(createBioCircuit({ substrate: 'clay' })));
+    expect(clayAt21Days).not.toBeNull();
+    expect(clayAt21Days!).toBeGreaterThan(15);
+
+    const sandAt21Days = firstAlertDay(run(createBioCircuit({ substrate: 'sandy' })));
+    expect(sandAt21Days!).toBeLessThan(clayAt21Days!);
   });
 
   it('never fires on a freshly planted experiment', () => {

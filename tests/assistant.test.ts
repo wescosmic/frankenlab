@@ -120,8 +120,24 @@ describe('tool execution', () => {
     // Measurements are handed to the model as formatted strings so a number
     // can never be misread as a different quantity.
     expect(typeof data.measurements['substrate.moisture']).toBe('string');
-    expect(Number.parseFloat(data.measurements['substrate.moisture']!)).toBeGreaterThan(0);
-    expect(data.measurements['sensor.signal']).toBeDefined();
+
+    // The number is the one the kernel produced, not a plausible-looking
+    // substitute. The flagship in sand ends with a dry medium, so the honest
+    // answer here is zero rather than a comfortable non-zero number.
+    const kernelMoisture = context.latestResult!.measurements['substrate.moisture']!.value;
+    expect(Number.parseFloat(data.measurements['substrate.moisture']!)).toBeCloseTo(
+      kernelMoisture,
+      2,
+    );
+    expect(kernelMoisture).toBeLessThan(0.01);
+
+    // The probe reading is the solved divider voltage, and it is not zero.
+    const kernelSignal = context.latestResult!.measurements['sensor.signal']!.value;
+    expect(Number.parseFloat(data.measurements['sensor.signal']!)).toBeCloseTo(
+      kernelSignal,
+      2,
+    );
+    expect(kernelSignal).toBeGreaterThan(0);
   });
 
   it('never reports a run that did not happen', () => {

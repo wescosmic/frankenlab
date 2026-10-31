@@ -15,6 +15,7 @@ import type {
   ComponentDefinition,
   ConnectionRule,
   DisciplineEngine,
+  Observation,
   Quantity,
 } from '../../kernel/types';
 import { quantity } from '../../kernel/units';
@@ -24,6 +25,8 @@ export interface PlantState extends Record<string, unknown> {
   readonly health: number;
   readonly waterUptake: number;
   readonly outputs: Record<string, Quantity>;
+  readonly __prev_health?: number;
+  readonly __prev_biomass?: number;
   readonly __param_max_biomass?: number;
   readonly __param_growth_rate?: number;
   readonly __param_transpiration_rate?: number;
@@ -267,6 +270,9 @@ export const plantBehavior: ComponentBehavior<PlantState> = {
       biomass,
       health: vigour,
       waterUptake: transpiration,
+      // Track previous values for transition detection in observe.
+      __prev_health: state.health,
+      __prev_biomass: state.biomass,
       outputs: {
         transpiration: quantity(transpiration, 'ratio'),
         biomass: quantity(biomass / maxBiomass, 'ratio'),
@@ -274,6 +280,35 @@ export const plantBehavior: ComponentBehavior<PlantState> = {
         nutrientDemand: quantity(nutrientDemand, 'ratio'),
       },
     };
+  },
+
+  observe(state, context) {
+    const s = state as PlantState;
+    const observations: Observation[] = [];
+    const currentHealth = s.health ?? 0;
+    const previousHealth = s.__prev_health;
+
+    // Growth stalled: the plant's vigour has fallen below the level at which
+    // it can still grow at its normal rate.
+    //
+    // The threshold is 0.8 because that is where this model actually goes. The
+    // vigour is the product of the plant's water response and its nutrient
+    // response, and in a drying medium it settles around 0.7 rather than
+    // collapsing to zero. A threshold below that would describe a condition
+    // this model cannot reach, and an event that can never fire is not an
+    // event. The plant is usually nutrient-limited by the time this fires,
+    // which is why the message does not claim a cause.
+    if (previousHealth !== undefined && previousHealth > 0.8 && currentHealth <= 0.8) {
+      observations.push({
+        time: context.time,
+        componentId: context.componentId,
+        severity: 'warning',
+        code: 'biology.growth_stalled',
+        message: "The plant's vigour is falling. It is no longer growing at its normal rate.",
+      });
+    }
+
+    return observations;
   },
 };
 

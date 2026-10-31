@@ -237,3 +237,171 @@ with a new discipline, and the honest limitations.
 6. New cross-discipline links are named rules in `src/interactions/couplings.ts`.
 7. Nothing in the UI or the assistant shows a number that did not come out of
    the kernel.
+
+---
+
+# Hackathon delivery plan
+
+**Deadline: 4 December 2026, 2:00 PM Pacific.** Today: 31 October 2026.
+The Kiro credit request form is due **1 December 2026, 12:00 PM Pacific**.
+
+This plan replaces the old phase ordering. The old one optimised for a clean
+product. This one optimises for the five judging criteria, weighted equally:
+Potential Impact, Technological Implementation, Design, Innovation,
+Presentation.
+
+Judges watch a three-minute video. Every phase below exists because it is
+visible in that video or in the ten seconds a judge spends deciding whether
+the project is real.
+
+| Phase | What it adds | Criteria it moves | Effort |
+| ----- | ------------ | ----------------- | ------ |
+| 1 | The run tells a story: observations, a live timeline, every measurement | Design, Presentation | Medium |
+| 2 | The user builds experiments: drag-and-drop wiring, live parameters, saved experiments | Impact, Innovation | High |
+| 3 | More science: chemistry end to end, materials in the circuit, a second experiment | Innovation, Technological Implementation | Medium-high |
+| 4 | The assistant earns trust: live provider, grounded-number guard in the UI, run comparison | Innovation, Impact | Medium |
+| 5 | Ship and present: deployment, video, README, screenshots, public repo | Presentation, and the Stage One gate | Medium |
+
+Nothing here replaces the earlier work. Phases 1 to 5 sit on top of the
+foundation that is already verified.
+
+## Phase 1 — The run tells a story
+
+**Why first.** A run currently produces numbers and nothing else. A judge
+watching two minutes of a chart learns very little. A run that narrates itself
+is the difference between a simulator and an instrument.
+
+**1.1 Observations become a first-class output**
+
+The kernel already carries an `Observation` type and an empty `#observations`
+array. Nothing populates it. Give the behaviour contract an optional
+`observe(state, context)` that returns observations, and have the kernel
+collect them after each step.
+
+- The kernel collects. It does not know what an observation means.
+- Observers live in the engines, next to the physics that justifies them.
+- An observation carries a time, an optional component id, a severity and a
+  plain-English message.
+
+**1.2 The engines report what happened**
+
+- materials: the medium reached its wilting point; the medium recovered.
+- biology: growth stalled; the plant reached maturity.
+- electronics: the alert fired; the alert cleared.
+- chemistry: the reaction approached equilibrium.
+
+**1.3 The workbench shows the story**
+
+- A timeline panel listing observations in time order, colour-coded by severity.
+- A results panel showing every measurement the kernel produced, with units,
+  not just the four tracked series.
+- The assistant already reads observations. It now has real ones.
+
+**Done when:** a 14-day BioCircuit run produces a readable narrative — the
+medium dries, the plant wilts, the alert fires, the medium recovers — visible
+in the UI without reading the numbers, and the assistant can explain the run
+from the same record.
+
+**Acceptance:**
+
+- `npm test` includes a case that asserts the alert observation fires on the
+  day the alert fires, and that observations are ordered by time.
+- The timeline renders every observation the kernel produced, with no
+  filtering.
+- No number in the timeline or the results panel is computed in the UI.
+
+## Phase 2 — The user builds experiments
+
+**Why.** The brief describes a journey where the user assembles a circuit and
+watches it behave. Right now they can only watch the one experiment we built.
+That is the largest gap between the product and the brief.
+
+**2.1 Drag a component onto the bench.** From the catalogue, onto the 3D
+scene. It appears, with its ports, and it takes part in the simulation.
+
+**2.2 Connect two ports by dragging.** The validator rejects an invalid
+connection with a readable message in the UI, not a silent no-op.
+
+**2.3 Edit a parameter without restarting the run.** Where the model allows
+it, a slider change applies to the live experiment and the run stays
+reproducible from the same seed.
+
+**2.4 Save and reopen an experiment.** An experiment survives a JSON round trip
+and produces the same result.
+
+**Done when:** a user can build a working circuit from nothing and watch the
+same physics we ship with.
+
+**Acceptance:**
+
+- A test builds an experiment through the public API, not through a fixture.
+- A test asserts an invalid connection is rejected with a message a
+  non-specialist can read.
+- A test asserts a saved experiment reloads to an identical result.
+
+## Phase 3 — More science
+
+**Why.** One experiment is a demo. Three is a platform. The judges are
+scoring whether the architecture is real, and the fastest proof is a second
+discipline that needed no kernel work.
+
+**3.1 The chemistry boundary becomes a real experiment.** A second reaction,
+a catalyst parameter and a concentration feed, so a user can watch a rate
+change. The conservation check is visible.
+
+**3.2 Material properties decide a circuit's operating point.** Put a
+`materials.conductor` in the BioCircuit divider, so the reference resistor's
+material decides the day the alert fires.
+
+**3.3 A second experiment in the catalogue.** A pure electronics experiment
+and a chemistry experiment, each with its own acceptance criteria.
+
+**Done when:** the catalogue lists at least three experiments and each one
+demonstrates a different pairing of disciplines.
+
+## Phase 4 — The assistant earns trust
+
+**Why.** "The simulation computes. The AI interprets. The user decides." The
+first two are done. The third is not, because the assistant cannot yet be
+shown to refuse a number.
+
+**4.1 Surface the grounded-number guard in the UI.** A provider that invents a
+number is visibly flagged, in front of the user, not only in a test.
+
+**4.2 An optional live provider.** `LocalExplainProvider` stays the default
+and the product works identically with the provider disabled. The provider
+path is covered by tests that stub the network.
+
+**4.3 Compare two runs.** The assistant can put two experiments side by side
+with real numbers on both sides.
+
+**4.4 The assistant explains confidence.** It says which parts of its answer
+are physical law and which are teaching simplification.
+
+**Done when:** a judge can break the assistant on purpose and watch it refuse.
+
+## Phase 5 — Ship and present
+
+**Why.** Without this there is no submission.
+
+**5.1 Deployment.** A public URL, working with no API key, reachable free of
+charge until 29 January 2027.
+
+**5.2 The three-minute video.** Built on five beats: planted, growing, drying
+out, alert triggered, recovery. Script first, then record against the deployed
+build. Public on YouTube, under three minutes.
+
+**5.3 The README.** What it is, the architecture in one diagram, how to run
+it, how to add a discipline, and the honest limitations.
+
+**5.4 Screenshots.** The workbench, the catalogue, the inspector, a mid-run
+chart and the timeline.
+
+**5.5 The public repository.** Pushed, public, with a visible OSS licence and
+`/.kiro` at the root, not gitignored.
+
+**5.6 The social post.** Starts with `#KiroweenHackathon26`.
+
+**Done when:** a stranger can clone, run and extend it from the README alone,
+and the video shows the app running for real.
+

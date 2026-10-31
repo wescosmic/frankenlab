@@ -173,11 +173,11 @@ describe('BioCircuit validation', () => {
 });
 
 describe('BioCircuit simulation', () => {
-  it('runs the full fourteen-day experiment', () => {
+  it('runs the full twenty-one-day experiment', () => {
     const registry = createTestRegistry();
     const result = new Simulation(createBioCircuit(), registry).run();
     expect(result.success).toBe(true);
-    expect(result.steps).toBe(336); // 14 days at one-hour steps
+    expect(result.steps).toBe(504); // 21 days at one-hour steps
     expect(result.measurements['plant.biomass']).toBeDefined();
     expect(result.measurements['substrate.moisture']).toBeDefined();
     expect(result.measurements['comparator.decision']).toBeDefined();
@@ -223,5 +223,124 @@ describe('BioCircuit simulation', () => {
 
     // Clay holds water better than sand — that is the whole point of the demo.
     expect(clayEnd).toBeGreaterThan(sandyEnd);
+  });
+});
+
+describe('observations', () => {
+  it('result includes an observations array', () => {
+    const registry = createTestRegistry();
+
+    // Create a minimal experiment with a single component.
+    const experiment: ExperimentDefinition = {
+      id: 'obs-test',
+      name: 'Observation test',
+      description: '',
+      discipline: 'electronics',
+      tags: [],
+      components: [
+        {
+          id: 'test-comp',
+          type: 'electronics.resistor',
+          parameters: { resistance: { value: 100, unit: 'ohm' } },
+          position: { x: 0, y: 0, z: 0 },
+        },
+      ],
+      connections: [],
+      environment: { variables: [] },
+      dt: 1,
+      duration: 3,
+      seed: 42,
+      modelVersion: '1.0.0',
+    };
+
+    // Verify that running a valid experiment returns observations in the result.
+    const result = new Simulation(experiment, registry).run();
+    expect(result.observations).toBeDefined();
+    expect(Array.isArray(result.observations)).toBe(true);
+  });
+
+  it('a behaviour without observe contributes nothing and does not throw', () => {
+    const registry = createTestRegistry();
+    const experiment: ExperimentDefinition = {
+      id: 'silent-test',
+      name: 'Silent behaviour test',
+      description: '',
+      discipline: 'electronics',
+      tags: [],
+      components: [
+        {
+          id: 'resistor1',
+          type: 'electronics.resistor',
+          parameters: { resistance: { value: 100, unit: 'ohm' } },
+          position: { x: 0, y: 0, z: 0 },
+        },
+      ],
+      connections: [],
+      environment: { variables: [] },
+      dt: 1,
+      duration: 2,
+      seed: 42,
+      modelVersion: '1.0.0',
+    };
+
+    // This should not throw even though behaviours don't implement observe.
+    const result = new Simulation(experiment, registry).run();
+    expect(result.success).toBe(true);
+    expect(result.observations).toEqual([]);
+  });
+
+  it('observations are timestamped with simulation time', () => {
+    // This test verifies the kernel stamps observations with the correct time.
+    // We run the BioCircuit and check that any observations present have
+    // timestamps within the simulation duration.
+    const registry = createTestRegistry();
+    const result = new Simulation(createBioCircuit(), registry).run();
+
+    for (const obs of result.observations) {
+      expect(obs.time).toBeGreaterThanOrEqual(0);
+      expect(obs.time).toBeLessThanOrEqual(result.durationSeconds);
+    }
+  });
+
+  it('same seed produces identical observations', () => {
+    const registry = createTestRegistry();
+    const experiment = createBioCircuit();
+
+    const first = new Simulation(experiment, registry).run();
+    const second = new Simulation(experiment, registry).run();
+
+    expect(first.observations).toEqual(second.observations);
+  });
+
+  it('snapshot includes observations collected so far', () => {
+    const registry = createTestRegistry();
+    const experiment: ExperimentDefinition = {
+      id: 'snapshot-obs-test',
+      name: 'Snapshot observation test',
+      description: '',
+      discipline: 'electronics',
+      tags: [],
+      components: [
+        {
+          id: 'resistor1',
+          type: 'electronics.resistor',
+          parameters: { resistance: { value: 100, unit: 'ohm' } },
+          position: { x: 0, y: 0, z: 0 },
+        },
+      ],
+      connections: [],
+      environment: { variables: [] },
+      dt: 1,
+      duration: 2,
+      seed: 42,
+      modelVersion: '1.0.0',
+    };
+
+    const sim = new Simulation(experiment, registry);
+    sim.tick();
+    const snapshot = sim.snapshot();
+
+    expect(snapshot.observations).toBeDefined();
+    expect(Array.isArray(snapshot.observations)).toBe(true);
   });
 });

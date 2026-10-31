@@ -298,6 +298,30 @@ export class Simulation {
       this.#outputs.set(instance.id, outputs);
     }
 
+    // Collect observations after the step, in the same stable order.
+    for (const instance of ordered) {
+      const behaviour = this.#registry.getBehavior(instance.type);
+      const state = this.#states.get(instance.id) ?? {};
+      const context = this.#context(instance.id);
+
+      if (behaviour.observe) {
+        const componentObservations = behaviour.observe(state, context);
+        for (const obs of componentObservations) {
+          this.#observations.push({
+            ...obs,
+            // The state a behaviour is looking at is the state *after* the
+            // step, so the observation belongs to the end of the step, not
+            // the start. The clock has not been advanced yet, so the end of
+            // this step is one timestep from now. Stamping it with the
+            // current time instead puts every observation one step before
+            // the data point that shows the same thing.
+            time: this.#time + this.#dt,
+            componentId: instance.id,
+          });
+        }
+      }
+    }
+
     this.#time += this.#dt;
     this.#step += 1;
   }

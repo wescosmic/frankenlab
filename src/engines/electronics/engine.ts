@@ -24,6 +24,7 @@ import type {
   ConnectionRule,
   DisciplineEngine,
   NetworkSolver,
+  Observation,
   ParameterValue,
   Quantity,
 } from '../../kernel/types';
@@ -968,7 +969,7 @@ export const comparatorDefinition: ComponentDefinition = {
 export const comparatorBehavior: ComponentBehavior = {
   type: 'electronics.comparator',
   step(state, inputs, _context) {
-    const s = state as { outputs?: Record<string, Quantity> };
+    const s = state as { outputs?: Record<string, Quantity>; __prev_decision?: number };
     const threshold = (s as { __param_threshold?: number }).__param_threshold ?? 0.5;
     const invert = (s as { __param_invert?: boolean }).__param_invert ?? false;
     const outputs = (s.outputs ?? {}) as Record<string, Quantity>;
@@ -987,20 +988,56 @@ export const comparatorBehavior: ComponentBehavior = {
           output: quantity(0, 'ratio'),
           decision: quantity(0, 'ratio'),
         },
+        __prev_decision: s.__prev_decision,
       };
     }
 
     const high = invert ? input.value < threshold : input.value > threshold;
+    const decision = high ? 1 : 0;
     return {
       ...s,
       outputs: {
         ...outputs,
         // Published under the port id so a connection can read it, and under a
         // readable alias so the measurements panel can name it.
-        output: quantity(high ? 1 : 0, 'ratio'),
-        decision: quantity(high ? 1 : 0, 'ratio'),
+        output: quantity(decision, 'ratio'),
+        decision: quantity(decision, 'ratio'),
       },
+      // Track previous decision for transition detection in observe.
+      __prev_decision: outputs.decision?.value ?? (invert ? 1 : 0),
     };
+  },
+
+  observe(state, context) {
+    const s = state as { outputs?: Record<string, Quantity>; __prev_decision?: number };
+    const outputs = (s.outputs ?? {}) as Record<string, Quantity>;
+    const currentDecision = outputs.decision?.value ?? 0;
+    const previousDecision = s.__prev_decision;
+    const observations: Observation[] = [];
+
+    // Alert fired: decision went from 0 to 1.
+    if (previousDecision !== undefined && previousDecision <= 0 && currentDecision > 0) {
+      observations.push({
+        time: context.time,
+        componentId: context.componentId,
+        severity: 'error',
+        code: 'electronics.alert_fired',
+        message: 'The alert has fired.',
+      });
+    }
+
+    // Alert cleared: decision went from 1 to 0.
+    if (previousDecision !== undefined && previousDecision > 0 && currentDecision <= 0) {
+      observations.push({
+        time: context.time,
+        componentId: context.componentId,
+        severity: 'info',
+        code: 'electronics.alert_cleared',
+        message: 'The alert has cleared.',
+      });
+    }
+
+    return observations;
   },
 };
 

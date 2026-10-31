@@ -148,7 +148,7 @@ divider, a comparator and an alert LED. The user changes the medium or the
 circuit and watches the alert change.
 
 - **AC-1** The experiment validates with zero errors.
-- **AC-2** A 14-day run at a one-hour timestep completes in 336 steps.
+- **AC-2** A 21-day run at a one-hour timestep completes in 504 steps.
 - **AC-3** The plant's biomass increases over the run.
 - **AC-4** The medium dries, and clay stays wetter than sand.
 - **AC-5** The probe's resistance rises as the medium dries.
@@ -156,8 +156,8 @@ circuit and watches the alert change.
   not the moisture that drove it.
 - **AC-7** Changing the reference resistor changes the reading, and changes
   the day the alert fires.
-- **AC-8** The alert fires on day 8 in sand, on day 13 in loam, and never in
-  clay or hydrogel.
+- **AC-8** The alert fires on day 8 in sand, on day 13 in loam and on day 15 in
+  clay, and does not fire at all in hydrogel inside a 21-day run.
 - **AC-9** The alert never fires on a freshly planted experiment.
 - **AC-10** The source delivers exactly the power the resistors dissipate.
 - **AC-11** Two runs with the same seed produce identical results.

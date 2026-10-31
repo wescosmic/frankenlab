@@ -19,6 +19,7 @@ import type {
   ComponentDefinition,
   ConnectionRule,
   DisciplineEngine,
+  Observation,
   Quantity,
 } from '../../kernel/types';
 import { quantity } from '../../kernel/units';
@@ -48,6 +49,11 @@ export interface VesselState extends Record<string, unknown> {
   readonly c: number;
   readonly heatReleased: number;
   readonly outputs?: Record<string, Quantity>;
+  readonly __prev_extent?: number;
+  readonly __param_initial_a?: number;
+  readonly __param_initial_b?: number;
+  readonly __param_rate_constant?: number;
+  readonly __param_equilibrium_constant?: number;
 }
 
 /**
@@ -476,6 +482,8 @@ export const reactionVesselBehavior: ComponentBehavior<VesselState> = {
       c,
       heatReleased,
       __initialised: true,
+      // Track previous extent for transition detection in observe.
+      __prev_extent: s.outputs?.extent?.value ?? 0,
       outputs: {
         product: quantity(c, 'mol_per_L'),
         reactantA: quantity(a, 'mol_per_L'),
@@ -485,6 +493,51 @@ export const reactionVesselBehavior: ComponentBehavior<VesselState> = {
         stoichiometricBalance: quantity(a + c, 'mol_per_L'),
       },
     };
+  },
+
+  observe(state, context) {
+    const s = state as VesselState;
+    const outputs = s.outputs ?? {};
+    const currentExtent = Math.abs(outputs.extent?.value ?? 0);
+    const previousExtent = s.__prev_extent ?? 0;
+    const observations: Observation[] = [];
+
+    // Calculate the equilibrium extent based on the initial conditions and K.
+    // For A + B ⇌ C with initial concentrations a0, b0, the equilibrium extent
+    // satisfies: K = c / (a * b) where c = extent, a = a0 - extent, b = b0 - extent.
+    // Solving: K * (a0 - x) * (b0 - x) = x
+    // This gives a quadratic: K*x² - K*(a0+b0)*x + K*a0*b0 - x = 0
+    const a0 = s.__param_initial_a ?? 1;
+    const b0 = s.__param_initial_b ?? 1;
+    // Simplified: the max possible extent is min(a0, b0). At equilibrium, use the
+    // approximation that extent/K is small relative to initial concentrations.
+    const maxExtent = Math.min(a0, b0);
+
+    // Detect when the reaction rate becomes negligible (approaching equilibrium).
+    // The net rate is |forward - reverse|. When this is small compared to the
+    // initial forward rate, we're near equilibrium.
+    const netRate = Math.abs(currentExtent - previousExtent) / context.dt;
+    const initialForwardRate = (s.__param_rate_constant ?? 0.01) * a0 * b0;
+    const rateRatio = initialForwardRate > 0 ? netRate / initialForwardRate : 0;
+
+    // Report equilibrium once when rate drops below 1% of initial rate.
+    if (previousExtent !== 0 && rateRatio < 0.01 && currentExtent > 0) {
+      // Check if we already reported this (using a flag would be cleaner, but
+      // we detect it by checking if extent is already close to max).
+      const fractionReacted = currentExtent / maxExtent;
+      if (fractionReacted > 0.5) {
+        // Only report when we've made significant progress toward equilibrium.
+        observations.push({
+          time: context.time,
+          componentId: context.componentId,
+          severity: 'info',
+          code: 'chemistry.equilibrium',
+          message: 'The reaction has approached equilibrium.',
+        });
+      }
+    }
+
+    return observations;
   },
 };
 

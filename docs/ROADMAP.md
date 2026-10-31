@@ -38,6 +38,30 @@ The repository ships five specialist agents in `.kiro/agents/` and four hooks in
 that makes "the tests still pass" a fact the agent knows. The full procedure is
 in [CLI-WORKFLOW.md](CLI-WORKFLOW.md).
 
+`scripts/kiro-run.mjs` runs a Kiro task headlessly and prints what happened:
+the agent's own words, the hooks that fired, and the tool calls that were
+blocked. That is the scripted one-shot pass, and it is how the phases below
+were built.
+
+### The delivery plan
+
+The phases below are ordered for the **hackathon**, not for a tidy product.
+The deadline is 4 December 2026, 2:00 PM Pacific, and the judging criteria are
+weighted equally: Potential Impact, Technological Implementation, Design,
+Innovation, Presentation. Every phase is visible in the three-minute video or
+in the ten seconds a judge spends deciding whether the project is real.
+
+| Phase | What it adds | Effort |
+| ----- | ------------ | ------ |
+| 1 | The run tells a story: observations, a timeline, every measurement | Medium |
+| 2 | The user builds experiments: drag-and-drop wiring, live parameters, saved experiments | High |
+| 3 | More science: chemistry end to end, materials in the circuit, a second experiment | Medium-high |
+| 4 | The assistant earns trust: grounded-number guard in the UI, run comparison | Medium |
+| 5 | Ship and present: deployment, video, README, screenshots, public repo | Medium |
+
+The full brief for each phase is in `.kiro/specs/frankenlab/tasks.md`, and the
+per-task briefs Kiro actually runs from are in `.kiro/briefs/`.
+
 ---
 
 ## Phase 1 — Correctness and coverage

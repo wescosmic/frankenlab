@@ -202,7 +202,8 @@ battery(+) ──▶ probe.terminal_a
 As the medium dries, the probe's resistance rises, the tap voltage falls,
 the comparator (inverted) fires, and the LED lights. With a 10 kΩ reference
 resistor and a 0.4 threshold, the alert fires on day 8 in sand, day 13 in
-loam, and never in clay.
+loam and day 15 in clay. Hydrogel holds its water for longer than the 21-day
+run, so it never alarms in this experiment.
 
 ---
 

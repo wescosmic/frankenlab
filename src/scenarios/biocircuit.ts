@@ -32,11 +32,16 @@ export interface BioCircuitOptions {
 }
 
 export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDefinition {
-  const substrate = options.substrate ?? 'loamy';
+  // Sand is the default medium because it is the one that tells the whole
+  // story inside the run: the alert fires on day 8, growth stalls on day 16
+  // and the medium wilts the same day. Loam reaches the same beats two weeks
+  // later, clay three, and hydrogel holds its water past the end of the run.
+  // The workbench still lets the user swap the medium and see the difference.
+  const substrate = options.substrate ?? 'sandy';
   const initialMoisture = options.initialMoisture ?? 1;
   const comparatorThreshold = options.comparatorThreshold ?? 0.4;
   // No irrigation by default: the plant drinks the medium dry over the
-  // fortnight and the alert fires. Turning irrigation up is the recovery
+  // twenty-one days and the alert fires. Turning irrigation up is the recovery
   // beat in the demonstration.
   const irrigationRate = options.irrigationRate ?? 0;
   const seed = options.seed ?? 20261030;
@@ -50,7 +55,7 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
     tags: ['biology', 'electronics', 'materials', 'flagship', 'interdisciplinary'],
     modelVersion: '1.0.0',
     dt: 3600, // one simulated hour per step
-    duration: 86400 * 14, // fourteen simulated days
+    duration: 86400 * 21, // twenty-one simulated days
     seed,
     components: [
       {
@@ -285,36 +290,62 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
  *
  * Each is a plain-language statement about what the user should be able to
  * see. They double as the demo script's checkpoints.
+ *
+ * The `atDay` values are the days the default flagship actually reaches them,
+ * measured from the simulation rather than written by hand. Sand is the
+ * default medium, so these are the numbers the demonstration is built on. The
+ * workbench still lets the user swap the medium, which pushes every beat
+ * later. The recovery beat has no day: it needs the user to water the medium,
+ * which the workbench cannot do yet.
  */
 export const BIOCIRCUIT_BEATS = [
   {
     id: 'planted',
+    atDay: 0,
     label: 'Planted',
     detail: 'The plant is established in the substrate with nutrients available.',
     expects: 'A small plant sits in the medium; moisture is above the wilting point.',
   },
   {
     id: 'growing',
+    atDay: 1,
     label: 'Growing',
     detail: 'Biomass increases as long as moisture and nutrients hold up.',
     expects: 'The plant visibly grows and the vigour reading stays near 1.',
   },
   {
     id: 'drying',
+    atDay: 4,
     label: 'Drying out',
     detail: 'Root uptake outpaces irrigation, so the medium dries.',
     expects: 'Moisture falls; the sensor resistance climbs.',
   },
   {
     id: 'alert',
+    atDay: 8,
     label: 'Alert triggered',
     detail: 'The comparator inverts: below the threshold means the medium is too dry.',
     expects: 'The LED lights to signal that the system needs water.',
   },
   {
+    id: 'stalled',
+    atDay: 16,
+    label: 'Growth stalled',
+    detail: 'The plant can no longer take up enough water to keep building tissue.',
+    expects: 'The biomass curve flattens and the vigour reading starts to fall.',
+  },
+  {
+    id: 'wilting',
+    atDay: 16,
+    label: 'Wilting',
+    detail: 'The medium has dropped below its wilting point.',
+    expects: 'The plant droops and the medium reads dry.',
+  },
+  {
     id: 'recovery',
+    atDay: null,
     label: 'Recovery',
-    detail: 'Irrigation or a better substrate restores moisture and the alert clears.',
+    detail: 'Watering the medium restores moisture and the alert clears.',
     expects: 'The LED switches off and growth resumes.',
   },
 ] as const;
