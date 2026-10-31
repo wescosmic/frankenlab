@@ -1,0 +1,13 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "eslint-on-save",
+      "description": "Run eslint --fix on the TypeScript file the agent just saved.",
+      "trigger": "PostFileSave",
+      "matcher": "\\.(ts|tsx)$",
+      "action": { "type": "command", "command": "node scripts/hook-lint.mjs" },
+      "timeout": 120
+    }
+  ]
+}

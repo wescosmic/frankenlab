@@ -1,0 +1,12 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "verify-on-stop",
+      "description": "Run the full verification suite when the agent finishes a turn, so 'the tests still pass' is a fact and not a claim.",
+      "trigger": "Stop",
+      "action": { "type": "command", "command": "node scripts/hook-verify.mjs" },
+      "timeout": 300
+    }
+  ]
+}

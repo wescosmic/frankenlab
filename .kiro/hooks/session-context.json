@@ -1,0 +1,12 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "session-context",
+      "description": "Give the agent the repo state and the next open tasks at the start of every session.",
+      "trigger": "SessionStart",
+      "action": { "type": "command", "command": "node scripts/hook-session-context.mjs" },
+      "timeout": 30
+    }
+  ]
+}

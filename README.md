@@ -97,6 +97,42 @@ Requires Node 20 or newer. No API key. No database. No network calls.
 
 See [docs/SETUP.md](docs/SETUP.md) for the full setup and troubleshooting.
 
+## Building it with Kiro
+
+This project is developed with the **Kiro CLI**. The CLI is not a reduced IDE:
+it is the same agent harness with the same `.kiro/` configuration, plus headless
+mode and ACP. It is also the surface the competition asks you to compare, so
+the differences are worth observing rather than assuming.
+
+```bash
+kiro-cli chat --v3
+```
+
+Trust the workspace when prompted, or none of the steering, agents, hooks and
+skills in `.kiro/` will load.
+
+| What                | Where                                                     |
+| ------------------- | --------------------------------------------------------- |
+| Specs               | `.kiro/specs/frankenlab/` — requirements, design, tasks     |
+| Steering            | `.kiro/steering/` — product, architecture, standards, integrity |
+| Specialist agents   | `.kiro/agents/` — kernel guardian, engine builder, science reviewer, UI integrator, and the lead that delegates to them |
+| Hooks               | `.kiro/hooks/` — session context, lint on save, destructive-shell guard, verify on stop |
+
+```bash
+/spec view frankenlab tasks      # read the spec
+/agent swap lab-lead             # switch to the orchestrator
+/agent swap kernel-guardian      # or work with a specialist
+```
+
+**Kiro drives MiniMax.** MiniMax M2.5 is in Kiro's own model catalogue at
+0.25x credit cost. Pick it with `/model`. You cannot supply your own MiniMax
+API key to Kiro: there is no custom provider or base URL setting. If you want
+another agent driving Kiro, that is ACP or the headless JSON-lines mode, not a
+provider setting.
+
+Full procedure, including the scripted one-shot pass and the ACP wiring, in
+[docs/CLI-WORKFLOW.md](docs/CLI-WORKFLOW.md).
+
 ## Architecture
 
 ```

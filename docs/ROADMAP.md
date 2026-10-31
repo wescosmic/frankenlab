@@ -26,6 +26,18 @@ What is built, what is next, and what each piece waits for.
 The full, ordered task list is in `.kiro/specs/frankenlab/tasks.md`. This
 document is the shape of the road; that file is the work list.
 
+### Development environment
+
+The build runs on the **Kiro CLI**, not the IDE. Same harness, same `.kiro/`
+configuration, plus headless mode and ACP. The competition asks for an
+explanation of how the IDE, CLI, Web and Crew differ, so the differences are
+observed rather than assumed.
+
+The repository ships five specialist agents in `.kiro/agents/` and four hooks in
+`.kiro/hooks/`, including a destructive-shell guard and a verify-on-stop hook
+that makes "the tests still pass" a fact the agent knows. The full procedure is
+in [CLI-WORKFLOW.md](CLI-WORKFLOW.md).
+
 ---
 
 ## Phase 1 — Correctness and coverage

@@ -9,7 +9,7 @@ Everything you need to run, test and extend FrankenLab.
 | Tool     | Version | Notes                                      |
 | -------- | ------- | ------------------------------------------ |
 | Node.js  | 20 or newer | The build uses `node:` imports and modern syntax. |
-| npm      | 10 or newer | pnpm also works and is the declared package manager. |
+| npm      | 10 or newer | npm is the supported package manager. The repository ships an npm lockfile. |
 
 Check yours:
 
@@ -70,7 +70,102 @@ npm run test:pbt    # property-based tests only
 npm run verify      # typecheck + lint + test
 ```
 
-## 4. Diagnostics
+## 4. Working with Kiro
+
+The primary development environment for this project is the **Kiro CLI**. It is
+not a reduced IDE: it is the same agent harness reading the same `.kiro/`
+configuration, plus headless mode and ACP.
+
+### 4.1 Install
+
+Windows (PowerShell, needs Windows 11 and Windows Terminal or PowerShell):
+
+```powershell
+irm 'https://cli.kiro.dev/install.ps1' | iex
+```
+
+macOS:
+
+```bash
+brew install kiro-cli
+```
+
+macOS and Linux:
+
+```bash
+curl -fsSL https://cli.kiro.dev/install | bash
+```
+
+Then sign in and check the install:
+
+```powershell
+kiro-cli login
+kiro-cli doctor
+```
+
+### 4.2 Open the project
+
+```powershell
+cd frankenlab
+kiro-cli chat --v3 --agent lab-lead
+```
+
+**Trust the workspace when prompted.** Until you do, Kiro loads none of the
+workspace's steering files, custom agents, MCP servers, skills or workflows,
+and it asks before every shell command.
+
+### 4.3 What ships in this repository
+
+| Path                    | Purpose                                                      |
+| ----------------------- | ------------------------------------------------------------ |
+| `.kiro/specs/frankenlab/` | Requirements, design and tasks                              |
+| `.kiro/steering/`       | Product, architecture, engineering standards, scientific integrity |
+| `.kiro/agents/`         | Five specialist agent profiles                                |
+| `.kiro/hooks/`          | Four hooks, and the scripts behind them                      |
+| `docs/CLI-WORKFLOW.md`  | The full operating procedure                                 |
+
+### 4.4 The agents
+
+| Agent              | Owns                                                        |
+| ------------------ | ----------------------------------------------------------- |
+| `lab-lead`         | Orchestrates and delegates. The default.                     |
+| `kernel-guardian`  | `src/kernel/`, `src/interactions/`, `src/world.ts`           |
+| `engine-builder`   | `src/engines/**` and engine tests                            |
+| `science-reviewer` | Read-only review of scientific honesty                       |
+| `ui-integration`   | `src/app/`, `src/components/`, `src/state/`, `src/three/`    |
+
+Switch with `/agent swap <name>`. The lead can run them in parallel; press
+`Ctrl+G` to watch them.
+
+### 4.5 The hooks
+
+| Hook                      | Trigger      | Effect                                                    |
+| ------------------------- | ------------ | --------------------------------------------------------- |
+| `session-context`         | SessionStart | Prints branch, last commit, working tree, next open tasks  |
+| `lint-on-save`            | File Save    | Runs `eslint --fix` on the saved TypeScript file           |
+| `guard-destructive-shell` | Pre Tool Use | Blocks force push, hard reset, `git clean`, repo-wide `rm -rf` |
+| `verify-on-stop`          | Agent Stop   | Runs `npm run verify` and feeds the result back to the agent |
+
+The scripts are in `scripts/hook-*.mjs`. A hook command that exits 0 has its
+stdout added to the agent's context. A non-zero exit is reported as an error,
+and on a Pre Tool Use trigger it **blocks** the tool call.
+
+### 4.6 Models
+
+```powershell
+kiro-cli chat --list-models
+```
+
+**MiniMax M2.5 is in Kiro's own catalogue** at 0.25x credit cost, available on
+every tier. Pick it with `/model`. You cannot supply your own MiniMax API key:
+Kiro has no custom provider or base URL setting.
+
+### 4.7 The full procedure
+
+[CLI-WORKFLOW.md](CLI-WORKFLOW.md) covers the install, the model table, the
+scripted one-shot pass, ACP, Kiro Crew, the credit deadlines and the gotchas.
+
+## 5. Diagnostics
 
 Two scripts help when a model does not behave as you expect.
 
@@ -90,7 +185,7 @@ Runs the electronics network solver in isolation and prints the solved
 voltages, currents and resistances. Use this when a circuit reading looks
 wrong.
 
-## 5. Project layout
+## 6. Project layout
 
 ```
 src/
@@ -106,18 +201,18 @@ src/
   world.ts         the one place that builds the registry
 tests/
   properties/      property-based invariant tests
-scripts/           diagnostic harnesses
-docs/              architecture, setup, roadmap
-.kiro/             Kiro specs and steering
+scripts/           diagnostic harnesses and the Kiro hook scripts
+docs/              architecture, setup, roadmap, CLI workflow
+.kiro/             Kiro specs, steering, agents and hooks
 ```
 
 The dependency rule: **downward only.** `kernel` imports nothing from
 `engines`. `engines` import nothing from each other. Cross-discipline
 behaviour is expressed as rules in `src/interactions/couplings.ts`.
 
-## 6. Extending it
+## 7. Extending it
 
-### 6.1 A new component in an existing discipline
+### 7.1 A new component in an existing discipline
 
 1. Write the definition in the engine's file:
 
@@ -153,12 +248,12 @@ behaviour is expressed as rules in `src/interactions/couplings.ts`.
 
 4. Write a test. A component without a test is not finished.
 
-### 6.2 A new discipline
+### 7.2 A new discipline
 
 Follow the recipe in the README. One folder, one export, one line in
 `src/world.ts`. The kernel does not change.
 
-### 6.3 A new cross-discipline link
+### 7.3 A new cross-discipline link
 
 1. Add a rule to the relevant coupling in `src/interactions/couplings.ts`:
 
@@ -179,7 +274,7 @@ Follow the recipe in the README. One folder, one export, one line in
 
 3. Write a test that fails if the link stops working.
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 **`npm run dev` fails with a port error.** Something else is on 4310. Change
 the port in `package.json`, or stop the other process.
@@ -201,7 +296,7 @@ use `unknown` and narrow it.
 **Next.js modified `tsconfig.json`.** It adds `.next/dev/types/**/*.ts` to
 `include` and sets `jsx: react-jsx`. Both are expected. Keep them.
 
-## 8. Before you commit
+## 9. Before you commit
 
 ```bash
 npm run verify

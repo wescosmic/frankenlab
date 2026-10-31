@@ -1,0 +1,13 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "guard-destructive-shell",
+      "description": "Block force pushes, hard resets, git clean and recursive deletes of the repository.",
+      "trigger": "PreToolUse",
+      "matcher": "shell",
+      "action": { "type": "command", "command": "node scripts/hook-guard.mjs" },
+      "timeout": 20
+    }
+  ]
+}

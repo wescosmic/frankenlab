@@ -27,8 +27,15 @@ const config = [
   },
   {
     // The kernel and the engines are plain TypeScript with no React, and the
-    // diagnostics scripts are meant to print.
-    files: ['src/kernel/**/*.ts', 'src/engines/**/*.ts', 'src/interactions/**/*.ts', 'scripts/**/*.ts'],
+    // diagnostics scripts are meant to print. The Kiro hook scripts also print
+    // by contract: their stdout is the agent's context.
+    files: [
+      'src/kernel/**/*.ts',
+      'src/engines/**/*.ts',
+      'src/interactions/**/*.ts',
+      'scripts/**/*.ts',
+      'scripts/**/*.mjs',
+    ],
     rules: {
       'no-console': 'off',
     },
