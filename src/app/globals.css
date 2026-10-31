@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+/**
+ * FrankenLab — laboratory design tokens.
+ *
+ * A dark instrument panel, not a dashboard. The 3D bench is the subject; the
+ * chrome stays quiet so the experiment is what the eye lands on.
+ *
+ * Each discipline carries its own hue, and that hue is used consistently in
+ * the 3D scene, the catalogue and the readings — so a component's colour
+ * always tells you what kind of science it is.
+ */
+@theme {
+  --color-lab-void: #05070d;
+  --color-lab-bg: #090d16;
+  --color-lab-panel: #0e1422;
+  --color-lab-panel-raised: #141c2e;
+  --color-lab-line: #1e2942;
+  --color-lab-line-bright: #2c3a5c;
+
+  --color-lab-text: #e6ecf7;
+  --color-lab-muted: #8b9ab5;
+  --color-lab-dim: #5b6883;
+
+  --color-lab-accent: #4fd1c5;
+  --color-lab-accent-dim: #2a6d67;
+
+  --color-lab-electronics: #ef6461;
+  --color-lab-biology: #7bc96f;
+  --color-lab-materials: #c2a084;
+  --color-lab-chemistry: #f0b350;
+  --color-lab-alert: #ff8f5e;
+
+  --font-mono: 'SFMono-Regular', 'JetBrains Mono', Consolas, monospace;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    background: var(--color-lab-void);
+    color: var(--color-lab-text);
+    font-family:
+      ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-lab-line);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-lab-line-bright);
+  }
+}
+
+@layer components {
+  /* Small uppercase labels under plain-English headings. */
+  .lab-label {
+    font-size: 10px;
+    line-height: 1.2;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-lab-dim);
+  }
+
+  .lab-panel {
+    background: var(--color-lab-panel);
+    border: 1px solid var(--color-lab-line);
+    border-radius: 10px;
+  }
+
+  .lab-value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}

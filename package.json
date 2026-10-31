@@ -1,0 +1,43 @@
+{
+  "name": "frankenlab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FrankenLab — a playable experimental universe where scientific disciplines interact inside one shared simulation environment.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev -p 4310",
+    "build": "next build",
+    "start": "next start -p 4310",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:pbt": "vitest run tests/properties",
+    "verify": "npm run typecheck && npm run lint && npm run test"
+  },
+  "dependencies": {
+    "next": "16.3.6",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "three": "^0.180.0",
+    "zustand": "^5.0.15",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.7.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "^0.180.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.6",
+    "jsdom": "^26.1.0",
+    "postcss": "^8.5.31",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^3.2.4",
+    "fast-check": "^4.2.0"
+  }
+}
