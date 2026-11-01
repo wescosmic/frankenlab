@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" rx="7" fill="#05070d"/>
+  <!-- Four disciplines, four colours, one frame. -->
+  <path d="M7 22 L13 10 L19 22 Z" fill="none" stroke="#4fd1c5" stroke-width="1.8" stroke-linejoin="round"/>
+  <circle cx="23" cy="11" r="3.2" fill="#f0b350"/>
+  <circle cx="23" cy="21" r="2.1" fill="#7bc96f"/>
+  <path d="M7 22 L23 11" stroke="#c2a084" stroke-width="1.4" opacity="0.85"/>
+  <path d="M13 10 L23 21" stroke="#8f9bd4" stroke-width="1.4" opacity="0.85"/>
+</svg>

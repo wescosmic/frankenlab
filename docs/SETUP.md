@@ -6,9 +6,9 @@ Everything you need to run, test and extend FrankenLab.
 
 ## 1. Requirements
 
-| Tool     | Version | Notes                                      |
-| -------- | ------- | ------------------------------------------ |
-| Node.js  | 40 or newer | The build uses `node:` imports and modern syntax. |
+| Tool     | Version    | Notes                                                              |
+| -------- | ---------- | ------------------------------------------------------------------ |
+| Node.js  | 20.9 or newer | Next.js 16.3.6 requires `>=20.9.0`. The build uses `node:` imports. |
 | npm      | 10 or newer | npm is the supported package manager. The repository ships an npm lockfile. |
 
 Check yours:
@@ -18,14 +18,14 @@ node --version
 npm --version
 ```
 
-## 4. Install
+## 2. Install
 
 ```bash
 cd frankenlab
 npm install
 ```
 
-This installs 466 packages. There is no postinstall step, no database, no
+This installs 575 packages. There is no postinstall step, no database, no
 container and no API key to set.
 
 ### Using pnpm instead
@@ -86,6 +86,39 @@ a live parameter. The substrate's medium and its initial fill are not, since
 they decide the physical constants the water balance is measured against;
 changing either of those rebuilds the run, and the interface says so.
 
+### Building it for a browser
+
+The whole application runs in the browser. There is no server route, no
+database and no API, so it can be published as a static site.
+
+```bash
+npm run build              # server build, for `npm start`
+npm run start              # serve that build on 4310
+```
+
+To produce the static site instead, set one environment variable:
+
+```bash
+# Windows PowerShell
+$env:NEXT_STATIC_EXPORT='1'; npm run build
+
+# macOS or Linux
+NEXT_STATIC_EXPORT=1 npm run build
+```
+
+That writes a self-contained site to `out/`, with `out/index.html` at the root.
+Any static host will serve it. To look at it locally:
+
+```bash
+python -m http.server 4312 --directory out
+```
+
+Open <http://localhost:4312>. The export behaves exactly like the server
+build, because it is the same application.
+
+The export is opt-in on purpose: an ordinary `npm run build` stays a server
+build so that `npm start` keeps working for a local review.
+
 ### Other scripts
 
 ```bash
@@ -132,9 +165,9 @@ kiro-cli login
 kiro-cli diagnostic
 ```
 
-`kiro-cli doctor` was removed in 4.37.0; `kiro-cli diagnostic` replaced it.
+`kiro-cli doctor` was removed. `kiro-cli diagnostic` replaced it.
 
-### 4.4 Open the project
+### 4.2 Open the project
 
 ```powershell
 cd frankenlab
@@ -177,20 +210,54 @@ Switch with `/agent swap <name>`. The lead can run them in parallel; press
 | `guard-destructive-shell` | Pre Tool Use | Blocks force push, hard reset, `git clean`, repo-wide `rm -rf` |
 | `verify-on-stop`          | Agent Stop   | Runs `npm run verify` and feeds the result back to the agent |
 
-The scripts are in `scripts/hook-*.mjs`. A hook command that exits 0 has its
-stdout added to the agent's context. **To block a tool call, exit 4.** Any
-other non-zero code is reported as a warning and the command still runs, so a
-guard that exits 1 refuses in words and then lets the command through.
+The scripts are in `scripts/hook-*.mjs`.
+
+A hook communicates through its **exit code**, and the codes are not "zero or
+non-zero":
+
+| Code      | Meaning                                                        |
+| --------- | -------------------------------------------------------------- |
+| `0`       | The hook succeeded. Its stdout is added to the agent's context. |
+| `2`       | PreToolUse only: the tool call is blocked. stderr goes to the agent. |
+| anything else | The hook failed. stderr is shown as a **warning**, and the tool still runs. |
+
+**To block a tool call, exit 2.** Exiting 1 blocks nothing. That is the trap:
+a guard hook that exits 1 prints its refusal and then lets the command
+through. The guard in this repository was written with exit 1 first, tested
+against a real `git reset --hard HEAD`, and the reset happened. The exit code
+is now 2, and the same command is refused before it runs.
 
 ### 4.6 Models
 
 ```powershell
-kiro-cli chat --list-models
+kiro-cli chat --list-models --format json
 ```
 
-**MiniMax M4.5 is in Kiro's own catalogue** at 0.45x credit cost, available on
-every tier. Pick it with `/model`. You cannot supply your own MiniMax API key:
-Kiro has no custom provider or base URL setting.
+This account sees these models. The multiplier is the credit cost.
+
+| Model              | Context | Credits | Note                       |
+| ------------------ | ------- | ------- | -------------------------- |
+| `auto`             | 1M      | 1.00x   | Chosen by task             |
+| `claude-sonnet-4.5`| 200K    | 1.30x   |                            |
+| `claude-haiku-4.5` | 200K    | 0.40x   |                            |
+| `glm-5`            | 200K    | 0.50x   |                            |
+| `deepseek-3.2`     | 164K    | 0.25x   | Experimental preview       |
+| `minimax-m2.5`     | 196K    | 0.25x   | **The default for this project** |
+| `minimax-m2.1`     | 196K    | 0.15x   | Experimental preview       |
+| `qwen3-coder-next` | 256K    | 0.05x   | Experimental preview       |
+
+The catalogue is served live and it changes. Check it rather than trusting
+this table.
+
+**MiniMax M2.5 is in Kiro's own catalogue** at 0.25x credit cost, and this
+project pins it:
+
+```powershell
+kiro-cli settings chat.defaultModel minimax-m2.5
+```
+
+You cannot supply your own MiniMax API key: Kiro has no custom provider or
+base URL setting, and inference always runs on Kiro's endpoints.
 
 ### 4.7 The full procedure
 
@@ -216,6 +283,13 @@ npx tsx scripts/debug-solver.ts
 Runs the electronics network solver in isolation and prints the solved
 voltages, currents and resistances. Use this when a circuit reading looks
 wrong.
+
+Two more scripts print the numbers this project quotes in its documentation:
+
+```bash
+npx tsx scripts/measure-beats.ts       # when the alert fires, and when the plant wilts
+npx tsx scripts/measure-catalysis.ts   # how far apart the two reaction vessels finish
+```
 
 ## 6. Project layout
 
@@ -264,7 +338,7 @@ behaviour is expressed as rules in `src/interactions/couplings.ts`.
    };
    ```
 
-4. Write the behaviour:
+2. Write the behaviour:
 
    ```ts
    export const myBehavior: ComponentBehavior = {
@@ -280,7 +354,7 @@ behaviour is expressed as rules in `src/interactions/couplings.ts`.
 
 4. Write a test. A component without a test is not finished.
 
-### 7.4 A new discipline
+### 7.2 A new discipline
 
 Follow the recipe in the README. One folder, one export, one line in
 `src/world.ts`. The kernel does not change.
@@ -301,7 +375,7 @@ Follow the recipe in the README. One folder, one export, one line in
    }
    ```
 
-4. Add the coupling's `chain` text — the story of why the two belong
+2. Add the coupling's `chain` text — the story of why the two belong
    together. The UI and the assistant show it.
 
 3. Write a test that fails if the link stops working.
@@ -310,6 +384,10 @@ Follow the recipe in the README. One folder, one export, one line in
 
 **`npm run dev` fails with a port error.** Something else is on 4310. Change
 the port in `package.json`, or stop the other process.
+
+**`npm run build` says another build is already running.** Two builds
+overlapped and the first one still holds the lock. Wait for it to finish, or
+stop the `.next` directory and build again.
 
 **The 3D scene is blank.** Check the browser console. WebGL is required. A
 headless or software-rendered environment may not have it. The rest of the
@@ -321,12 +399,24 @@ errors rather than broken tests — the chemistry vessel's "conserved total"
 and the Arrhenius activation-energy direction were both genuine mistakes that
 the tests caught.
 
+**The tests pass but the run says "Failed to terminate worker".** That is
+teardown noise from the test runner on a busy machine, not a failing test. The
+assertions all ran and passed. Free some memory and run it again.
+
 **`npm run lint` reports unused imports.** Type-only imports need
 `import type`. The rule is `@typescript-eslint/no-explicit-any` as an error:
 use `unknown` and narrow it.
 
 **Next.js modified `tsconfig.json`.** It adds `.next/dev/types/**/*.ts` to
 `include` and sets `jsx: react-jsx`. Both are expected. Keep them.
+
+**Kiro loads none of the workspace's configuration.** Trust the workspace
+when it asks. Until you do, it sees no steering, no agents, no hooks and no
+MCP servers.
+
+**A Kiro guard hook says no but the command runs anyway.** It exited 1, which
+is a warning, not a block. It must exit 2. See the exit-code table in
+section 4.5.
 
 ## 9. Before you commit
 
