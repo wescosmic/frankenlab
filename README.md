@@ -53,6 +53,39 @@ the run:
 | Clay     | day 17             |
 | Hydrogel | not within 24 days |
 
+## Three experiments, not one
+
+The bench opens with a catalogue, because a sandbox with a single experiment
+in it is a demonstration.
+
+| Experiment | What it shows |
+| ---------- | ------------- |
+| **Project BioCircuit** | The flagship. Soil, a plant, a probe and an alarm. |
+| **Threshold Alarm** | The same circuit with the biology taken out. Turn the reference resistor from 40 kOhm to 10 kOhm and the alarm goes out. |
+| **Catalysis Comparison** | Two vessels, the same reaction, one catalysed and one not. Same destination, nine times sooner. |
+
+The catalysis comparison is the sharpest of the three. The equilibrium is not
+guessed at from a rate that looks small: the mass-action law gives a quadratic
+in the extent of reaction, and the smaller root is where the reaction is
+heading. Measured by `scripts/measure-catalysis.ts`:
+
+| | Uncatalysed | Catalysed |
+| --- | --- | --- |
+| Solved equilibrium | 0.609612 mol/L | 0.609612 mol/L |
+| Within 1 per cent of it | minute 110 | minute 12 |
+| Product after four hours | 0.609569 mol/L | 0.609612 mol/L |
+
+The two vessels finish 0.000043 mol/L apart. The catalyst changed the speed
+and not the destination, and the numbers say so.
+
+## Build it yourself
+
+Parts are dragged from the catalogue onto the bench and wired by dragging
+between the dots on them. The bench and the simulator share one validator, so
+a wire refused on the bench is refused for exactly the same reason. A refused
+wire explains itself in plain English: *"Trigger" is an input on LED, so
+nothing comes out of it.*
+
 ## Principles
 
 **The simulation computes. The AI interprets. The user decides.**
@@ -61,6 +94,18 @@ The AI assistant is never the source of a number. It reads the same
 structured context the UI reads, and it cites the values it uses. With no
 provider configured it still works, because a deterministic local explainer
 answers from the same context.
+
+**Every answer says what it is worth.**
+
+An experiment is only as trustworthy as its weakest model, so the assistant
+names that model and says what its confidence level means:
+
+> **What to trust here:** the weakest model on the bench is **Illustrative**
+> (Irrigation). It is illustrative. It shows what the model does, not what
+> would really happen.
+
+And the guard runs on every reply, whoever wrote it. A number the simulation
+did not produce is removed from the answer, and the removal is stated.
 
 **Scientific honesty is a product feature.** Every component carries a
 confidence level and states its own assumptions in plain English:
@@ -94,11 +139,11 @@ and carry on: the medium comes back above its wilting point, the timeline
 records the recovery, and the LED goes out. The simulation computes, the
 timeline shows what happened, and you decide what to do about it.
 
-Under the bench there are three tabs. **Readings** shows the four headline
-numbers and their history. **Timeline** lists every moment the simulation
-reported, in order, with a severity and a plain-English explanation. **Measurements**
-lists every quantity the kernel produced, grouped by the part it came from,
-with its unit.
+Under the bench there are three tabs. **Readings** shows the headline numbers
+for whichever experiment is open and their history. **Timeline** lists every
+moment the simulation reported, in order, with a severity and a plain-English
+explanation. **Measurements** lists every quantity the kernel produced,
+grouped by the part it came from, with its unit.
 
 Other commands:
 
@@ -212,7 +257,7 @@ appears in the catalogue, the validator and the workbench.
 npm test
 ```
 
-94 tests across seven files. The interesting ones are the property-based
+149 tests across eleven files. The interesting ones are the property-based
 invariants in `tests/properties/`:
 
 - The source delivers exactly the power the resistors dissipate.
@@ -220,6 +265,16 @@ invariants in `tests/properties/`:
 - The medium never gains water when nothing is added to it.
 - No normalised reading leaves 0–1.
 - The same seed gives the same result, every time.
+
+And the two contracts that keep the product honest:
+
+- **`tests/ports.test.ts`** wires every component in the world into one graph
+  and checks that every output port publishes its value under its own port id.
+  A value published under any other name is a value no wire can carry, and it
+  fails silently. This test found three real bugs, including an unwired part
+  on the bench collapsing the whole circuit solve.
+- **`tests/trust.test.ts`** checks that the assistant cannot cite a number the
+  simulation did not produce, and that every answer states what it is worth.
 
 ## Honest limitations
 
@@ -229,8 +284,11 @@ invariants in `tests/properties/`:
 - The electronics solver is DC resistive nodal analysis. There is no
   capacitance, no inductance and no transient behaviour.
 - The assistant uses a deterministic local explainer. A live model provider
-  is not wired up.
-- Components cannot yet be dragged and rewired in the 3D scene.
+  is not wired up, though the trust guard is already in front of it.
+- Runs are not persisted and cannot be compared side by side yet.
+- Most of this was built with Kiro agents, but two phases were built by hand
+  because the Kiro account's monthly quota ran out. The full account is in
+  [docs/KIRO-WRITEUP.md](docs/KIRO-WRITEUP.md).
 - FrankenLab is a learning environment. It does not replace a laboratory.
 
 ## Licence

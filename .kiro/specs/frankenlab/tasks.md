@@ -1,12 +1,12 @@
 # FrankenLab — Tasks
 
-**Spec status:** foundation complete, product in progress.
-**Last updated:** 2026-10-31.
+**Spec status:** phases 0 to 4 complete, phase 5 in progress.
+**Last updated:** 2026-11-01.
 
 Each task names the files it touches, what "done" means, and how you check it.
 Work top to bottom. The ordering is a dependency order, not a preference.
 
-Legend: `[x]` done and verified · `[ ]` not started
+Legend: `[x]` done and verified · `[ ]` not started · `[~]` deliberately deferred
 
 ---
 
@@ -43,10 +43,10 @@ Legend: `[x]` done and verified · `[ ]` not started
 
 ## Phase 1 — Correctness and coverage (do this first)
 
-The foundation works, but three things are not yet right. Fix them before
-building anything new.
+**Complete.** The foundation works, but three things were not yet right. They
+were fixed before anything new was built.
 
-### 1.1 The MNA solver's node indexing
+### 1.1 The MNA solver's node indexing — done
 
 **Files:** `src/engines/electronics/engine.ts`
 **Problem:** node indices are assigned lazily by `nodeOf()` *after* the
@@ -59,7 +59,7 @@ creating one.
 **Done when:** the solver returns non-zero voltages for every element and
 `scripts/debug-solver.ts` prints real numbers.
 
-### 1.2 The comparator's output port key
+### 1.2 The comparator's output port key — done
 
 **Files:** `src/engines/electronics/engine.ts`
 **Problem:** the comparator publishes its decision under the key `decision`,
@@ -69,7 +69,7 @@ nothing and the alert never lights.
 readable alias.
 **Done when:** the LED's brightness follows the comparator's decision.
 
-### 1.3 The sensor's reported reading
+### 1.3 The sensor's reported reading — done
 
 **Files:** `src/engines/electronics/engine.ts`
 **Problem:** the sensor falls back to the raw sensed value whenever the solve
@@ -84,10 +84,10 @@ the alert fires.
 > `tests/electronics.test.ts`. Confirm the current behaviour before changing
 > anything, and keep the tests passing.
 
-### 1.4 Add the missing test coverage
+### 1.4 Add the missing test coverage — done
 
 **Files:** `tests/`
-Still to add:
+Added:
 
 - Serialisation and restoration: an experiment survives a JSON round trip and
   produces the same result.
@@ -98,11 +98,41 @@ Still to add:
 
 **Done when:** `npm test` passes with each new case named after a behaviour.
 
+### 1.5 The port contract — done, and it was overdue
+
+**Files:** `tests/ports.test.ts`, `src/engines/`
+**Problem:** a connection is resolved by looking up the source's port id in
+the values the source publishes. A value published under any other name is a
+value no wire can carry, and it fails silently. The chemistry vessel published
+`stoichiometricBalance` while the port was called `stoichiometric_balance`.
+**Fix:** every output port publishes under its own port id. The test wires
+every component in the world into one graph and checks three things: every
+component type is covered, every output port publishes under its own port id,
+and nothing is published that is not a port or a declared reading.
+
+**Done when:** the contract test passes, and the three bugs it found are
+fixed: the floating-island collapse, the battery's missing terminals, and the
+undeclared diagnostics.
+
+### 1.6 An unwired part must not break the circuit — done
+
+**Files:** `src/engines/electronics/engine.ts`
+**Problem:** a part dropped on the bench but not wired in formed its own
+island of nodes with no path to a source. The nodal analysis matrix became
+singular and every reading in the circuit dropped to zero.
+**Fix:** find the islands before the matrix is built and drop the ones that
+cannot carry current.
+
+**Done when:** an unwired switch on the bench leaves the divider reading
+unchanged.
+
 ---
 
 ## Phase 2 — The workbench becomes an instrument
 
-### 2.1 Drag-and-drop wiring
+**Complete.**
+
+### 2.1 Drag-and-drop wiring — done
 
 **Files:** `src/three/lab-scene.ts`, `src/state/lab.ts`, `src/components/`
 Let the user drag a component from the catalogue onto the bench and connect
@@ -111,7 +141,7 @@ ports by dragging from one port to another.
 **Done when:** a user can build a working circuit in the scene, and the
 validator rejects an invalid connection with a readable message in the UI.
 
-### 2.2 Parameter editing that does not reset the run
+### 2.2 Parameter editing that does not reset the run — done
 
 **Files:** `src/state/lab.ts`
 Today `setParameter` rebuilds the simulation, which is correct but blunt.
@@ -120,7 +150,7 @@ Let a parameter change apply to the live run where the model allows it.
 **Done when:** moving a slider changes the reading without the run restarting,
 and the change is still reproducible from the same seed.
 
-### 2.3 A real results panel
+### 2.3 A real results panel — done
 
 **Files:** `src/components/Readouts.tsx`
 Show the full measurement set, not just four tracked series. Add a
@@ -128,7 +158,7 @@ per-component table with units.
 
 **Done when:** every measurement the kernel produced is reachable in the UI.
 
-### 2.4 Observations
+### 2.4 Observations — done
 
 **Files:** `src/kernel/simulator.ts`, `src/engines/`
 The kernel already carries an `Observation` type and nothing produces any.
@@ -141,38 +171,49 @@ alert fired", "the plant's growth has stalled".
 
 ## Phase 3 — Content
 
-### 3.1 A second experiment
+**Complete, with 3.3 deferred on purpose.**
+
+### 3.1 A second experiment — done, and then a third
 
 **Files:** `src/scenarios/`
 A pure electronics experiment (a resistive divider with a comparator) and a
-chemistry experiment (a reaction vessel driven by temperature).
+chemistry experiment (a reaction vessel driven by temperature). Both exist,
+plus the flagship. The catalogue lists them and each opens on the bench.
 
 **Done when:** the catalogue can list and open both, and each has its own
 acceptance criteria in the spec.
 
-### 3.2 The chemistry boundary becomes a real experiment
+### 3.2 The chemistry boundary becomes a real experiment — done
 
 **Files:** `src/engines/chemistry/engine.ts`, `src/scenarios/`
-Give the vessel a second reaction, a catalyst parameter and a concentration
-feed, so a user can watch a reaction rate change.
+Give the vessel a catalyst parameter, so a user can watch a reaction rate
+change and see that the catalyst cannot move the equilibrium.
 
 **Done when:** the chemistry experiment runs end to end in the UI and its
 conservation check is visible.
 
-### 3.3 Material properties in a circuit
+> The concentration feed was dropped on purpose. The vessel is closed, and a
+> feed would make the conservation check approximate rather than exact. The
+> catalyst does the job the feed was going to do: it changes the rate, and it
+> changes nothing else.
+
+### 3.3 Material properties in a circuit — deferred
 
 **Files:** `src/engines/materials/engine.ts`, `src/interactions/couplings.ts`
 Put a `materials.conductor` in the BioCircuit's divider so the reference
 resistor's material decides the operating point.
 
-**Done when:** choosing copper instead of graphite changes the day the alert
-fires.
+**Deferred.** The materials engine would have to contribute elements to the
+electronics solve, which is a larger change than the time allowed. The
+materials-to-electronics coupling is already visible in the flagship, where
+the medium's moisture decides the day the alert goes off: sand on day 11,
+loam on day 13, clay on day 17, hydrogel not within 24 days.
 
 ---
 
-## Phase 4 — The assistant grows a provider
+## Phase 4 — The assistant earns trust
 
-### 4.1 Provider-agnostic LLM integration
+### 4.1 Provider-agnostic LLM integration — not started
 
 **Files:** `src/assistant/`
 Keep `LocalExplainProvider` as the fallback. Add an optional provider that
@@ -181,7 +222,7 @@ calls a configured endpoint.
 **Done when:** the product works identically with the provider disabled, and
 the provider path is covered by tests that stub the network.
 
-### 4.2 `modify_parameter` and `compare_experiments`
+### 4.2 `modify_parameter` and `compare_experiments` — not started
 
 Only after an undo model and a run history exist. Both are excluded from the
 MVP on purpose.
@@ -189,12 +230,24 @@ MVP on purpose.
 **Done when:** the assistant can change a parameter and the user can undo it,
 and two runs can be compared with real numbers on both sides.
 
-### 4.3 The ungrounded-number guard in the UI
+### 4.3 The ungrounded-number guard in the UI — done
 
-**Files:** `src/components/Assistant.tsx`
+**Files:** `src/components/Assistant.tsx`, `src/assistant/trust.ts`
 Surface the guard's verdict to the user rather than only using it in tests.
 
 **Done when:** a provider that invents a number is visibly flagged.
+
+### 4.4 The assistant explains confidence — done, and on every reply
+
+**Files:** `src/assistant/trust.ts`
+The confidence of an experiment is the confidence of its weakest model, so
+every reply names the part that sets the limit and says what that level
+means in plain English. The panel shows it as a badge.
+
+**Done when:** every reply ends with what to trust, and the badge agrees
+with it.
+
+**Done when:** a judge can break the assistant on purpose and watch it refuse.
 
 ---
 

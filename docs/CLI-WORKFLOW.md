@@ -406,17 +406,39 @@ repeatedly instead of paying process start-up on every call.
 
 ## 8. Kiro Crew
 
-```powershell
-kiro-cli crew
-```
-
 Crew is a persistent local agent with a Gateway on `http://localhost:5476`, a
 Task Runner that turns a description into a spec and runs it end to end,
 schedules, and parallel sub-agents.
 
-On Windows, Crew installs from a signed `.exe`. `kiro-cli crew --yes gateway`
-installs it when needed and starts the Gateway. The standalone commands are
-`kirocrew setup`, `kirocrew doctor` and `kirocrew gateway`.
+**Crew is not bundled with the CLI.** `kiro-cli crew --yes` fails with
+`Kiro Crew is not installed`, and no flag makes it install it. On Windows,
+Crew comes from its own signed desktop installer:
+
+```powershell
+# Download and run the installer silently.
+https://download.crew.kiro.dev/desktop/stable/latest/KiroCrew-Setup.exe
+
+$kc = "$env:LOCALAPPDATA\Programs\KiroCrew\resources\backend-dist\kirocrew-backend\bin\kirocrew.cmd"
+& $kc doctor          # checks kiro-cli, auth and the config
+& $kc setup --agent-only
+& $kc gateway         # binds http://localhost:5476
+```
+
+The installer's own closing message can name a different directory than the
+one it installs to, so check `%LOCALAPPDATA%\Programs\KiroCrew` rather than
+believing the message.
+
+Two settings matter and are not settable through `config set`:
+
+- `taskrunner.test_command` needs a JSON list, so it has to be written with
+  `--value-base64`.
+- `hooks.auto_approve_tools` is rejected by `config set` entirely, so it goes
+  straight into `%USERPROFILE%\.kiro\crew\config.json`.
+
+A Crew chat runs Crew's own agent, `kirocrew`, which ships pinned to the
+`auto` model. The CLI was set to `minimax-m2.5`. Those are not the same model
+and they do not draw on the same allowance, so pin the Crew agent to the same
+model before the first run. This is in `%USERPROFILE%\.kiro\agents\kirocrew.json`.
 
 Crew is the right home for the long unattended runs, and it is the surface
 behind the Best Kiro Crew App prize.
@@ -432,6 +454,33 @@ behind the Best Kiro Crew App prize.
 
 Request 4,000 credits. **Confirm with the organisers that CLI usage draws from
 the same pool as the IDE** before you commit the whole build to one surface.
+
+The draft answers are in [KIRO-CREDIT-REQUEST.md](KIRO-CREDIT-REQUEST.md).
+
+### The monthly request quota
+
+The Kiro account's allowance is a **monthly request count**, not a token
+budget, and it ran out part-way through this build:
+
+```
+ServiceQuotaExceededException: "You have reached the limit."
+reason: "MONTHLY_REQUEST_COUNT"
+```
+
+It is model-independent: `minimax-m2.5` at 0.25x, `minimax-m2.1` at 0.15x and
+`qwen3-coder-next` at 0.05x all fail the same way. That is how you tell a
+request count from a spend limit.
+
+Two symptoms look like different problems and are not:
+
+- **Crew runs that time out on MCP.** The session never starts, so the
+  `kirocrew-core` MCP server has nothing to answer and the call times out
+  after sixty seconds.
+- **`kiro-cli diagnostic` reports no reset date.** Check the account creation
+  date instead; the cycle resets a month after it.
+
+The account here was created on 30 October 2026, so the cycle resets around
+30 November. Check the quota before a long agent run, not after it fails.
 
 ## 10. Gotchas
 

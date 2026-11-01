@@ -2,7 +2,7 @@
 
 What is built, what is next, and what each piece waits for.
 
-**Last updated:** 2026-10-31.
+**Last updated:** 2026-11-01.
 
 ---
 
@@ -14,13 +14,15 @@ What is built, what is next, and what each piece waits for.
 | Electronics | **Working** | Real modified nodal analysis. DC resistive only. |
 | Biology | **Working** | Logistic growth, transpiration, nutrients. Teaching scale. |
 | Materials | **Working** | Two-reservoir water balance, four presets, conductors. |
-| Chemistry | **Boundary only** | One reversible reaction in one closed vessel. |
+| Chemistry | **Working** | One reversible reaction in one closed vessel, a catalyst parameter, a solved equilibrium. |
 | Interdisciplinary coupling | **Working** | Five named couplings, specificity-ordered rules. |
 | Observations | **Working** | The kernel collects them; the four engines report them. |
-| AI assistant | **Working, offline** | Five tools and a deterministic local explainer. |
-| 3D workbench | **Working** | Scene, selection, animation, labels. No drag-and-drop yet. |
+| AI assistant | **Working, offline** | Five tools, a deterministic local explainer, and a trust guard on every reply. |
+| 3D workbench | **Working** | Scene, selection, animation, labels, drag-and-drop wiring. |
 | Timeline and measurements | **Working** | Three tabs under the bench. |
-| Experiment builder | **Not built** | Parameters can be edited; components cannot be placed. |
+| Experiment catalogue | **Three experiments** | BioCircuit, Threshold Alarm, Catalysis Comparison. |
+| Experiment builder | **Working** | Parts are dragged onto the bench and wired by dragging. |
+| Run comparison | **Not built** | |
 | Missions and notebooks | **Not built** | |
 | Persistence | **Not built** | In-memory only. |
 | Deployment | **Not done** | Builds locally. |
@@ -53,13 +55,13 @@ weighted equally: Potential Impact, Technological Implementation, Design,
 Innovation, Presentation. Every phase is visible in the three-minute video or
 in the ten seconds a judge spends deciding whether the project is real.
 
-| Phase | What it adds | Effort |
-| ----- | ------------ | ------ |
-| 1 | The run tells a story: observations, a timeline, every measurement | Medium |
-| 2 | The user builds experiments: drag-and-drop wiring, live parameters, saved experiments | High |
-| 3 | More science: chemistry end to end, materials in the circuit, a second experiment | Medium-high |
-| 4 | The assistant earns trust: grounded-number guard in the UI, run comparison | Medium |
-| 5 | Ship and present: deployment, video, README, screenshots, public repo | Medium |
+| Phase | What it adds | Effort | State |
+| ----- | ------------ | ------ | ----- |
+| 1 | The run tells a story: observations, a timeline, every measurement | Medium | Done |
+| 2 | The user builds experiments: drag-and-drop wiring, live parameters | High | Done |
+| 3 | More science: chemistry end to end, a catalyst, three experiments | Medium-high | Done |
+| 4 | The assistant earns trust: the guard, the confidence badge | Medium | Done, except run comparison |
+| 5 | Ship and present: deployment, video, README, screenshots, public repo | Medium | Next |
 
 The full brief for each phase is in `.kiro/specs/frankenlab/tasks.md`, and the
 per-task briefs Kiro actually runs from are in `.kiro/briefs/`.
@@ -96,60 +98,95 @@ Three things were corrected along the way, and the corrections are the point:
 
 ## Phase 2 — The user builds experiments
 
-**Next.** The biggest gap between the current product and the product the
-brief describes.
+**Done.** This was the biggest gap between the product and the brief, and it
+is now the part a judge can try in ten seconds.
 
-- **Drag-and-drop wiring.** Drag a component from the catalogue onto the
-  bench, connect ports by dragging.
-- **Live parameter editing.** A parameter change currently rebuilds the
-  simulation, which is correct but blunt. Where the model allows it, a
-  change should apply to the running experiment. This is what makes the
-  recovery beat possible: turn the tap on and watch the medium come back.
-- **Saved experiments**, so a build is reproducible and shareable.
-- **A saturation ceiling on the medium.** A pot cannot hold unlimited
-  water. The model has no upper bound today, so a tap turned up far enough
-  pushes the water readings off the end of their scale.
+- **Drag-and-drop wiring.** A part is dragged from the catalogue onto the
+  bench. Ports are dots on the part; dragging between two dots draws a wire.
+  The wire is validated by the same validator the simulator uses, so a wire
+  refused on the bench is refused for exactly the same reason.
+- **Live parameter editing.** Where the model allows it, a parameter change
+  applies to the running experiment. This is what makes the recovery beat
+  possible: turn the irrigation up and watch the medium come back.
+- **A saturation ceiling on the medium.** A pot cannot hold unlimited water,
+  so the model has an upper bound and the readings stay on their scale.
+- **Parts come off the bench.** A selected part can be removed, and so can
+  any individual wire.
 
-**Blocked by:** Phase 1.
+Two real bugs were found by driving it in a browser rather than by reading the
+code: the scene never unsubscribed its pointer listeners, so one drop added
+two parts; and the CSS2D labels of removed parts stayed in the DOM, so the
+bench showed two of every label.
 
-## Phase 3 — Content
+## Phase 3 — More science
 
-More experiments, so the product is a sandbox rather than one demo.
+**Done, with one thing deliberately left out.**
 
-- A pure electronics experiment: a divider and a comparator.
-- A chemistry experiment: a reaction vessel driven by temperature, showing
-  the rate change and the conservation check.
-- Material properties in a circuit: put a conductor in the BioCircuit's
-  divider so the material decides the operating point.
-- A second plant or a nutrient variant.
+- **A pure electronics experiment.** *Threshold Alarm* is the flagship's
+  circuit with the biology taken out, so the operating point can be moved on
+  its own. A 40 kOhm probe against a 40 kOhm reference puts the tap at
+  2.5 V, the normalised reading at 0.5 and the alarm on. Lower the reference
+  to 10 kOhm and the reading falls to 0.2 and the alarm goes out.
+- **A chemistry experiment.** *Catalysis Comparison* runs the same reaction
+  in two vessels, one catalysed and one not. The equilibrium is not guessed
+  at from a rate that "looks small": the mass-action law gives a quadratic in
+  the extent of reaction, and the smaller root is where the reaction is
+  heading. Measured by `scripts/measure-catalysis.ts`, the uncatalysed vessel
+  reaches 99 per cent of it at minute 110, the catalysed vessel at minute 12,
+  and the two finish 0.000043 mol/L apart.
+- **The chemistry engine was corrected.** It published `stoichiometricBalance`
+  while the port was called `stoichiometric_balance`, so the conservation
+  reading could never travel down a wire. It published the per-step
+  increment as the extent of reaction, which broke the equilibrium check.
+  All three are fixed, and `tests/ports.test.ts` now holds the line.
+- **Each experiment carries its own tracked series**, so the chart follows
+  what that experiment is about rather than what the flagship was about.
 
-**Blocked by:** Phase 2, partially. The chemistry experiment needs the
-chemistry boundary to grow a second reaction and a catalyst parameter first.
+**Left out on purpose:** a conductor inside the BioCircuit's divider, so that
+the material decides the operating point. The materials-to-electronics
+coupling is already visible in the flagship, where the medium's moisture
+decides the day the alarm goes off: sand on day 11, loam on day 13, clay on
+day 17, hydrogel not within 24 days. Putting a conductor in the divider
+would need the materials engine to contribute elements to the electronics
+solve, which is a larger change than the remaining time allows.
 
 ## Phase 4 — The assistant earns trust
 
-- **Provider-agnostic LLM integration**, keeping the local explainer as the
-  fallback. The product must keep working with the provider disabled.
-- **Surface the ungrounded-number guard in the UI**, so a provider that
-  invents a number is visibly flagged rather than only caught in tests.
-- **Compare runs**, once a run history exists.
+**Done, except run comparison.**
 
-**Blocked by:** the run history for comparing runs.
+- **Every answer ends with what to trust.** The confidence of an experiment
+  is the confidence of its weakest model, so the answer names the part that
+  sets the limit and says what that level means in plain English. The panel
+  shows it as a badge.
+- **The ungrounded-number guard is in the UI, not just in the tests.** The
+  guard runs on every reply, whoever wrote it. A number the simulation did
+  not produce is removed from the reply and the removal is stated. The
+  allowed set is every number the experiment contains, in raw and rounded
+  form, so a real measurement restated with fewer digits survives and an
+  invented one does not.
+- **The local explainer is still the default**, and it still works with no
+  provider, no API key and no network.
+
+**Left out:** provider-agnostic LLM integration. The product must keep
+working with the provider disabled, and it does, so the integration is
+additive rather than urgent. It is the natural next change.
 
 ## Phase 5 — Shipping
 
-- **Deployment** to a public URL, working with no API key set, reachable
-  free of charge.
-- **The three-minute demonstration**, built on the beats in
-  `BIOCIRCUIT_BEATS`: planted, growing, drying out, alert triggered,
-  recovery.
-- **The README** polished for a reader who has never seen the code.
-- **Screenshots** of the workbench, the catalogue, the inspector and a
-  mid-run chart.
+The next phase, and the one the clock is now on.
+
 - **The public repository**, with the licence visible and `.kiro/` tracked
   at the root.
-
-**Blocked by:** Phases 2 and 4.
+- **Deployment** to a public URL, working with no API key set, reachable
+  free of charge.
+- **The three-minute demonstration.** The best beat in it is the catalysis
+  comparison: two vessels, one catalyst, and a number that proves the
+  catalyst changed the speed and not the destination. The last fifteen
+  seconds are the Kiro moment — the science audit moving the timeline from
+  day 8 and day 16 to day 11 and day 21.
+- **Screenshots** of the workbench, the catalogue, the inspector and a
+  mid-run chart.
+- **The blog post** and the social post.
 
 ---
 
@@ -176,15 +213,26 @@ Things worth deciding before the relevant phase starts.
 1. **Where does the deployed demo live?** Vercel is the obvious default.
    The Lucid Mind Labs platform is the alternative, and it has a path
    prefix, which affects how assets are resolved.
-2. **Should chemistry get a real experiment, or stay a boundary?** A full
-   chemistry experiment is a meaningful chunk of work. If it is not going to
-   be in the demonstration, the boundary may be enough — but the brief asks
-   for chemistry as a primary discipline, so this needs a decision before
-   Phase 3.
-3. **Does the experiment builder need to be a visual drag-and-drop tool, or
-   is a parameter-driven configuration enough?** Drag-and-drop is a large
-   piece of work and the demonstration does not need it. The brief's
-   description of the user journey suggests it does.
-4. **How much of the mission system is worth building before the
+2. **Should chemistry get a second reaction, or stay one reaction?** The
+   catalyst comparison needs one reaction to be interesting. A second
+   reaction would need a second equilibrium constant and a way to choose
+   between them, and it is not in the demonstration.
+3. **How much of the mission system is worth building before the
    demonstration?** Missions are a strong framing but they compete with the
    workbench for the same time.
+
+---
+
+## A note on how the phases were built
+
+Most of this was built with Kiro agents: the observations contract, the
+timeline and measurements panels, the watchable run speed, the live
+parameters, the science audit that corrected the substrate physics, the
+Kiro Power, the agent profiles and the hooks.
+
+Two phases were not. The Kiro account's monthly request quota was exhausted
+part-way through the build, and every agent run since then fails with
+`MONTHLY_REQUEST_COUNT`. Phase 2b and Phases 3 and 4 were implemented directly
+instead, by hand, with the same tests and the same review. The full account
+is in [KIRO-WRITEUP.md](KIRO-WRITEUP.md), because a write-up that hid this
+would be worthless.

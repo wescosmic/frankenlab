@@ -1,7 +1,7 @@
 # FrankenLab — Requirements
 
-**Spec status:** foundation complete, product in progress.
-**Last updated:** 2026-10-31.
+**Spec status:** phases 1 to 4 complete, shipping in progress.
+**Last updated:** 2026-11-01.
 
 FrankenLab is an interactive scientific sandbox. It lets a user assemble
 components from different scientific disciplines into one experiment, run it,
@@ -117,7 +117,44 @@ because the representation they share knows neither of them.
 - **FR-1.40** An experiment shall be fully described by serialisable data:
   components, connections, parameters, environment, timestep, duration and
   seed.
-- **FR-1.41** The product shall ship at least one ready-made experiment.
+- **FR-1.41** The product shall ship at least three ready-made experiments.
+- **FR-1.42** Each experiment shall declare the readings its chart follows, so
+  the chart shows what that experiment is about rather than what another
+  experiment was about.
+- **FR-1.43** Every port shall publish its value under its own port id. A
+  value published under any other name is a value no wire can carry, and it
+  fails silently.
+- **FR-1.44** A part that is on the bench but not wired into the circuit shall
+  not affect the circuit. An unwired part shall not make the network solve
+  singular, and shall not change any reading.
+
+### 1.8 The experiment builder
+
+- **FR-1.45** The user shall be able to drag a component from the catalogue
+  onto the bench.
+- **FR-1.46** The user shall be able to wire two ports together by dragging
+  between them.
+- **FR-1.47** The bench and the simulator shall use the same validator, so a
+  wire refused on the bench is refused for exactly the same reason.
+- **FR-1.48** A refused wire shall explain itself in plain English, without
+  internal identifiers.
+- **FR-1.49** The user shall be able to remove a part, and to remove any
+  individual wire.
+- **FR-1.50** Dragging a port shall not orbit the camera.
+
+### 1.9 The trust guard
+
+- **FR-1.51** Every assistant reply shall end with what the answer is worth
+  trusting for: the confidence of the weakest model on the bench, and what
+  that confidence level means in plain English.
+- **FR-1.52** The confidence of an experiment shall be the confidence of its
+  weakest model. A model that is not in the experiment shall not weaken it.
+- **FR-1.53** The guard shall run on every reply, whichever provider wrote
+  it.
+- **FR-1.54** A number in a reply that the experiment does not contain shall
+  be removed, and the removal shall be stated rather than hidden.
+- **FR-1.55** A real measurement restated with fewer digits shall survive the
+  guard.
 
 ---
 
@@ -164,14 +201,53 @@ circuit and watches the alert change.
 
 ---
 
+## 3a. Acceptance criteria for the other experiments
+
+### Threshold Alarm
+
+A battery, a resistive probe, a reference resistor, a comparator and an LED.
+No biology, no medium.
+
+- **AC-12** The experiment validates with zero errors.
+- **AC-13** The probe's reading is the solved divider voltage: 0.5 with a
+  40 kOhm probe and a 40 kOhm reference, 0.2 with a 10 kOhm reference.
+- **AC-14** The comparator's decision follows the threshold, and the LED
+  follows the decision.
+- **AC-15** Changing the reference resistance moves the operating point and
+  switches the alarm.
+
+### Catalysis Comparison
+
+Two closed vessels running the same reaction, one with a catalyst and one
+without.
+
+- **AC-16** The equilibrium extent solves the mass-action law it comes from:
+  the equilibrium constant is reproduced when the solved extent is put back
+  into it.
+- **AC-17** A catalyst changes the rate constant and nothing else. The
+  solved equilibrium does not depend on the rate constant or the catalyst.
+- **AC-18** The vessel reports reaching equilibrium once, when it is within
+  one per cent of the solved equilibrium.
+- **AC-19** The stoichiometric balance is exact at every step: A + C never
+  changes.
+- **AC-20** The extent is published as a total, not a per-step increment, and
+  equals the product concentration.
+- **AC-21** The two vessels end within two per cent of each other, and the
+  catalysed one settles at least five times sooner.
+
+---
+
 ## 4. Out of scope for the foundation
 
 These are deliberately not built yet, and are recorded in
 `docs/ROADMAP.md` with their entry conditions:
 
-- Drag-and-drop wiring in the 3D scene.
 - The mission and experiment-notebook system.
 - Saving and sharing experiments to a backend.
-- A chemistry experiment that a user can run end to end.
 - A third-party LLM provider integration.
 - `modify_parameter` and `compare_experiments` assistant tools.
+- Running history, so two runs cannot yet be compared side by side.
+- A conductor inside a circuit, so a material cannot yet decide an operating
+  point. The materials-to-electronics coupling is visible in the flagship
+  through the medium's moisture instead.
+- A second chemical reaction, and a way to choose between them.

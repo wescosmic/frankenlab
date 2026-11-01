@@ -8,10 +8,18 @@ and chemistry share one component graph, one clock and one simulator.
 The Kiroween 2026 rules ask for a write-up covering eight Kiro surfaces, and
 they make insufficient use of Kiro a gate rather than a bonus. This document
 covers all eight, says what actually happened on each, and is honest about the
-three things that went wrong.
+four things that went wrong.
 
 Every claim here is checkable against the repository. The `.kiro/` directory is
 the evidence.
+
+> **One thing to read first.** Part-way through the build, the Kiro account's
+> monthly request quota was exhausted. Every agent run after that failed with
+> `MONTHLY_REQUEST_COUNT`, on every model, including the cheap ones. Two of
+> the phases were therefore implemented by hand rather than by an agent. This
+> document says exactly which, why, and what the quota cost. It is in
+> [section 9](#9-what-went-wrong), and it is the most important thing in the
+> write-up, because a write-up that hid it would be worthless.
 
 ---
 
@@ -422,6 +430,53 @@ still being downloaded underneath it.
 complete a Google sign-in, and it needs a Pro-tier plan. We read the surface
 and its documentation in the browser rather than pretending to have run a
 session in it.
+
+**The account ran out of requests, and that cost two phases.**
+
+This is the one that matters, so it gets its own account.
+
+The Kiro account was created on 30 October 2026, for this project. Part-way
+through the build, every agent run started failing:
+
+```
+ServiceQuotaExceededException: "You have reached the limit."
+reason: "MONTHLY_REQUEST_COUNT"
+```
+
+It is model-independent. `minimax-m2.5` at 0.25x credits, `minimax-m2.1` at
+0.15x and `qwen3-coder-next` at 0.05x all fail identically, which is how we
+know it is a request count and not a spend limit. It also explains the Crew
+failures that had looked like MCP timeouts: the Crew session never started,
+so the `kirocrew-core` MCP server had nothing to talk to and timed out after
+sixty seconds. `kiro-cli diagnostic` reports no reset date.
+
+So two phases were built by hand instead of by an agent:
+
+- **Phase 2b, the drag-and-drop bench.** The wiring model, the port markers,
+  the wire refusal, the removal of parts and wires.
+- **Phases 3 and 4, the chemistry work and the trust guard.** The port-id
+  fixes, the solved equilibrium, the catalyst, the two new experiments, the
+  port contract test, the assistant's confidence footer and the ungrounded
+  number guard in the UI.
+
+Everything else was built by Kiro agents, and the `.kiro/` directory is the
+evidence for that.
+
+The honest cost is worth stating plainly. The hand-built phases are the two
+that most needed a second pair of eyes, and the second pair of eyes was
+exactly what a specialist agent gives you. What came out of it is not nothing:
+the port contract test found three real bugs that no agent had been asked to
+look for, and the chemistry corrections came from measuring rather than from
+reading. But it would have been better if a `science-reviewer` had checked the
+new equilibrium maths, and it would have been better if a `kernel-guardian`
+had checked the floating-island fix against the MNA spec.
+
+The credit request form for the Kiroween bonus was due on 1 December 2026 at
+12:00 PM Pacific, and the draft answer is in the repository at
+`docs/KIRO-CREDIT-REQUEST.md`. The quota is expected to reset around
+30 November, which is before the demonstration deadline, so the plan was to
+use the remainder of the month for the Crew property sweep and a final agent
+pass over the hand-built phases.
 
 ---
 
