@@ -25,7 +25,7 @@ What is built, what is next, and what each piece waits for.
 | Run comparison | **Not built** | |
 | Missions and notebooks | **Not built** | |
 | Persistence | **Not built** | In-memory only. |
-| Deployment | **Prepared** | The static export is verified. It has not been published yet. |
+| Deployment | **Live** | Running at [frankenlab.vercel.app](https://frankenlab.vercel.app). No API key, no account, free. |
 
 The full, ordered task list is in `.kiro/specs/frankenlab/tasks.md`. This
 document is the shape of the road; that file is the work list.
@@ -61,7 +61,7 @@ in the ten seconds a judge spends deciding whether the project is real.
 | 2 | The user builds experiments: drag-and-drop wiring, live parameters | High | Done |
 | 3 | More science: chemistry end to end, a catalyst, three experiments | Medium-high | Done |
 | 4 | The assistant earns trust: the guard, the confidence badge | Medium | Done, except run comparison |
-| 5 | Ship and present: deployment, video, README, screenshots, public repo | Medium | Mostly done, deployment waiting on one authorisation |
+| 5 | Ship and present: deployment, video, README, screenshots, public repo | Medium | Done. Live at frankenlab.vercel.app |
 | 6 | Make the thesis visible: the couplings panel | Medium | Done |
 
 The full brief for each phase is in `.kiro/specs/frankenlab/tasks.md`, and the
@@ -189,8 +189,9 @@ writing is drafted. What is left needs the account holder, not the developer.
   [github.com/wescosmic/frankenlab](https://github.com/wescosmic/frankenlab),
   public, MIT licence detected by GitHub, with `.kiro/` at the root.
 - **Deployment** to a public URL, working with no API key set, reachable free
-  of charge. The static export is prepared and verified. It has not been
-  published yet; the account holder has to finish the one authorisation step.
+  of charge. **Done.** It is running at
+  [frankenlab.vercel.app](https://frankenlab.vercel.app). The static export is
+  also verified, for anyone who would rather host it themselves.
 - **Screenshots** of the workbench, the measurements, the catalysis
   comparison, the assistant, the couplings panel and the Kiro audit. The first
   five are frames taken from the demo itself, so the README cannot drift from
@@ -244,9 +245,9 @@ Recording these keeps scope honest.
 
 Things worth deciding before the relevant phase starts.
 
-1. **Where does the deployed demo live?** Vercel is the obvious default.
-   The Lucid Mind Labs platform is the alternative, and it has a path
-   prefix, which affects how assets are resolved.
+1. **Where does the deployed demo live?** **Answered.** Vercel, at
+   `frankenlab.vercel.app`. The static export is verified too, for anyone who
+   would rather host it themselves.
 2. **Should chemistry get a second reaction, or stay one reaction?** The
    catalyst comparison needs one reaction to be interesting. A second
    reaction would need a second equilibrium constant and a way to choose

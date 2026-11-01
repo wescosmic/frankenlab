@@ -8,6 +8,9 @@ Build it. Break it. Discover it.
 
 ![The bench, the alert lit and the timeline showing the alert firing](docs/images/the-bench-alert.png)
 
+**Try it now:** [frankenlab.vercel.app](https://frankenlab.vercel.app) — no install,
+no API key, nothing to sign up for.
+
 **Watch it work:** [the 2:22 demo](docs/demo/frankenlab-demo.mp4)
 — the run, the recovery, the catalyst, the assistant, the named rules that
 carry the experiment, and the Kiro moment that moved the whole story three
@@ -151,6 +154,12 @@ is a property-based test that proves it.
 
 ## Running it
 
+The simplest way to run it is in a browser, with nothing to install:
+
+**[frankenlab.vercel.app](https://frankenlab.vercel.app)**
+
+To run it yourself:
+
 ```bash
 npm install
 npm run dev          # http://localhost:4310
@@ -185,9 +194,14 @@ npm test             # vitest run
 npm run test:pbt     # property-based tests only
 npm run verify       # all three
 npm run build        # production build
+npm run build:static # static export into out/
+npm run measure      # re-measure every day this project quotes
 ```
 
 Requires Node 20.9 or newer. No API key. No database. No network calls.
+
+Source: [github.com/wescosmic/frankenlab](https://github.com/wescosmic/frankenlab),
+MIT licensed.
 
 See [docs/SETUP.md](docs/SETUP.md) for the full setup and troubleshooting, and
 [CONTRIBUTING.md](CONTRIBUTING.md) if you intend to change the code. The

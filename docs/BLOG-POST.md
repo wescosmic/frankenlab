@@ -249,13 +249,16 @@ FrankenLab is a learning environment. It does not replace a laboratory.
 
 ## Try it
 
+It is running at **[frankenlab.vercel.app](https://frankenlab.vercel.app)**. Open
+it, press **Run**, and watch a plant drink a soil dry. No API key, no database,
+no network calls, nothing to sign up for.
+
+To run it yourself:
+
 ```bash
 npm install
 npm run dev
 ```
-
-No API key. No database. No network calls. Open the laboratory, press **Run**,
-and watch a plant drink a soil dry.
 
 The code is at [github.com/wescosmic/frankenlab](https://github.com/wescosmic/frankenlab),
 and `.kiro/` is tracked at the root, so the whole build is inspectable.

@@ -78,7 +78,7 @@ Concretely, the remaining agent work is:
 |---|---|
 | IDE | Spec authoring and steering. This is where the product decisions get made and written down. |
 | CLI | The primary build surface. Every implementation task runs as a headless one-shot pass, so the whole build is repeatable and the transcript is the evidence. |
-| Web | The deployed app is the test surface. |
+| Web | The deployed app is the test surface. It is live at [frankenlab.vercel.app](https://frankenlab.vercel.app), with no API key and no account. |
 | Crew | Unattended sweeps: the full test suite, the lint and typecheck pass, and the accessibility audit. |
 | Custom agents | Five specialists in the repo: a lab lead, a kernel guardian, an engine builder, a science reviewer and a UI integrator. |
 | Agent hooks | Four hooks that actually fire: session context injection, lint on save, a guard that blocks destructive shell commands before they run, and a verify-on-stop that runs the test suite at the end of every agent turn. |
@@ -119,7 +119,8 @@ leaves room for the Crew sweeps to run unattended overnight.
 ## Timeline
 
 - Credits redeemed by **4 December 2026**.
-- App deployed and publicly reachable before submission.
+- App deployed and publicly reachable before submission. **Done.** It is live
+  at [frankenlab.vercel.app](https://frankenlab.vercel.app).
 - Hackathon submission: **4 December 2026, 2:00 PM Pacific**.
 
 ## Anything else

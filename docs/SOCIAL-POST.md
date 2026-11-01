@@ -46,6 +46,7 @@ audit was the product.
 
 No API key. No network calls. Runs in a browser.
 
+Try it: https://frankenlab.vercel.app
 Demo: <paste the YouTube link here>
 Code: https://github.com/wescosmic/frankenlab
 ```
@@ -71,6 +72,7 @@ the experiment.
 Built with Kiro, including a science-reviewer agent that caught our soil
 physics being wrong against published data and moved the whole timeline.
 
+Try it: https://frankenlab.vercel.app
 Demo: <paste the YouTube link here>
 Code: https://github.com/wescosmic/frankenlab
 ```
