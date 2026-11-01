@@ -6,6 +6,12 @@ one simulation kernel.
 
 Build it. Break it. Discover it.
 
+![The bench, the alert lit and the timeline showing the alert firing](docs/images/the-bench-alert.png)
+
+**Watch it work:** [the two and a half minute demo](docs/demo/frankenlab-demo.mp4)
+— the run, the recovery, the catalyst, the assistant, and the Kiro moment that
+moved the whole story three days.
+
 ---
 
 ## What this is
@@ -78,6 +84,8 @@ heading. Measured by `scripts/measure-catalysis.ts`:
 The two vessels finish 0.000043 mol/L apart. The catalyst changed the speed
 and not the destination, and the numbers say so.
 
+![Two reaction vessels, one catalysed and one not, with their measurements](docs/images/catalysis.png)
+
 ## Build it yourself
 
 Parts are dragged from the catalogue onto the bench and wired by dragging
@@ -106,6 +114,8 @@ names that model and says what its confidence level means:
 
 And the guard runs on every reply, whoever wrote it. A number the simulation
 did not produce is removed from the answer, and the removal is stated.
+
+![The assistant's reply, ending with what it is worth](docs/images/assistant.png)
 
 **Scientific honesty is a product feature.** Every component carries a
 confidence level and states its own assumptions in plain English:
@@ -144,6 +154,8 @@ for whichever experiment is open and their history. **Timeline** lists every
 moment the simulation reported, in order, with a severity and a plain-English
 explanation. **Measurements** lists every quantity the kernel produced,
 grouped by the part it came from, with its unit.
+
+![Every quantity the simulation produced, named and with its unit](docs/images/measurements.png)
 
 Other commands:
 
@@ -195,6 +207,22 @@ provider setting.
 
 Full procedure, including the scripted one-shot pass and the ACP wiring, in
 [docs/CLI-WORKFLOW.md](docs/CLI-WORKFLOW.md).
+
+### The moment it changed the product
+
+The substrate model claims `established-simplified` confidence, which means it
+may be simpler than reality but not wrong. A `science-reviewer` agent checked
+the four substrate presets against two published sources, found sand's field
+capacity below the published range, and a `engine-builder` agent applied the
+correction and re-measured every day the project quotes.
+
+The visible outcome is in the product. The alert used to fire on day 8 and
+the medium used to wilt on day 16. Now the alert fires on day 11 and the
+medium wilts on day 21, and the recovery follows. Those days are in the
+Timeline tab, in this README, in the spec and in the code, and they agree
+because a measurement script measures them rather than restating them.
+
+![The Kiro science reviewer's correction, as a diff against the real repository](docs/images/kiro-audit.png)
 
 ## Architecture
 
