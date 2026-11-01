@@ -14,7 +14,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { createTestRegistry } from './world';
-import { createBioCircuit } from '../src/scenarios/biocircuit';
+import { createBioCircuit, BIOCIRCUIT_MEASURED_DAYS } from '../src/scenarios/biocircuit';
 import { Simulation } from '../src/kernel/simulator';
 import { substrateBehavior, type SubstrateState } from '../src/engines/materials/engine';
 import type { Quantity, StepContext } from '../src/kernel/types';
@@ -41,6 +41,52 @@ describe('the flagship tells a story', () => {
       'biology.growth_stalled',
       'materials.wilting',
     ]);
+  });
+
+  it('fires the beats on the days the documentation quotes', () => {
+    // A test that asserts a shape is worth less than a test that asserts a
+    // day. The README, the spec and the demo all quote these days, and they
+    // are only true if the simulation still produces them.
+    const result = run({ substrate: 'sandy' });
+    const dayOf = (code: string): number => {
+      const observation = result.observations.find((o) => o.code === code);
+      if (!observation) return NaN;
+      return observation.time / 86400;
+    };
+
+    expect(dayOf('electronics.alert_fired')).toBeCloseTo(BIOCIRCUIT_MEASURED_DAYS.alertFired, 1);
+    expect(dayOf('biology.growth_stalled')).toBeCloseTo(BIOCIRCUIT_MEASURED_DAYS.growthStalled, 1);
+    expect(dayOf('materials.wilting')).toBeCloseTo(BIOCIRCUIT_MEASURED_DAYS.mediumWilting, 1);
+  });
+
+  it('recovers on the days the demonstration says it does', () => {
+    // The rescue: the medium wilts, the irrigation is turned up, and the
+    // medium comes back. These are the days the demo's last beats narrate.
+    const experiment = createBioCircuit({ substrate: 'sandy' });
+
+    // Find the step the medium wilts on. This has to be a throwaway run: the
+    // shipped experiment is twenty-four days long, so a run that goes past the
+    // wilting has already reached the end of the story and cannot be rewound
+    // to rescue it.
+    const probe = new Simulation(experiment, registry).run();
+    const wilted = probe.observations.find((o) => o.code === 'materials.wilting');
+    expect(wilted, 'the medium never wilts in sand').toBeDefined();
+    const wiltingStep = Math.ceil(wilted!.time / experiment.dt);
+
+    // Now the demonstration's own sequence: run to the wilting, turn the
+    // irrigation up, and resume.
+    const simulation = new Simulation(experiment, registry);
+    simulation.run({ maxSteps: wiltingStep + 1 });
+    simulation.updateParameter('irrigation', 'rate', 0.05);
+    const result = simulation.run();
+
+    const dayOf = (code: string): number => {
+      const observation = result.observations.find((o) => o.code === code);
+      return observation ? observation.time / 86400 : NaN;
+    };
+
+    expect(dayOf('materials.recovered')).toBeCloseTo(BIOCIRCUIT_MEASURED_DAYS.mediumRecovered, 1);
+    expect(dayOf('electronics.alert_cleared')).toBeCloseTo(BIOCIRCUIT_MEASURED_DAYS.alertCleared, 1);
   });
 
   it('tells the same story for loam, but later', () => {

@@ -141,3 +141,54 @@ describe('cross-discipline connections are governed by explicit rules', () => {
     ).toBe(true);
   });
 });
+
+describe('the nutrient reservoir is a real coupling', () => {
+  const REGENERATION = 0.003;
+  const CAPACITY = 1;
+
+  it('is actually drawn down by the plant', () => {
+    const result = new Simulation(createBioCircuit({ substrate: 'sandy' }), registry).run();
+    const points = result.dataPoints;
+
+    const first = points[0]!.values['nutrients.availability']!.value;
+    const last = points.at(-1)!.values['nutrients.availability']!.value;
+
+    // A reservoir that never falls is a reservoir the plant does not drink
+    // from, which is the bug this test was written for.
+    expect(last).toBeLessThan(first);
+    expect(last).toBeCloseTo(0.9253, 3);
+  });
+
+  it('treats the plant\'s demand as a rate, not as a step', () => {
+    // The contract, exactly: over one step the reservoir gives back its
+    // regeneration and loses the plant's demand multiplied by the length of
+    // the step. If the demand were a step's growth instead of a rate, this
+    // would not balance.
+    const experiment = createBioCircuit({ substrate: 'sandy' });
+    const simulation = new Simulation(experiment, registry);
+    simulation.run({ maxSteps: 60 });
+
+    const before = simulation.snapshot();
+    const stored = (before.components['nutrients'] as { stored?: number }).stored ?? NaN;
+    const demand = before.outputs['plant']!['nutrientDemand']!.value;
+    expect(demand).toBeGreaterThan(0);
+
+    simulation.run({ maxSteps: 1 });
+    const after = (simulation.snapshot().components['nutrients'] as { stored?: number }).stored ?? NaN;
+
+    const days = experiment.dt / 86400;
+    const expected = stored - demand * days + REGENERATION * CAPACITY * days;
+    expect(after).toBeCloseTo(expected, 10);
+  });
+
+  it('leaves the plant short of nutrients long after it is short of water', () => {
+    const result = new Simulation(createBioCircuit({ substrate: 'sandy' }), registry).run();
+    const last = result.dataPoints.at(-1)!.values;
+
+    // The plant's nutrient response has a plateau between a tenth and nine
+    // tenths. The reservoir never falls below nine tenths in the flagship, so
+    // nutrients never touch the growth and water sets the pace.
+    expect(last['nutrients.availability']!.value).toBeGreaterThan(0.9);
+    expect(last['substrate.moisture']!.value).toBeLessThan(0.1);
+  });
+});

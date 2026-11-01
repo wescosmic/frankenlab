@@ -100,7 +100,11 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
         position: { x: -6.2, y: 0.5, z: 0 },
         parameters: {
           capacity: { value: 1, unit: 'ratio' },
-          regeneration: { value: 0.01 },
+          // The reservoir regenerates more slowly than the plant draws, so the
+          // drawdown is visible: over the twenty-four days the plant takes
+          // about seven per cent of the store out of it. The plant is limited
+          // by water long before it is limited by nutrients.
+          regeneration: { value: 0.003 },
           label: { value: 'Nutrients' },
         },
       },
@@ -374,9 +378,9 @@ export const BIOCIRCUIT_BEATS = [
  * the numbers here and that script disagree, the script is right.
  */
 export const BIOCIRCUIT_MEASURED_DAYS = {
-  alertFired: 10.96,
-  growthStalled: 20.38,
-  mediumWilting: 21.0,
-  mediumRecovered: 21.33,
-  alertCleared: 23.13,
+  alertFired: 10.92,
+  growthStalled: 20.33,
+  mediumWilting: 20.67,
+  mediumRecovered: 21.0,
+  alertCleared: 22.79,
 } as const;

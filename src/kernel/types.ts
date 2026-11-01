@@ -363,7 +363,11 @@ export interface RunOptions {
   readonly seed?: number;
   /** Stop early once this predicate is satisfied. */
   readonly until?: (state: RuntimeSnapshot) => boolean;
-  /** Maximum steps, a hard safety bound against runaway loops. */
+  /**
+   * How many steps this call may take, as a safety bound against runaway
+   * loops. The budget belongs to the call, so "one more step" means one more
+   * step however far the simulation has already got.
+   */
   readonly maxSteps?: number;
 }
 

@@ -7,7 +7,7 @@
  * Every value on this panel came out of a simulation run.
  */
 
-import { useState } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 import { useLabStore, trackedSeriesFor } from '@/state/lab';
 import { Couplings } from '@/components/Couplings';
 
@@ -268,30 +268,70 @@ function MeasurementsTab() {
 
 type TabId = 'readings' | 'timeline' | 'measurements' | 'couplings';
 
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'readings', label: 'Readings' },
+  { id: 'timeline', label: 'Timeline' },
+  { id: 'measurements', label: 'Measurements' },
+  { id: 'couplings', label: 'Couplings' },
+];
+
+/**
+ * Arrow keys move between tabs, as the tabs pattern expects.
+ *
+ * Without this, a keyboard user has to tab through every tab to reach the
+ * panel they want, and the tab list announces as four separate controls
+ * rather than as one.
+ */
+export function tabKeyHandler(
+  event: KeyboardEvent<HTMLButtonElement>,
+  tabs: readonly { id: string }[],
+  current: string,
+  select: (id: string) => void,
+  idPrefix = 'tab-',
+): void {
+  const index = tabs.findIndex((t) => t.id === current);
+  if (index === -1) return;
+
+  let next = index;
+  if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+  else if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+  else if (event.key === 'Home') next = 0;
+  else if (event.key === 'End') next = tabs.length - 1;
+  else return;
+
+  event.preventDefault();
+  select(tabs[next]!.id);
+  // Move the focus with the selection, so the keyboard stays where the eye is.
+  // The prefix matters: the readouts and the side tabs are two different
+  // tab lists with two different id schemes.
+  const target = document.getElementById(`${idPrefix}${tabs[next]!.id}`);
+  target?.focus();
+}
+
 export function Readouts() {
   const elapsed = useLabStore((s) => s.elapsed);
   const status = useLabStore((s) => s.status);
   const experiment = useLabStore((s) => s.experiment);
   const [tab, setTab] = useState<TabId>('readings');
 
-  const tabs: { id: TabId; label: string }[] = [
-    { id: 'readings', label: 'Readings' },
-    { id: 'timeline', label: 'Timeline' },
-    { id: 'measurements', label: 'Measurements' },
-    { id: 'couplings', label: 'Couplings' },
-  ];
-
   return (
     <div className="border-t border-lab-line bg-lab-panel">
       <div className="flex items-center justify-between border-b border-lab-line px-3 pt-2">
-        <div className="flex gap-1">
-          {tabs.map(({ id, label }) => (
+        <div className="flex gap-1" role="tablist" aria-label="Readouts">
+          {TABS.map(({ id, label }) => (
             <button
               key={id}
               type="button"
+              role="tab"
+              id={`tab-${id}`}
+              aria-selected={tab === id}
+              aria-controls={tab === id ? `panel-${id}` : undefined}
+              tabIndex={tab === id ? 0 : -1}
               onClick={() => setTab(id)}
+              onKeyDown={(event) => tabKeyHandler(event, TABS, tab, (next) => setTab(next as TabId))}
               className={[
                 'px-3 py-1.5 text-[10px] uppercase tracking-wider transition-colors',
+                'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent',
                 tab === id
                   ? 'text-lab-text'
                   : 'text-lab-dim hover:text-lab-muted',
@@ -320,7 +360,13 @@ export function Readouts() {
         </div>
       </div>
 
-      <div className="py-2">
+      <div
+        className="py-2"
+        role="tabpanel"
+        id={`panel-${tab}`}
+        aria-labelledby={`tab-${tab}`}
+        tabIndex={0}
+      >
         {tab === 'readings' && <ReadingsTab />}
         {tab === 'timeline' && <TimelineTab />}
         {tab === 'measurements' && <MeasurementsTab />}

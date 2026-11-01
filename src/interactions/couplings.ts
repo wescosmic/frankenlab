@@ -170,9 +170,12 @@ export const biologyToBiology: InteractionCoupling = {
   name: 'Nutrient depletion',
   disciplines: ['biology', 'biology'],
   chain:
-    'A nutrient reservoir supplies the plant and is drawn down by uptake, regenerating slowly. Over a long run, a closed system exhausts its own nutrients.',
+    'A nutrient reservoir supplies the plant and is drawn down by uptake, regenerating at its own rate. Over the flagship\'s twenty-four days the plant takes about seven per cent of the store out of it, and the reservoir puts back about half of what the plant drank.',
   confidence: 'established-simplified',
-  notes: ['Single scalar nutrient pool; no distinct nutrient species.'],
+  notes: [
+    'Single scalar nutrient pool; no distinct nutrient species.',
+    'The plant runs out of water long before it runs out of nutrients, so this rule never decides the flagship\'s story. What it leaves out is any feedback from a nutrient shortage onto growth: the reservoir has to fall below nine tenths of its capacity before the plant feels it at all, and below a tenth before nutrients stop it.',
+  ],
   rules: [
     {
       sourceChannel: 'nutrient',

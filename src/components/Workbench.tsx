@@ -8,12 +8,44 @@
  * stays smooth without flooding React with renders.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { LabScene } from '@/three/lab-scene';
 import { useLabStore, SPEED_TARGET_SECONDS } from '@/state/lab';
 
 /** How often the readings are republished to React, in milliseconds. */
 const PUBLISH_INTERVAL = 90;
+
+/**
+ * A signature of everything the scene actually draws.
+ *
+ * The bench is a pile of meshes and labels. Rebuilding it means taking all of
+ * them off the page and putting them back. That is the right thing to do when
+ * a part is added, moved or wired, and the wrong thing to do when a slider
+ * moves: an environment slider changes the simulation, not the geometry, and
+ * rebuilding fifty-four nodes on every step of a drag made the bench stutter
+ * under the user's hand.
+ *
+ * So the scene is rebuilt when this string changes, and only then.
+ */
+function benchSignature(experiment: {
+  components: readonly { id: string; type: string; position: { x: number; y: number; z: number } }[];
+  connections: readonly {
+    id: string;
+    source: { componentId: string; portId: string };
+    target: { componentId: string; portId: string };
+  }[];
+}): string {
+  const parts = experiment.components
+    .map((c) => `${c.id}|${c.type}|${c.position.x},${c.position.y},${c.position.z}`)
+    .join(';');
+  const wires = experiment.connections
+    .map(
+      (c) =>
+        `${c.id}|${c.source.componentId}.${c.source.portId}>${c.target.componentId}.${c.target.portId}`,
+    )
+    .join(';');
+  return `${parts}#${wires}`;
+}
 
 /**
  * How many simulation steps the run is due to have taken by now.
@@ -133,10 +165,18 @@ export function Workbench() {
     };
   }, [select, selectConnection, connect, addComponent]);
 
-  // Rebuild the bench when the experiment changes.
+  // Rebuild the bench when the bench changes. The experiment object is
+  // replaced for every edit, including edits that leave the geometry alone,
+  // so the scene is keyed on what it draws rather than on what it is handed.
+  const signature = useMemo(() => benchSignature(experiment), [experiment]);
+  const experimentRef = useRef(experiment);
   useEffect(() => {
-    sceneRef.current?.setExperiment(experiment, registry);
-  }, [experiment, registry]);
+    experimentRef.current = experiment;
+  }, [experiment]);
+
+  useEffect(() => {
+    sceneRef.current?.setExperiment(experimentRef.current, registry);
+  }, [signature, registry]);
 
   useEffect(() => {
     sceneRef.current?.setSelection(selectedId);

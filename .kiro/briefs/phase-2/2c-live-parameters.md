@@ -3,6 +3,13 @@
 **Agent:** `kernel-guardian` for the kernel part, then `ui-integration` for the
 interface · **Phase:** 2 · **Do not commit.**
 
+> **Historical note.** The days quoted in this brief were measured before the
+> substrate audit and before the nutrient reservoir was calibrated, and they
+> have since been superseded. The current measured days live in
+> `BIOCIRCUIT_MEASURED_DAYS` in `src/scenarios/biocircuit.ts` and are printed
+> by `npm run measure`. The brief is kept as the record of what this agent was
+> asked to build, not as the current numbers.
+
 ## Context
 
 FrankenLab, at `the repository root`. Read

@@ -62,19 +62,27 @@ used for text has to clear WCAG AA against the panel it sits on. Enforced by
 ## Measuring numbers, not writing them
 
 Almost every number in this repository is a fact about the simulation, not a
-fact about the code. The alert fires on day 10.96. The equilibrium extent is
+fact about the code. The alert fires on day 10.92. The equilibrium extent is
 0.609612 mol/L. Those are measurements, and the documentation quotes them from
 the measurement script rather than from memory.
 
 If you change an engine, a scenario or a substrate constant, measure again:
 
 ```bash
-npm run measure           # the alert, wilting and recovery days
-npm run measure:catalysis # the equilibrium numbers
+npm run measure             # the alert, wilting and recovery days
+npm run measure:catalysis   # the equilibrium numbers
+npm run measure:nutrients   # the reservoir's balance
 ```
 
 If a number in the README, the spec or a test disagrees with that output, the
 documentation is wrong. Fix the documentation.
+
+The reservoir's balance is worth measuring rather than describing. The plant's
+demand is a rate, the reservoir regenerates at its own rate, and the tank
+cannot hold more than its capacity — so the three numbers only balance if the
+series is aligned to the step the model actually took. `npm run
+measure:nutrients` prints that balance, and `tests/interactions.test.ts`
+asserts it.
 
 ## Adding a discipline
 

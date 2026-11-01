@@ -33,7 +33,7 @@ export function Library() {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-lab-line bg-lab-panel">
       <div className="border-b border-lab-line px-4 py-3">
-        <div className="lab-label">Experiments</div>
+        <h2 className="lab-label m-0">Experiments</h2>
         <p className="mt-1 text-[13px] leading-snug text-lab-muted">
           One bench, several sciences. Open one and run it.
         </p>
@@ -76,7 +76,7 @@ export function Library() {
       </div>
 
       <div className="border-b border-lab-line px-4 py-3">
-        <div className="lab-label">Components</div>
+        <h2 className="lab-label m-0">Components</h2>
         <p className="mt-1 text-[13px] leading-snug text-lab-muted">
           Drag a part onto the bench, or press the add button to put it there.
         </p>
@@ -93,9 +93,8 @@ export function Library() {
                   style={{ background: colour }}
                   aria-hidden
                 />
-                <span className="lab-label">{discipline.name}</span>
+                <h3 className="lab-label m-0">{discipline.name}</h3>
               </div>
-
               <ul className="space-y-1">
                 {discipline.components.map((definition) => {
                   const used = experiment.components.filter(

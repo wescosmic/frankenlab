@@ -267,7 +267,15 @@ export const plantBehavior: ComponentBehavior<PlantState> = {
 
     // Nutrient consumption tracks growth: a plant that is not growing is not
     // drawing down the reservoir.
-    const nutrientDemand = growth * 0.5;
+    //
+    // The demand is a RATE, the same way transpiration is. The reservoir
+    // multiplies it by the step to get an amount, exactly as the medium does
+    // with the plant's uptake. Publishing the growth of one step instead would
+    // have made the reservoir draw down at a rate that depends on the
+    // timestep, which is how it ended up regenerating faster than the plant
+    // could ever consume.
+    const nutrientDemand =
+      growthRate * state.biomass * (1 - state.biomass / maxBiomass) * vigour * 0.5;
 
     return {
       ...state,
@@ -408,10 +416,13 @@ export const nutrientSourceBehavior: ComponentBehavior = {
   step(state, inputs, context) {
     const s = state as { stored?: number; outputs?: Record<string, Quantity> };
     const capacity = ((s as { __param_capacity?: number }).__param_capacity ?? 1);
-    const regeneration = ((s as { __param_regeneration?: number }).__param_regeneration ?? 0.01);
+    const regeneration = ((s as { __param_regeneration?: number }).__param_regeneration ?? 0.003);
     const days = context.dt / 86400;
 
     const demand = inputs.demand?.value ?? 0;
+    // The plant's demand is a rate, like its transpiration, so it is turned
+    // into an amount over the step here. The reservoir regenerates at its own
+    // rate, which is why the two can be compared at all.
     const stored = Math.max(0, Math.min(capacity, (s.stored ?? capacity) - demand * days + regeneration * capacity * days));
 
     return {

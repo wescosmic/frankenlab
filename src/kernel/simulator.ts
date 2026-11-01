@@ -326,13 +326,22 @@ export class Simulation {
     this.#step += 1;
   }
 
-  /** Run to completion (or until the `until` predicate fires). */
+  /**
+   * Run to completion, or until the `until` predicate fires, or for at most
+   * `maxSteps` more steps.
+   *
+   * The step budget belongs to the call, not to the simulation. A caller that
+   * says "run one more step" means one more step, whatever the simulation has
+   * already done; a budget that counted the steps already taken would make a
+   * second call do nothing at all, silently.
+   */
   run(options: RunOptions = {}): SimulationResult {
     const maxSteps = options.maxSteps ?? 500_000;
     const until = options.until;
     const dataPoints: DataPoint[] = [];
+    const startStep = this.#step;
 
-    while (this.#time < this.#duration && this.#step < maxSteps) {
+    while (this.#time < this.#duration && this.#step - startStep < maxSteps) {
       this.tick();
 
       dataPoints.push({

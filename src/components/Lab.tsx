@@ -12,11 +12,16 @@ import { useState } from 'react';
 import { Workbench } from './Workbench';
 import { Library } from './Library';
 import { Inspector } from './Inspector';
-import { Readouts } from './Readouts';
+import { Readouts, tabKeyHandler } from './Readouts';
 import { Assistant } from './Assistant';
 import { useLabStore, type Speed } from '@/state/lab';
 
 type SideTab = 'inspector' | 'assistant';
+
+const SIDE_TABS: { id: SideTab; label: string }[] = [
+  { id: 'inspector', label: 'Inspector' },
+  { id: 'assistant', label: 'Assistant' },
+];
 
 export function Lab() {
   const experiment = useLabStore((s) => s.experiment);
@@ -34,11 +39,20 @@ export function Lab() {
 
   return (
     <div className="flex h-screen w-screen flex-col bg-lab-void">
+      {/* The first thing a keyboard user reaches. It is invisible until it is
+          focused, which is the point of it. */}
+      <a
+        href="#bench"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:border focus:border-lab-accent focus:bg-lab-panel focus:px-3 focus:py-2 focus:text-[12px] focus:text-lab-accent"
+      >
+        Skip to the laboratory
+      </a>
+
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-lab-line bg-lab-panel px-4">
         <div className="flex items-baseline gap-4">
-          <span className="text-[15px] font-semibold tracking-[0.22em] text-lab-text">
+          <h1 className="m-0 text-[15px] font-semibold tracking-[0.22em] text-lab-text">
             FRANKENLAB
-          </span>
+          </h1>
           <span className="hidden text-[12px] text-lab-dim sm:inline">
             The experimental universe
           </span>
@@ -102,7 +116,7 @@ export function Lab() {
       <div className="flex min-h-0 flex-1">
         <Library />
 
-        <main className="flex min-w-0 flex-1 flex-col">
+        <main id="bench" className="flex min-w-0 flex-1 flex-col">
           <div className="relative min-h-0 flex-1">
             <Workbench />
             {notice && (
@@ -128,24 +142,41 @@ export function Lab() {
         </main>
 
         <aside className="flex h-full w-80 shrink-0 flex-col border-l border-lab-line bg-lab-panel">
-          <div className="flex shrink-0 border-b border-lab-line">
-            {(['inspector', 'assistant'] as const).map((id) => (
+          <div className="flex shrink-0 border-b border-lab-line" role="tablist" aria-label="Tools">
+            {SIDE_TABS.map(({ id, label }) => (
               <button
                 key={id}
                 type="button"
+                role="tab"
+                id={`side-tab-${id}`}
+                aria-selected={tab === id}
+                aria-controls={tab === id ? `side-panel-${id}` : undefined}
+                tabIndex={tab === id ? 0 : -1}
                 onClick={() => setTab(id)}
+                onKeyDown={(event) =>
+                  tabKeyHandler(event, SIDE_TABS, tab, (next) => setTab(next as SideTab), 'side-tab-')
+                }
                 className={[
                   'flex-1 px-4 py-2.5 text-[11px] uppercase tracking-wider transition-colors',
+                  'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent',
                   tab === id
                     ? 'border-b-2 border-lab-accent text-lab-text'
                     : 'border-b-2 border-transparent text-lab-dim hover:text-lab-muted',
                 ].join(' ')}
               >
-                {id}
+                {label}
               </button>
             ))}
           </div>
-          <div className="min-h-0 flex-1">{tab === 'inspector' ? <Inspector /> : <Assistant />}</div>
+          <div
+            className="min-h-0 flex-1"
+            role="tabpanel"
+            id={`side-panel-${tab}`}
+            aria-labelledby={`side-tab-${tab}`}
+            tabIndex={0}
+          >
+            {tab === 'inspector' ? <Inspector /> : <Assistant />}
+          </div>
         </aside>
       </div>
     </div>

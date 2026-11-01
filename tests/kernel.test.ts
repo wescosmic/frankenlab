@@ -237,6 +237,32 @@ describe('BioCircuit simulation', () => {
   });
 });
 
+describe('the step budget belongs to the call', () => {
+  it('runs one more step when asked for one more step', () => {
+    const registry = createTestRegistry();
+    const simulation = new Simulation(createBioCircuit(), registry);
+
+    simulation.run({ maxSteps: 10 });
+    const afterTen = simulation.elapsed;
+
+    simulation.run({ maxSteps: 1 });
+
+    // A budget that counted the steps already taken would leave the clock
+    // exactly where it was, and the caller would never know.
+    expect(simulation.elapsed).toBeGreaterThan(afterTen);
+    expect(simulation.elapsed - afterTen).toBeCloseTo(createBioCircuit().dt);
+  });
+
+  it('does not run at all when the budget is zero', () => {
+    const registry = createTestRegistry();
+    const simulation = new Simulation(createBioCircuit(), registry);
+
+    simulation.run({ maxSteps: 0 });
+
+    expect(simulation.elapsed).toBe(0);
+  });
+});
+
 describe('observations', () => {
   it('result includes an observations array', () => {
     const registry = createTestRegistry();

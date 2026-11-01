@@ -19,6 +19,7 @@
     "test:pbt": "vitest run tests/properties",
     "measure": "tsx scripts/measure-beats.ts",
     "measure:catalysis": "tsx scripts/measure-catalysis.ts",
+    "measure:nutrients": "tsx scripts/measure-nutrients.ts",
     "inspect": "tsx scripts/inspect.ts",
     "verify": "npm run typecheck && npm run lint && npm run test"
   },
