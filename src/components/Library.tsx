@@ -31,7 +31,7 @@ export function Library() {
   ];
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-lab-line bg-lab-panel">
+    <aside className="flex h-full min-h-0 w-full flex-col bg-lab-panel">
       <div className="border-b border-lab-line px-4 py-3">
         <h2 className="lab-label m-0">Experiments</h2>
         <p className="mt-1 text-[13px] leading-snug text-lab-muted">
@@ -78,7 +78,13 @@ export function Library() {
       <div className="border-b border-lab-line px-4 py-3">
         <h2 className="lab-label m-0">Components</h2>
         <p className="mt-1 text-[13px] leading-snug text-lab-muted">
-          Drag a part onto the bench, or press the add button to put it there.
+          {/* Dragging is a pointer gesture. A phone gets the add button. */}
+          <span className="hidden lg:inline">
+            Drag a part onto the bench, or press the add button to put it there.
+          </span>
+          <span className="lg:hidden">
+            Press the add button to put a part on the bench.
+          </span>
         </p>
       </div>
 

@@ -9,7 +9,9 @@ Build it. Break it. Discover it.
 ![The bench, the alert lit and the timeline showing the alert firing](docs/images/the-bench-alert.png)
 
 **Try it now:** [frankenlab.vercel.app](https://frankenlab.vercel.app) — no install,
-no API key, nothing to sign up for.
+no API key, nothing to sign up for. It works on a phone: the bench and its
+readings stay on the screen, and the catalogue, the inspector and the assistant
+slide up from the bottom when you want them.
 
 **Watch it work:** [the 2:22 demo](docs/demo/frankenlab-demo.mp4)
 — the run, the recovery, the catalyst, the assistant, the named rules that

@@ -50,6 +50,18 @@ const VIEW_DIRECTION = new THREE.Vector3(0.16, 0.5, 0.85).normalize();
  */
 const FRAME_MARGIN = 1.12;
 
+/**
+ * How big a label is, relative to a desktop-sized canvas.
+ *
+ * The labels are DOM elements, so they do not shrink with the scene the way
+ * the parts do. On a phone the canvas is a third of the width it is on a
+ * desktop, and labels set in desktop pixels cover the parts they are naming.
+ * The font and the padding are scaled together, so a label keeps its shape.
+ */
+function labelScaleFor(width: number): number {
+  return Math.max(0.66, Math.min(1, width / 900));
+}
+
 /** The room a part needs around its body, in world units. */
 const PART_PADDING = { side: 0.6, below: 0.6, z: 0.6 };
 
@@ -267,6 +279,8 @@ export class LabScene {
   }[] = [];
   #selectionRing: THREE.Mesh | null = null;
   #selectedConnectionId: string | null = null;
+  /** How big the labels are, relative to a desktop-sized canvas. */
+  #labelScale = 1;
 
   /** The wire the user is dragging, if any. */
   #wiring: { ref: PortRef; direction: PortDirection } | null = null;
@@ -286,6 +300,8 @@ export class LabScene {
 
     const width = options.container.clientWidth || 960;
     const height = options.container.clientHeight || 600;
+
+    this.#labelScale = labelScaleFor(width);
 
     this.#scene = new THREE.Scene();
     this.#scene.background = new THREE.Color(0x05070d);
@@ -780,16 +796,15 @@ export class LabScene {
         // pinned rather than relying on inline-block.
         'width: max-content',
         'max-width: 220px',
-        'font: 500 11px/1.2 ui-sans-serif, system-ui, sans-serif',
         'letter-spacing: 0.04em',
         'color: #c8d4e8',
         'background: rgba(8, 12, 20, 0.72)',
         'border: 1px solid rgba(44, 58, 92, 0.9)',
         'border-radius: 999px',
-        'padding: 3px 9px',
         'white-space: nowrap',
         'pointer-events: none',
       ].join(';');
+      this.#applyLabelStyle(labelElement);
       labelElement.textContent = instance.label ?? definition.name;
       label.position.set(0, definition.visual.labelHeight ?? DEFAULT_LABEL_HEIGHT, 0);
       group.add(label);
@@ -975,6 +990,18 @@ export class LabScene {
     this.#labelRenderer.render(this.#scene, this.#camera);
   }
 
+  /**
+   * Set a label's type and padding to the current scale.
+   *
+   * The font and the padding move together, so a small label is a smaller
+   * label and not a different shape.
+   */
+  #applyLabelStyle(element: HTMLElement): void {
+    const scale = this.#labelScale;
+    element.style.font = `500 ${(11 * scale).toFixed(1)}px/1.2 ui-sans-serif, system-ui, sans-serif`;
+    element.style.padding = `${(3 * scale).toFixed(1)}px ${(9 * scale).toFixed(1)}px`;
+  }
+
   resize(): void {
     const width = this.#container.clientWidth;
     const height = this.#container.clientHeight;
@@ -984,6 +1011,16 @@ export class LabScene {
     this.#camera.updateProjectionMatrix();
     this.#renderer.setSize(width, height);
     this.#labelRenderer.setSize(width, height);
+
+    // The labels are DOM, so they have to be told about the new size
+    // themselves.
+    const scale = labelScaleFor(width);
+    if (scale !== this.#labelScale) {
+      this.#labelScale = scale;
+      for (const node of this.#nodes.values()) {
+        this.#applyLabelStyle(node.labelElement);
+      }
+    }
 
     // The fit depends on the shape of the viewport, so the bench is framed
     // again for the new one.

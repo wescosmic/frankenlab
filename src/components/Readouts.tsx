@@ -315,9 +315,9 @@ export function Readouts() {
   const [tab, setTab] = useState<TabId>('readings');
 
   return (
-    <div className="border-t border-lab-line bg-lab-panel">
-      <div className="flex items-center justify-between border-b border-lab-line px-3 pt-2">
-        <div className="flex gap-1" role="tablist" aria-label="Readouts">
+    <div className="min-h-0 flex-1 overflow-y-auto border-t border-lab-line bg-lab-panel lg:flex-none lg:overflow-visible">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-lab-line px-3 pt-2">
+        <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Readouts">
           {TABS.map(({ id, label }) => (
             <button
               key={id}
@@ -330,7 +330,7 @@ export function Readouts() {
               onClick={() => setTab(id)}
               onKeyDown={(event) => tabKeyHandler(event, TABS, tab, (next) => setTab(next as TabId))}
               className={[
-                'px-3 py-1.5 text-[10px] uppercase tracking-wider transition-colors',
+                'shrink-0 px-3 py-1.5 text-[10px] uppercase tracking-wider transition-colors',
                 'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent',
                 tab === id
                   ? 'text-lab-text'
