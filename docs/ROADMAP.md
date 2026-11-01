@@ -10,14 +10,16 @@ What is built, what is next, and what each piece waits for.
 
 | Area | State | Notes |
 | --- | --- | --- |
-| Simulation kernel | **Working** | Units, validation, lifecycle, determinism, network solvers. |
+| Simulation kernel | **Working** | Units, validation, lifecycle, determinism, network solvers, observations. |
 | Electronics | **Working** | Real modified nodal analysis. DC resistive only. |
 | Biology | **Working** | Logistic growth, transpiration, nutrients. Teaching scale. |
 | Materials | **Working** | Two-reservoir water balance, four presets, conductors. |
 | Chemistry | **Boundary only** | One reversible reaction in one closed vessel. |
 | Interdisciplinary coupling | **Working** | Five named couplings, specificity-ordered rules. |
+| Observations | **Working** | The kernel collects them; the four engines report them. |
 | AI assistant | **Working, offline** | Five tools and a deterministic local explainer. |
 | 3D workbench | **Working** | Scene, selection, animation, labels. No drag-and-drop yet. |
+| Timeline and measurements | **Working** | Three tabs under the bench. |
 | Experiment builder | **Not built** | Parameters can be edited; components cannot be placed. |
 | Missions and notebooks | **Not built** | |
 | Persistence | **Not built** | In-memory only. |
@@ -64,36 +66,48 @@ per-task briefs Kiro actually runs from are in `.kiro/briefs/`.
 
 ---
 
-## Phase 1 — Correctness and coverage
+## Phase 1 — The run tells a story
 
-**Do this before anything else.** The foundation works, but the coverage has
-gaps.
+**Done.** The kernel has an `observe` contract, the four engines report the
+moments that matter, and the workbench shows them.
 
-- Serialisation: an experiment survives a JSON round trip and produces the
-  same result.
-- Validation edge cases: required ports left unconnected, port direction
-  violations, enum parameters out of range.
-- Rule specificity: an explicit coupling beats a generic rule.
-- The assistant's ungrounded-number guard, exercised on a reply that invents
-  a value.
+- **Observations.** `ComponentBehavior.observe?(state, context)` is the
+  sibling of `outputs`. The kernel collects them after the step, stamps each
+  one with its component and its time, and the flagship produces three:
+  the alert on day 8, growth stalling on day 16, the medium wilting the
+  same day.
+- **A timeline.** Every observation, in time order, with a severity mark
+  and a plain-English message.
+- **A measurements panel.** Every measurement the kernel produced, grouped
+  by component, with the label, the value and the unit.
+- **The assistant sees the story.** It used to be handed an empty list of
+  observations, so it could never mention an event that had happened.
 
-**Blocks nothing.** It is simply the cheapest way to make the next phase
-safe.
+Three things were corrected along the way, and the corrections are the point:
 
-## Phase 2 — The workbench becomes an instrument
+- The flagship ran 14 days, which was not long enough to reach the wilting
+  and stress beats. It now runs 21.
+- The default medium is sand. It is the only one that reaches all three
+  beats inside the run.
+- An earlier claim that the alert never fires in clay turned out to be an
+  artefact of the 14-day window rather than a fact about clay. Clay alarms
+  on day 15. The test and the specs now say what the simulation does.
+
+## Phase 2 — The user builds experiments
+
+**Next.** The biggest gap between the current product and the product the
+brief describes.
 
 - **Drag-and-drop wiring.** Drag a component from the catalogue onto the
-  bench, connect ports by dragging. This is the single biggest gap between
-  the current product and the product the brief describes.
-- **Live parameter editing.** Today a parameter change rebuilds the
-  simulation, which is correct but blunt. Where the model allows it, a change
-  should apply to the running experiment.
-- **A real results panel.** Show every measurement the kernel produced, with
-  units, not just four tracked series.
-- **Observations.** The kernel already carries an `Observation` type and
-  nothing produces any. The engines should: "the medium has reached its
-  wilting point", "the alert fired", "growth has stalled". The timeline is
-  what makes a run tell a story.
+  bench, connect ports by dragging.
+- **Live parameter editing.** A parameter change currently rebuilds the
+  simulation, which is correct but blunt. Where the model allows it, a
+  change should apply to the running experiment. This is what makes the
+  recovery beat possible: turn the tap on and watch the medium come back.
+- **Saved experiments**, so a build is reproducible and shareable.
+- **A saturation ceiling on the medium.** A pot cannot hold unlimited
+  water. The model has no upper bound today, so a tap turned up far enough
+  pushes the water readings off the end of their scale.
 
 **Blocked by:** Phase 1.
 
@@ -111,28 +125,28 @@ More experiments, so the product is a sandbox rather than one demo.
 **Blocked by:** Phase 2, partially. The chemistry experiment needs the
 chemistry boundary to grow a second reaction and a catalyst parameter first.
 
-## Phase 4 — The assistant grows a provider
+## Phase 4 — The assistant earns trust
 
 - **Provider-agnostic LLM integration**, keeping the local explainer as the
   fallback. The product must keep working with the provider disabled.
-- **`modify_parameter`** and **`compare_experiments`**, once an undo model and
-  a run history exist.
 - **Surface the ungrounded-number guard in the UI**, so a provider that
   invents a number is visibly flagged rather than only caught in tests.
+- **Compare runs**, once a run history exists.
 
-**Blocked by:** the run history for `compare_experiments`; the undo model for
-`modify_parameter`.
+**Blocked by:** the run history for comparing runs.
 
 ## Phase 5 — Shipping
 
 - **Deployment** to a public URL, working with no API key set, reachable
   free of charge.
-- **The three-minute demonstration**, built on the five beats in
+- **The three-minute demonstration**, built on the beats in
   `BIOCIRCUIT_BEATS`: planted, growing, drying out, alert triggered,
   recovery.
 - **The README** polished for a reader who has never seen the code.
 - **Screenshots** of the workbench, the catalogue, the inspector and a
   mid-run chart.
+- **The public repository**, with the licence visible and `.kiro/` tracked
+  at the root.
 
 **Blocked by:** Phases 2 and 4.
 

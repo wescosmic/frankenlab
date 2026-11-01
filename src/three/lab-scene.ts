@@ -19,6 +19,32 @@ import type { ComponentRegistry } from '@/kernel/registry';
 import type { ComponentDefinition, ExperimentDefinition, Quantity } from '@/kernel/types';
 import { DISCIPLINE_COLOURS } from '@/world';
 
+/**
+ * How far above a part its name floats, unless the part says otherwise.
+ */
+const DEFAULT_LABEL_HEIGHT = 0.85;
+
+/**
+ * The direction the camera looks from, as a unit vector from the bench towards
+ * the viewer.
+ *
+ * It is raised well above the horizontal so the parts on the bench separate
+ * from each other in screen space, and it is turned only slightly off the
+ * bench's own axis. A bench laid out along a line and viewed at an angle
+ * projects to a diagonal band, and a diagonal band wastes most of the frame.
+ */
+const VIEW_DIRECTION = new THREE.Vector3(0.16, 0.5, 0.85).normalize();
+
+/**
+ * How much room to leave around the bench, as a multiplier on the fitted
+ * distance. A little air around the subject reads better than filling every
+ * pixel of it.
+ */
+const FRAME_MARGIN = 1.12;
+
+/** The room a part needs around its body, in world units. */
+const PART_PADDING = { side: 0.6, below: 0.6, z: 0.6 };
+
 /** How a component's shape is turned into geometry. */
 function geometryFor(shape: ComponentDefinition['visual']['shape']): THREE.BufferGeometry {
   switch (shape) {
@@ -99,7 +125,12 @@ export class LabScene {
 
   readonly #nodes = new Map<string, ComponentNode>();
   readonly #pickables: THREE.Object3D[] = [];
-  #connections: THREE.Line[] = [];
+  #connections: THREE.Mesh[] = [];
+  /** Where the parts of the current experiment sit, so the bench can be framed again. */
+  #benchParts: readonly {
+    position: { x: number; y: number; z: number };
+    labelHeight: number;
+  }[] = [];
   #selectionRing: THREE.Mesh | null = null;
   #disposed = false;
 
@@ -147,6 +178,84 @@ export class LabScene {
 
     this.#buildEnvironment();
     this.#bindPointer();
+  }
+
+  /**
+   * Frame the experiment so the bench fills the viewport.
+   *
+   * The distance is not guessed. Every corner of the bench's bounding box is
+   * projected into the camera's frustum, and the camera is placed at the
+   * distance that keeps all eight of them inside it. That means the bench
+   * fills the frame at any window shape, and it fills it the same way every
+   * time.
+   *
+   * The direction is fixed, so the bench always opens the same way, and the
+   * orbit controls still work from there.
+   */
+  #frameExperiment(
+    parts: readonly { position: { x: number; y: number; z: number }; labelHeight: number }[],
+  ): void {
+    if (parts.length === 0) return;
+
+    // The box has to hold the parts *and* the names floating above them, so
+    // it is built from where each name actually ends up.
+    const box = new THREE.Box3();
+    for (const part of parts) {
+      const { x, y, z } = part.position;
+      box.expandByPoint(new THREE.Vector3(x - PART_PADDING.side, y - PART_PADDING.below, z - PART_PADDING.z));
+      box.expandByPoint(new THREE.Vector3(x + PART_PADDING.side, y + part.labelHeight + 0.3, z + PART_PADDING.z));
+    }
+
+    const centre = box.getCenter(new THREE.Vector3());
+
+    // Place the camera at a trial distance, then read its axes. The camera's
+    // local +Z points back towards the viewer, so the view direction is -Z.
+    const probe = new THREE.Vector3().copy(centre).addScaledVector(VIEW_DIRECTION, 10);
+    this.#camera.position.copy(probe);
+    this.#camera.lookAt(centre);
+    this.#camera.updateMatrixWorld();
+
+    const basis = this.#camera.matrixWorld.elements;
+    const right = new THREE.Vector3(basis[0]!, basis[1]!, basis[2]!);
+    const up = new THREE.Vector3(basis[4]!, basis[5]!, basis[6]!);
+    const towardsViewer = new THREE.Vector3(basis[8]!, basis[9]!, basis[10]!);
+
+    const verticalFov = (this.#camera.fov * Math.PI) / 180;
+    const tanVertical = Math.tan(verticalFov / 2);
+    const tanHorizontal = tanVertical * this.#camera.aspect;
+
+    // For a corner at offset `o` from the centre, the depth from the camera
+    // is `distance - o · towardsViewer`. Keeping the corner inside the
+    // frustum means `|o · right| <= depth · tanHorizontal`, and the same for
+    // the vertical. Solving for the distance gives the two terms below.
+    let distance = 0;
+    const corner = new THREE.Vector3();
+    for (let cornerIndex = 0; cornerIndex < 8; cornerIndex++) {
+      corner
+        .set(
+          cornerIndex & 1 ? box.max.x : box.min.x,
+          cornerIndex & 2 ? box.max.y : box.min.y,
+          cornerIndex & 4 ? box.max.z : box.min.z,
+        )
+        .sub(centre);
+
+      const across = Math.abs(corner.dot(right));
+      const upDown = Math.abs(corner.dot(up));
+      const depth = corner.dot(towardsViewer);
+
+      distance = Math.max(
+        distance,
+        across / tanHorizontal + depth,
+        upDown / tanVertical + depth,
+      );
+    }
+
+    distance = Math.max(distance * FRAME_MARGIN, this.#controls.minDistance);
+
+    this.#controls.target.copy(centre);
+    this.#camera.position.copy(centre).addScaledVector(VIEW_DIRECTION, distance);
+    this.#controls.update();
+    this.#camera.updateMatrixWorld();
   }
 
   /** The bench, the lights and the floor grid. */
@@ -221,6 +330,15 @@ export class LabScene {
     }
     this.#connections = [];
 
+    // Frame the bench on the experiment, so it fills the viewport whatever
+    // shape the window is.
+    this.#benchParts = experiment.components.map((c) => ({
+      position: c.position,
+      labelHeight:
+        registry.tryGetDefinition(c.type)?.visual.labelHeight ?? DEFAULT_LABEL_HEIGHT,
+    }));
+    this.#frameExperiment(this.#benchParts);
+
     for (const instance of experiment.components) {
       const definition = registry.tryGetDefinition(instance.type);
       if (!definition) continue;
@@ -286,7 +404,7 @@ export class LabScene {
         'pointer-events: none',
       ].join(';');
       labelElement.textContent = instance.label ?? definition.name;
-      label.position.set(0, 0.85, 0);
+      label.position.set(0, definition.visual.labelHeight ?? DEFAULT_LABEL_HEIGHT, 0);
       group.add(label);
 
       this.#scene.add(group);
@@ -311,17 +429,21 @@ export class LabScene {
       const from = source.group.position.clone();
       const to = target.group.position.clone();
       const midpoint = from.clone().add(to).multiplyScalar(0.5);
-      midpoint.y += 0.8 + from.distanceTo(to) * 0.12;
+      midpoint.y += 0.5 + from.distanceTo(to) * 0.08;
 
       const curve = new THREE.QuadraticBezierCurve3(from, midpoint, to);
-      const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(48));
+      // A tube rather than a line. WebGL draws lines one pixel wide whatever
+      // you ask for, and a one-pixel wire on a dark bench is invisible. The
+      // connection between two disciplines is the thing the product is about,
+      // so it has to be seen.
+      const geometry = new THREE.TubeGeometry(curve, 48, 0.035, 8, false);
       const colour = DISCIPLINE_COLOURS[source.discipline] ?? '#4fd1c5';
-      const line = new THREE.Line(
+      const wire = new THREE.Mesh(
         geometry,
-        new THREE.LineBasicMaterial({ color: colour, transparent: true, opacity: 0.55 }),
+        new THREE.MeshBasicMaterial({ color: colour, transparent: true, opacity: 0.8 }),
       );
-      this.#scene.add(line);
-      this.#connections.push(line);
+      this.#scene.add(wire);
+      this.#connections.push(wire);
     }
 
     if (this.#selectionRing) {
@@ -425,6 +547,10 @@ export class LabScene {
     this.#camera.updateProjectionMatrix();
     this.#renderer.setSize(width, height);
     this.#labelRenderer.setSize(width, height);
+
+    // The fit depends on the shape of the viewport, so the bench is framed
+    // again for the new one.
+    this.#frameExperiment(this.#benchParts);
   }
 
   dispose(): void {

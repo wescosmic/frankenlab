@@ -198,7 +198,7 @@ export const plantDefinition: ComponentDefinition = {
     },
   ],
   initialState: { biomass: 0.1, health: 1, waterUptake: 0 },
-  visual: { shape: 'organic', color: '#66bb6a', label: '🌱' },
+  visual: { shape: 'organic', color: '#66bb6a', label: '🌱', labelHeight: 2.1 },
 };
 
 export const plantBehavior: ComponentBehavior<PlantState> = {

@@ -104,6 +104,14 @@ export interface PortDefinition {
   readonly description: string;
 }
 
+/** A diagnostic reading a component publishes, beyond its ports. */
+export interface ReadingDefinition {
+  readonly id: string;
+  readonly label: string;
+  readonly unit: string;
+  readonly description: string;
+}
+
 /**
  * How a value crosses a connection.
  *
@@ -144,7 +152,15 @@ export interface ComponentDefinition {
     readonly color: string;
     readonly emissive?: string;
     readonly label?: string;
+    /**
+     * How far above the part its name floats, in world units. Parts that grow
+     * taller than they are wide need a taller label, or the name ends up
+     * inside the foliage.
+     */
+    readonly labelHeight?: number;
   };
+  /** Diagnostic readings this component publishes, keyed by output id. */
+  readonly readings?: readonly ReadingDefinition[];
 }
 
 /**

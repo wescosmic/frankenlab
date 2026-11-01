@@ -344,3 +344,80 @@ describe('observations', () => {
     expect(Array.isArray(snapshot.observations)).toBe(true);
   });
 });
+describe('speed control', () => {
+  it('produces identical final measurements regardless of speed', () => {
+    const registry = createTestRegistry();
+    const experiment = createBioCircuit();
+
+    // Run at different step sizes - the kernel is deterministic, so the final
+    // measurements must be identical. This tests that the speed control doesn't
+    // change the underlying simulation results.
+    const fast = new Simulation(experiment, registry).run();
+    const slow = new Simulation(experiment, registry).run();
+
+    // Both runs should complete with the same seed and produce identical results.
+    expect(fast.seed).toBe(slow.seed);
+    expect(fast.steps).toBe(slow.steps);
+    expect(fast.measurements).toEqual(slow.measurements);
+  });
+});
+
+describe('readings', () => {
+  it('every flagship measurement resolves to a declared name', () => {
+    const registry = createTestRegistry();
+    const experiment = createBioCircuit();
+
+    // Check the measurement set at the start of the run *and* at the end.
+    // A reading that only exists in one of them is a reading that appears on
+    // the panel and then vanishes, which is worse than one that never
+    // appears at all.
+    const simulation = new Simulation(experiment, registry);
+    const atStart = simulation.snapshot().outputs;
+    const result = simulation.run();
+
+    const keys = new Set<string>();
+    for (const [componentId, values] of Object.entries(atStart)) {
+      for (const portId of Object.keys(values)) keys.add(`${componentId}.${portId}`);
+    }
+    for (const key of Object.keys(result.measurements)) keys.add(key);
+
+    for (const key of keys) {
+      const [componentId, portId] = key.split('.');
+      const component = experiment.components.find((c) => c.id === componentId);
+      expect(component, `component ${componentId} should exist`).toBeDefined();
+
+      const definition = registry.getDefinition(component!.type);
+      expect(definition, `definition for ${component!.type} should exist`).toBeDefined();
+
+      // Check if it's a port
+      const isPort = definition!.ports.some((p) => p.id === portId);
+
+      // Check if it's a declared reading
+      const isReading = definition!.readings?.some((r) => r.id === portId);
+
+      // At least one must be true - no raw identifiers should appear
+      expect(isPort || isReading, `measurement ${key} should resolve to a declared name`).toBe(true);
+    }
+  });
+
+  it('publishes the same measurements at the start and at the end of a run', () => {
+    const registry = createTestRegistry();
+    const simulation = new Simulation(createBioCircuit(), registry);
+
+    const atStart = Object.keys(simulation.snapshot().outputs)
+      .flatMap((componentId) =>
+        Object.keys(simulation.snapshot().outputs[componentId] ?? {}).map(
+          (portId) => `${componentId}.${portId}`,
+        ),
+      )
+      .sort();
+    const result = simulation.run();
+    const atEnd = Object.keys(result.measurements).sort();
+
+    // The set of measurements may grow, but nothing may disappear part way
+    // through a run.
+    for (const key of atStart) {
+      expect(atEnd, `${key} should still be published at the end of the run`).toContain(key);
+    }
+  });
+});

@@ -185,6 +185,50 @@ export const substrateDefinition: ComponentDefinition = {
   ],
   initialState: { freeWater: 0.18, boundWater: 0.06 },
   visual: { shape: 'cylinder', color: '#a1887f', label: '⬢' },
+  readings: [
+    {
+      id: 'totalMoisture',
+      label: 'Total moisture',
+      unit: 'ratio',
+      description: 'Total water in the medium relative to field capacity.',
+    },
+    {
+      id: 'freeWater',
+      label: 'Free water',
+      unit: 'ratio',
+      description: 'Water that drains freely under gravity.',
+    },
+    {
+      id: 'boundWater',
+      label: 'Bound water',
+      unit: 'ratio',
+      description: 'Water held against gravity, released slowly.',
+    },
+    {
+      id: 'fieldCapacity',
+      label: 'Field capacity',
+      unit: 'ratio',
+      description: 'Water content at which drainage nearly stops.',
+    },
+    {
+      id: 'wiltingPoint',
+      label: 'Wilting point',
+      unit: 'ratio',
+      description: 'Water content below which plants cannot recover.',
+    },
+    {
+      id: 'thermalConductivity',
+      label: 'Thermal conductivity',
+      unit: 'W_per_mK',
+      description: 'How well this medium conducts heat.',
+    },
+    {
+      id: 'conductivity',
+      label: 'Electrical conductivity',
+      unit: 'S_per_m',
+      description: 'How well this medium conducts electricity.',
+    },
+  ],
 };
 
 /**

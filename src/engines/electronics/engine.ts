@@ -506,6 +506,26 @@ export const resistorDefinition: ComponentDefinition = {
   ],
   initialState: { outputs: { voltage: quantity(0, 'V'), current: quantity(0, 'A') } },
   visual: { shape: 'cylinder', color: '#c8a15a', label: 'R' },
+  readings: [
+    {
+      id: 'voltage',
+      label: 'Voltage',
+      unit: 'V',
+      description: 'Voltage across the resistor terminals.',
+    },
+    {
+      id: 'current',
+      label: 'Current',
+      unit: 'A',
+      description: 'Current flowing through the resistor.',
+    },
+    {
+      id: 'resistance',
+      label: 'Resistance',
+      unit: 'ohm',
+      description: 'The resistance value.',
+    },
+  ],
 };
 
 export const resistorBehavior: ComponentBehavior = {
@@ -577,6 +597,20 @@ export const voltageSourceDefinition: ComponentDefinition = {
   ],
   initialState: { outputs: { voltage: quantity(0, 'V') } },
   visual: { shape: 'box', color: '#e05d5d', label: 'V' },
+  readings: [
+    {
+      id: 'voltage',
+      label: 'Voltage',
+      unit: 'V',
+      description: 'The voltage the source maintains between its terminals.',
+    },
+    {
+      id: 'current',
+      label: 'Current',
+      unit: 'A',
+      description: 'Current flowing from the source into the circuit.',
+    },
+  ],
 };
 
 export const voltageSourceBehavior: ComponentBehavior = {
@@ -673,6 +707,38 @@ export const ledDefinition: ComponentDefinition = {
   ],
   initialState: { outputs: { brightness: quantity(0, 'ratio'), conducting: quantity(0, 'ratio') } },
   visual: { shape: 'sphere', color: '#ff8f5e', emissive: '#ff5a2e', label: 'LED' },
+  readings: [
+    {
+      id: 'brightness',
+      label: 'Brightness',
+      unit: 'ratio',
+      description: 'How bright the LED appears, from 0 (off) to 1 (full).',
+    },
+    {
+      id: 'conducting',
+      label: 'Conducting',
+      unit: 'ratio',
+      description: 'Whether the LED is currently conducting, 1 or 0.',
+    },
+    {
+      id: 'voltage',
+      label: 'Voltage across the LED',
+      unit: 'V',
+      description: 'Voltage across the LED terminals.',
+    },
+    {
+      id: 'current',
+      label: 'Current',
+      unit: 'A',
+      description: 'Current flowing through the LED.',
+    },
+    {
+      id: 'forwardVoltage',
+      label: 'Forward voltage',
+      unit: 'V',
+      description: 'The voltage the LED needs before it conducts.',
+    },
+  ],
 };
 
 export const ledBehavior: ComponentBehavior = {
@@ -697,6 +763,14 @@ export const ledBehavior: ComponentBehavior = {
     const brightness = conducting
       ? quantity(Math.min(1, current.value / maxCurrent || 1), 'ratio')
       : quantity(0, 'ratio');
+    // The forward voltage is a property of the LED, not a reading of the
+    // circuit. It has to be published on every step, not just at the start,
+    // or the measurement appears on the panel and then vanishes when the
+    // run begins.
+    const forwardVoltage =
+      solved?.['forwardVoltage'] ??
+      outputs.forwardVoltage ??
+      quantity((s as { __param_forward_voltage?: number }).__param_forward_voltage ?? 2, 'V');
 
     return {
       ...s,
@@ -706,6 +780,7 @@ export const ledBehavior: ComponentBehavior = {
         current,
         brightness,
         conducting: quantity(conducting, 'ratio'),
+        forwardVoltage,
       },
     };
   },
@@ -867,8 +942,28 @@ export const sensorDefinition: ComponentDefinition = {
       description: 'Reference designator.',
     },
   ],
-  initialState: { outputs: { resistance: quantity(10, 'kohm'), current: quantity(0, 'A') } },
+  initialState: { outputs: { resistance: quantity(10_000, 'ohm'), current: quantity(0, 'A') } },
   visual: { shape: 'cylinder', color: '#4fc3f7', label: 'S' },
+  readings: [
+    {
+      id: 'resistance',
+      label: 'Resistance',
+      unit: 'ohm',
+      description: 'The sensor resistance, which varies with the sensed quantity.',
+    },
+    {
+      id: 'current',
+      label: 'Current',
+      unit: 'A',
+      description: 'Current flowing through the sensor.',
+    },
+    {
+      id: 'voltage',
+      label: 'Voltage',
+      unit: 'V',
+      description: 'Voltage drop across the sensor terminals.',
+    },
+  ],
 };
 
 export const sensorBehavior: ComponentBehavior = {
@@ -887,7 +982,7 @@ export const sensorBehavior: ComponentBehavior = {
         ...outputs,
         voltage: solved?.['voltage'] ?? quantity(0, 'V'),
         current: solved?.['current'] ?? quantity(0, 'A'),
-        resistance: solved?.['resistance'] ?? quantity(10, 'kohm'),
+        resistance: solved?.['resistance'] ?? quantity(10_000, 'ohm'),
         sense: quantity(clamped, 'ratio'),
         // The normalised divider voltage across this sensor, as solved by the
         // nodal analysis. This is what the comparator thresholds.
@@ -964,6 +1059,14 @@ export const comparatorDefinition: ComponentDefinition = {
   ],
   initialState: { outputs: { decision: quantity(0, 'ratio') } },
   visual: { shape: 'box', color: '#ba68c8', label: 'U' },
+  readings: [
+    {
+      id: 'decision',
+      label: 'Decision',
+      unit: 'ratio',
+      description: 'The binary decision: 1 when the condition is met, 0 otherwise.',
+    },
+  ],
 };
 
 export const comparatorBehavior: ComponentBehavior = {

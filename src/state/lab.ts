@@ -27,8 +27,26 @@ export interface SeriesPoint {
 
 export type LabStatus = 'idle' | 'running' | 'paused' | 'complete';
 
+/** Speed options: simulated hours per wall-clock second. */
+export type Speed = 'slow' | 'fast';
+
 /** How many series points to keep in memory. */
 const SERIES_LIMIT = 600;
+
+/** Default speed: the full 21-day run takes about 56 seconds. */
+export const DEFAULT_SPEED: Speed = 'slow';
+
+/**
+ * Speed values in simulated hours per wall-clock second.
+ *
+ * The flagship is 504 simulated hours. Slow puts the alert about 21 seconds
+ * in and the wilting about 43 seconds in, which is long enough to follow.
+ * Fast gets to the end state in about five seconds.
+ */
+export const SPEED_VALUES: Record<Speed, number> = {
+  slow: 9, // 504 hours / 9 = 56 seconds
+  fast: 100, // 504 hours / 100 = 5 seconds
+};
 
 /** Readings the panels and the chart care about, in the order they appear. */
 export const TRACKED_SERIES = [
@@ -45,6 +63,7 @@ export interface LabStore {
 
   readonly status: LabStatus;
   readonly elapsed: number;
+  readonly speed: Speed;
   readonly readings: Readonly<Record<string, Quantity>>;
   readonly series: readonly SeriesPoint[];
   readonly observations: readonly Observation[];
@@ -58,6 +77,7 @@ export interface LabStore {
   reset(): void;
   /** Advance the simulation by a number of steps and publish the readings. */
   advance(steps: number): void;
+  setSpeed(speed: Speed): void;
   setParameter(componentId: string, parameterId: string, value: number): void;
   setSubstrate(substrate: 'sandy' | 'loamy' | 'clay' | 'hydrogel'): void;
   ask(question: string): Promise<void>;
@@ -142,6 +162,7 @@ export const useLabStore = create<LabStore>((set, get) => {
 
     status: 'idle',
     elapsed: 0,
+    speed: DEFAULT_SPEED,
     readings: initial.readings,
     series: [initial.seriesPoint],
     observations: initial.observations,
@@ -173,6 +194,10 @@ export const useLabStore = create<LabStore>((set, get) => {
         series: [snap.seriesPoint],
         observations: snap.observations,
       });
+    },
+
+    setSpeed(speed: Speed) {
+      set({ speed });
     },
 
     advance(steps) {

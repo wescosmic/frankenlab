@@ -14,16 +14,18 @@ import { Library } from './Library';
 import { Inspector } from './Inspector';
 import { Readouts } from './Readouts';
 import { Assistant } from './Assistant';
-import { useLabStore } from '@/state/lab';
+import { useLabStore, type Speed } from '@/state/lab';
 
 type SideTab = 'inspector' | 'assistant';
 
 export function Lab() {
   const experiment = useLabStore((s) => s.experiment);
   const status = useLabStore((s) => s.status);
+  const speed = useLabStore((s) => s.speed);
   const start = useLabStore((s) => s.start);
   const pause = useLabStore((s) => s.pause);
   const reset = useLabStore((s) => s.reset);
+  const setSpeed = useLabStore((s) => s.setSpeed);
   const [tab, setTab] = useState<SideTab>('inspector');
 
   const running = status === 'running';
@@ -73,6 +75,24 @@ export function Lab() {
             >
               Reset
             </button>
+          </div>
+
+          <div className="flex items-center gap-1 rounded-md border border-lab-line bg-lab-panel-raised px-1 py-0.5">
+            {(['slow', 'fast'] as Speed[]).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setSpeed(s)}
+                className={[
+                  'rounded px-2 py-1 text-[11px] uppercase tracking-wider transition-colors',
+                  speed === s
+                    ? 'bg-lab-accent/20 text-lab-accent'
+                    : 'text-lab-dim hover:text-lab-text',
+                ].join(' ')}
+              >
+                {s}
+              </button>
+            ))}
           </div>
         </div>
       </header>

@@ -10,13 +10,33 @@
 
 import { useEffect, useRef } from 'react';
 import { LabScene } from '@/three/lab-scene';
-import { useLabStore } from '@/state/lab';
+import { useLabStore, SPEED_VALUES } from '@/state/lab';
 
 /** How often the readings are republished to React, in milliseconds. */
 const PUBLISH_INTERVAL = 90;
 
-/** How many simulation steps to advance per publish. */
-const STEPS_PER_PUBLISH = 18;
+/**
+ * How many simulation steps the run is due to have taken by now.
+ *
+ * Speed is expressed as simulated hours per wall-clock second. The run is
+ * measured against the wall clock from the moment it started, not against the
+ * number of frames that have gone by, so a slow laptop and a fast one play
+ * the experiment at the same speed.
+ *
+ * The answer is a *target*, not an increment: the loop advances the
+ * simulation to the target rather than adding to it. That keeps the run
+ * honest when a frame is dropped or the tab is in the background.
+ */
+function targetStep(
+  speed: number,
+  dt: number,
+  wallSeconds: number,
+  anchorHours: number,
+): number {
+  const dtHours = dt / 3600;
+  const targetHours = anchorHours + speed * wallSeconds;
+  return Math.floor(targetHours / dtHours);
+}
 
 export function Workbench() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,13 +61,45 @@ export function Workbench() {
     let frame = 0;
     let lastPublish = 0;
 
+    // Wall-clock accounting for the run speed. `runAnchor` is the wall clock
+    // moment the current speed segment began, and `hoursAnchor` is how many
+    // simulated hours had been delivered by then. The anchors are reset
+    // whenever the run starts, restarts or changes speed, so the clock only
+    // counts the time the run was actually playing.
+    let runAnchor = performance.now();
+    let hoursAnchor = 0;
+    let lastSpeed = useLabStore.getState().speed;
+    let lastStatus = useLabStore.getState().status;
+    let lastElapsed = 0;
+
     const loop = () => {
       const state = useLabStore.getState();
       const now = performance.now();
 
+      const restarted = state.elapsed < lastElapsed;
+      const speedChanged = state.speed !== lastSpeed;
+      const statusChanged = state.status !== lastStatus;
+
+      if (restarted || speedChanged || statusChanged) {
+        runAnchor = now;
+        hoursAnchor = state.elapsed / 3600;
+        lastSpeed = state.speed;
+        lastStatus = state.status;
+      }
+      lastElapsed = state.elapsed;
+
       if (state.status === 'running' && now - lastPublish >= PUBLISH_INTERVAL) {
         lastPublish = now;
-        state.advance(STEPS_PER_PUBLISH);
+        const dt = state.experiment.dt;
+        const due = targetStep(
+          SPEED_VALUES[state.speed],
+          dt,
+          (now - runAnchor) / 1000,
+          hoursAnchor,
+        );
+        const taken = Math.round(state.elapsed / dt);
+        const steps = Math.min(due - taken, Math.ceil((state.experiment.duration - state.elapsed) / dt));
+        if (steps > 0) state.advance(steps);
       }
 
       scene.applyReadings(useLabStore.getState().readings);

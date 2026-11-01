@@ -42,12 +42,16 @@ The comparator thresholds a **solved circuit quantity**, not the moisture that
 drove it. Change the reference resistor and the day the alarm goes off
 changes with it. The electronics is load-bearing, not decoration.
 
-| Medium  | Alert fires        |
-| ------- | ------------------ |
-| Sand    | day 8              |
-| Loam    | day 13             |
-| Clay    | never              |
-| Hydrogel| never              |
+The medium decides the pace of the whole experiment. Swapping sand for clay
+holds the alarm off for a week, and hydrogel holds its water past the end of
+the run:
+
+| Medium   | Alert fires        |
+| -------- | ------------------ |
+| Sand     | day 8              |
+| Loam     | day 13             |
+| Clay     | day 15             |
+| Hydrogel | not within 21 days |
 
 ## Principles
 
@@ -80,7 +84,16 @@ npm run dev          # http://localhost:4310
 ```
 
 Then open the laboratory, press **Run**, and watch the plant drink the medium
-dry while the readout falls and the alarm lights.
+dry while the readout falls and the alarm lights. The run takes about a
+minute at the default speed, which is slow enough to follow: the alert goes
+off on day 8, growth stalls on day 16 and the medium wilts the same day.
+**Fast** gets to the end state in about five seconds.
+
+Under the bench there are three tabs. **Readings** shows the four headline
+numbers and their history. **Timeline** lists every moment the simulation
+reported, in order, with a severity and a plain-English explanation. **Measurements**
+lists every quantity the kernel produced, grouped by the part it came from,
+with its unit.
 
 Other commands:
 
@@ -194,7 +207,7 @@ appears in the catalogue, the validator and the workbench.
 npm test
 ```
 
-72 tests across six files. The interesting ones are the property-based
+94 tests across seven files. The interesting ones are the property-based
 invariants in `tests/properties/`:
 
 - The source delivers exactly the power the resistors dissipate.

@@ -54,8 +54,18 @@ catalogue on the left, the inspector on the right, and the readings along the
 bottom. The readings start at their true initial values: available moisture
 1.000, probe reading 0.909.
 
-Press **Run**. Over about two seconds the plant drinks the medium dry, the
+Press **Run**. Over about a minute the plant drinks the medium dry, the
 probe reading falls, and the alert LED lights. Press **Reset** to start over.
+
+Two speeds sit next to Run and Reset. **Slow** is the default and plays the
+21-day run in about 56 seconds, so the alert at day 8 and the wilting at day
+16 are both long enough to see coming. **Fast** finishes the same run in
+about five seconds. The speed changes how fast the run plays, never what it
+produces: the same seed gives the same numbers at either speed.
+
+Under the bench, **Timeline** lists every moment the simulation reported, and
+**Measurements** lists every quantity it produced, grouped by part and
+carrying its unit.
 
 ### Other scripts
 

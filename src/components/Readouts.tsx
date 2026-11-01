@@ -171,6 +171,25 @@ function MeasurementsTab() {
   const experiment = useLabStore((s) => s.experiment);
   const registry = useLabStore((s) => s.registry);
 
+  // Resolve a measurement key to a label, checking ports first, then readings.
+  const resolveLabel = (componentId: string, portId: string): string => {
+    const component = experiment.components.find((c) => c.id === componentId);
+    if (!component) return portId;
+    const definition = registry.getDefinition(component.type);
+    if (!definition) return portId;
+
+    // Check if it's a port first.
+    const portDef = definition.ports.find((p) => p.id === portId);
+    if (portDef) return portDef.label;
+
+    // Check if it's a declared reading.
+    const readingDef = definition.readings?.find((r) => r.id === portId);
+    if (readingDef) return readingDef.label;
+
+    // Fall back to the raw identifier.
+    return portId;
+  };
+
   // Group readings by component
   const byComponent = new Map<string, Map<string, { value: number; unit: string; label: string }>>();
   for (const [key, quantity] of Object.entries(readings)) {
@@ -181,11 +200,7 @@ function MeasurementsTab() {
     if (!byComponent.has(componentId)) {
       byComponent.set(componentId, new Map());
     }
-    // Get the port's label from the registry
-    const component = experiment.components.find((c) => c.id === componentId);
-    const definition = component ? registry.getDefinition(component.type) : null;
-    const portDef = definition?.ports.find((p) => p.id === portId);
-    const label = portDef?.label ?? portId;
+    const label = resolveLabel(componentId, portId);
     byComponent.get(componentId)!.set(portId, {
       value: quantity.value,
       unit: quantity.unit,
