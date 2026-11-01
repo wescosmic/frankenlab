@@ -461,11 +461,12 @@ export const conductorDefinition: ComponentDefinition = {
     {
       id: 'potential',
       label: 'Potential',
-      direction: 'output',
+      direction: 'bidirectional',
       channel: 'electrical-potential',
       unit: 'V',
       required: false,
-      description: 'Potential at this specimen relative to the circuit reference.',
+      description:
+        'Potential at this specimen relative to the circuit reference. Wire it in and it carries the potential it sits at; leave it alone and it reads zero.',
     },
   ],
   parameters: [
@@ -512,6 +513,32 @@ export const conductorDefinition: ComponentDefinition = {
   ],
   initialState: { outputs: { resistance: quantity(0, 'ohm') } },
   visual: { shape: 'cylinder', color: '#b87333', label: 'Cu' },
+  readings: [
+    {
+      id: 'resistance',
+      label: 'Resistance',
+      unit: 'ohm',
+      description: 'The resistance of the specimen, from its length, area and conductivity.',
+    },
+    {
+      id: 'conductivity',
+      label: 'Electrical conductivity',
+      unit: 'S_per_m',
+      description: 'Published electrical conductivity of the material.',
+    },
+    {
+      id: 'thermalConductivity',
+      label: 'Thermal conductivity',
+      unit: 'W_per_mK',
+      description: 'Published thermal conductivity of the material.',
+    },
+    {
+      id: 'density',
+      label: 'Density',
+      unit: 'kg_per_m3',
+      description: 'Published density of the material.',
+    },
+  ],
 };
 
 /** Electrical conductivity in S/m for the materials we expose. */

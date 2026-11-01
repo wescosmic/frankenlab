@@ -107,10 +107,10 @@ interface VoltageSourceLike {
  * that for free and handles the rewiring that happens when the user drags a
  * component around.
  */
-class UnionFind {
-  readonly #parent = new Map<TerminalId, TerminalId>();
+class UnionFind<T> {
+  readonly #parent = new Map<T, T>();
 
-  find(id: TerminalId): TerminalId {
+  find(id: T): T {
     this.add(id);
     let current = id;
     while (this.#parent.get(current) !== current) {
@@ -121,13 +121,13 @@ class UnionFind {
     return current;
   }
 
-  union(a: TerminalId, b: TerminalId): void {
+  union(a: T, b: T): void {
     const rootA = this.find(a);
     const rootB = this.find(b);
     if (rootA !== rootB) this.#parent.set(rootA, rootB);
   }
 
-  add(id: TerminalId): void {
+  add(id: T): void {
     if (!this.#parent.has(id)) this.#parent.set(id, id);
   }
 }
@@ -146,7 +146,7 @@ export const electronicsNetworkSolver: NetworkSolver = {
     const results = new Map<string, Record<string, Quantity>>();
 
     // --- Build the graph -------------------------------------------------
-    const uf = new UnionFind();
+    const uf = new UnionFind<string>();
 
     // Terminals are discovered from the component's port definitions rather
     // than assumed. A component's terminal ids are whatever its ports say
@@ -271,6 +271,50 @@ export const electronicsNetworkSolver: NetworkSolver = {
       nodeOf(source.nodeB);
     }
 
+    // --- Floating islands -------------------------------------------------
+    // A part the user has dropped on the bench but not wired in — a spare
+    // switch, a second battery — forms its own island of nodes. Nothing
+    // connects that island to a source, so the equations for those nodes have
+    // no unique solution. Left in the matrix they make the whole system
+    // singular, and every reading in the circuit drops to zero because of a
+    // part that is not even in the circuit.
+    //
+    // So the islands are found first, and the ones that cannot carry current
+    // are dropped before the matrix is built. An island is a set of nodes
+    // joined by elements: wires make two terminals the same node, and an
+    // element carries current from one node to the next.
+    const islands = new UnionFind<number>();
+    for (const resistor of resistors) {
+      islands.union(nodeOf(resistor.nodeA), nodeOf(resistor.nodeB));
+    }
+    for (const source of sources) {
+      islands.union(nodeOf(source.nodeA), nodeOf(source.nodeB));
+    }
+
+    // A source energises its own island. Anything reachable from a source can
+    // carry current; anything else is floating.
+    const energised = new Set<number>();
+    for (const source of sources) {
+      energised.add(islands.find(nodeOf(source.nodeA)));
+    }
+
+    const liveResistors = resistors.filter((resistor) =>
+      energised.has(islands.find(nodeOf(resistor.nodeA))),
+    );
+
+    // The nodes that are actually in the solve. A floating node is not one of
+    // them, and must not become an unknown: an unknown that no element
+    // stamps is a row of zeros, which is exactly the singularity above.
+    const liveNodes = new Set<number>();
+    for (const resistor of liveResistors) {
+      liveNodes.add(nodeOf(resistor.nodeA));
+      liveNodes.add(nodeOf(resistor.nodeB));
+    }
+    for (const source of sources) {
+      liveNodes.add(nodeOf(source.nodeA));
+      liveNodes.add(nodeOf(source.nodeB));
+    }
+
     // --- Ground ----------------------------------------------------------
     // The negative terminal of the first source is the reference node.
     const groundTerminal = sources[0]?.nodeB;
@@ -278,7 +322,7 @@ export const electronicsNetworkSolver: NetworkSolver = {
 
     // Map node indices onto the reduced (non-ground) unknown set.
     const reducedIndex = new Map<number, number>();
-    for (const index of nodeIndex.values()) {
+    for (const index of liveNodes) {
       if (index === groundIndex) continue;
       reducedIndex.set(index, reducedIndex.size);
     }
@@ -317,7 +361,7 @@ export const electronicsNetworkSolver: NetworkSolver = {
       // A node that is ground contributes nothing to the reduced system.
     };
 
-    for (const resistor of resistors) {
+    for (const resistor of liveResistors) {
       stampResistor(nodeOf(resistor.nodeA), nodeOf(resistor.nodeB), resistor.resistance);
     }
 
@@ -357,7 +401,7 @@ export const electronicsNetworkSolver: NetworkSolver = {
     };
 
     // --- Report per component --------------------------------------------
-    for (const resistor of resistors) {
+    for (const resistor of liveResistors) {
       const voltage = voltageAt(nodeOf(resistor.nodeA)) - voltageAt(nodeOf(resistor.nodeB));
       const current = voltage / Math.max(1e-9, resistor.resistance);
       results.set(resistor.componentId, {
@@ -370,9 +414,16 @@ export const electronicsNetworkSolver: NetworkSolver = {
     sources.forEach((source, index) => {
       const branch = nodeCount + index;
       const current = solved ? (solution[branch] ?? 0) : 0;
+      // The terminals are published under their own port ids. An ideal source
+      // holds its voltage whatever the load, so the positive terminal reads
+      // the source voltage even when the rest of the circuit is broken.
+      const positive = solved ? voltageAt(nodeOf(source.nodeA)) : source.voltage;
+      const negative = solved ? voltageAt(nodeOf(source.nodeB)) : 0;
       results.set(source.componentId, {
         voltage: quantity(source.voltage, 'V'),
         current: quantity(current, 'A'),
+        positive: quantity(positive, 'V'),
+        negative: quantity(negative, 'V'),
       });
     });
 
@@ -424,7 +475,7 @@ export const electronicsNetworkSolver: NetworkSolver = {
 
       // Prefer a node shared with another resistor — that is the divider tap.
       const shared = pool.filter((node) =>
-        resistors.some(
+        liveResistors.some(
           (resistor) =>
             resistor.componentId !== component.id &&
             (nodeOf(resistor.nodeA) === node || nodeOf(resistor.nodeB) === node),
@@ -595,7 +646,13 @@ export const voltageSourceDefinition: ComponentDefinition = {
       description: 'Reference designator.',
     },
   ],
-  initialState: { outputs: { voltage: quantity(0, 'V') } },
+  initialState: {
+    outputs: {
+      voltage: quantity(0, 'V'),
+      positive: quantity(0, 'V'),
+      negative: quantity(0, 'V'),
+    },
+  },
   visual: { shape: 'box', color: '#e05d5d', label: 'V' },
   readings: [
     {
@@ -625,6 +682,10 @@ export const voltageSourceBehavior: ComponentBehavior = {
         ...outputs,
         voltage: solved?.['voltage'] ?? quantity(5, 'V'),
         current: solved?.['current'] ?? quantity(0, 'A'),
+        // The two terminals, published under their port ids so a wire can
+        // read the battery's potential.
+        positive: solved?.['positive'] ?? quantity(5, 'V'),
+        negative: solved?.['negative'] ?? quantity(0, 'V'),
       },
     };
   },
@@ -832,6 +893,26 @@ export const switchDefinition: ComponentDefinition = {
   ],
   initialState: { outputs: { current: quantity(0, 'A'), closed: quantity(1, 'ratio') } },
   visual: { shape: 'box', color: '#8a94a6', label: 'SW' },
+  readings: [
+    {
+      id: 'voltage',
+      label: 'Voltage',
+      unit: 'V',
+      description: 'Voltage across the switch terminals.',
+    },
+    {
+      id: 'current',
+      label: 'Current',
+      unit: 'A',
+      description: 'Current flowing through the switch.',
+    },
+    {
+      id: 'closed',
+      label: 'Closed',
+      unit: 'ratio',
+      description: 'Whether the switch is closed, 1 or 0.',
+    },
+  ],
 };
 
 export const switchBehavior: ComponentBehavior = {

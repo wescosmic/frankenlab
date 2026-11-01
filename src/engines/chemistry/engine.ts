@@ -48,12 +48,24 @@ export interface VesselState extends Record<string, unknown> {
   readonly b: number;
   readonly c: number;
   readonly heatReleased: number;
+  /**
+   * The cumulative extent of reaction: how far the reaction has moved from
+   * the starting mixture, in moles per litre. The per-step increment is a
+   * different number and is not published — the port describes how far the
+   * reaction has *progressed*, and that is a total, not a rate.
+   */
+  readonly extentOfReaction?: number;
   readonly outputs?: Record<string, Quantity>;
   readonly __prev_extent?: number;
+  /** True once the vessel has been observed to sit at equilibrium. */
+  readonly __equilibriumReported?: boolean;
+  /** True only on the step where the vessel first reached equilibrium. */
+  readonly __equilibriumJustReached?: boolean;
   readonly __param_initial_a?: number;
   readonly __param_initial_b?: number;
   readonly __param_rate_constant?: number;
   readonly __param_equilibrium_constant?: number;
+  readonly __param_catalyst?: number;
 }
 
 /**
@@ -144,6 +156,14 @@ export const substanceDefinition: ComponentDefinition = {
     outputs: { concentration: quantity(1, 'mol_per_L'), amount: quantity(1, 'mol') },
   },
   visual: { shape: 'sphere', color: '#4fc3f7', label: '⬡' },
+  readings: [
+    {
+      id: 'molarMass',
+      label: 'Molar mass',
+      unit: 'g_per_mol',
+      description: 'The published molar mass of the substance.',
+    },
+  ],
 };
 
 export const substanceBehavior: ComponentBehavior<SubstanceState> = {
@@ -163,7 +183,7 @@ export const substanceBehavior: ComponentBehavior<SubstanceState> = {
     return {
       concentration: quantity(concentration, 'mol_per_L'),
       amount: quantity(concentration * volume, 'mol'),
-      molarMass: quantity(preset.molarMass, 'g'),
+      molarMass: quantity(preset.molarMass, 'g_per_mol'),
     };
   },
 
@@ -196,7 +216,10 @@ export const reactionVesselDefinition: ComponentDefinition = {
     'Arrhenius temperature dependence, using the gas constant and the activation energy.',
     'The vessel is closed and perfectly mixed — no diffusion, no surface effects.',
     'The stoichiometry is A + B ⇌ C. Two moles are consumed per mole made, so the sum of concentrations falls; what is conserved is A + C (and B + C).',
-    'Only one reaction is modelled. Side reactions and catalysts are not.',
+    'Only one reaction is modelled. Side reactions are not.',
+    'A catalyst multiplies the rate constant and leaves the equilibrium where it was. The equilibrium is set by the ratio of the forward and reverse rates, and a catalyst changes both by the same factor.',
+    'The vessel is closed. Nothing is added to it and nothing leaves it, so the conservation check is exact rather than approximate.',
+    'Equilibrium is reported when the reaction is within one per cent of the extent the mass-action law says it should settle at. That extent is solved, not guessed.',
   ],
   ports: [
     {
@@ -338,6 +361,19 @@ export const reactionVesselDefinition: ComponentDefinition = {
       confidence: 'illustrative',
     },
     {
+      id: 'catalyst',
+      label: 'Catalyst',
+      kind: 'number',
+      unit: 'unitless',
+      defaultValue: 1,
+      min: 1,
+      max: 1000,
+      step: 1,
+      description:
+        'How much the catalyst speeds the reaction up. It multiplies the rate constant and nothing else. A catalyst does not move the equilibrium position, because equilibrium depends on the ratio of the forward and reverse rates, not on how big they are.',
+      confidence: 'illustrative',
+    },
+    {
       id: 'enthalpy',
       label: 'Reaction enthalpy',
       kind: 'number',
@@ -374,13 +410,14 @@ export const reactionVesselDefinition: ComponentDefinition = {
     b: 1,
     c: 0,
     heatReleased: 0,
+    extentOfReaction: 0,
     outputs: {
       product: quantity(0, 'mol_per_L'),
-      reactantA: quantity(1, 'mol_per_L'),
-      reactantB: quantity(1, 'mol_per_L'),
+      reactant_a: quantity(1, 'mol_per_L'),
+      reactant_b: quantity(1, 'mol_per_L'),
       extent: quantity(0, 'mol_per_L'),
       heat: quantity(0, 'J'),
-      stoichiometricBalance: quantity(1, 'mol_per_L'),
+      stoichiometric_balance: quantity(1, 'mol_per_L'),
     },
   },
   visual: { shape: 'cylinder', color: '#ffb74d', label: '⚗' },
@@ -400,6 +437,44 @@ export function arrheniusRate(
   return rateConstant * Math.exp(Math.max(-700, Math.min(700, exponent)));
 }
 
+/**
+ * The extent of reaction at equilibrium, solved from the mass-action law.
+ *
+ * For A + B ⇌ C starting from a0 and b0 with no product:
+ *
+ *     K = x / ((a0 - x)(b0 - x))
+ *
+ * which rearranges into the quadratic
+ *
+ *     K x² - (K(a0 + b0) + 1) x + K a0 b0 = 0
+ *
+ * The smaller root is the physical one. This is the number the vessel is
+ * heading for, and it is worth solving for rather than eyeballing: it is
+ * what lets the model say "this reaction has reached equilibrium" honestly,
+ * instead of guessing from a rate that happens to look small.
+ *
+ * Note what is *not* in this expression: the rate constant, the activation
+ * energy and the catalyst. Equilibrium depends on the ratio of the forward
+ * and reverse rates, so speeding the reaction up does not move it.
+ */
+export function equilibriumExtent(
+  initialA: number,
+  initialB: number,
+  equilibriumConstant: number,
+): number {
+  if (initialA <= 0 || initialB <= 0 || equilibriumConstant <= 0) return 0;
+
+  const k = equilibriumConstant;
+  const sum = k * (initialA + initialB) + 1;
+  const discriminant = sum * sum - 4 * k * k * initialA * initialB;
+  if (discriminant <= 0) return Math.min(initialA, initialB);
+
+  return (sum - Math.sqrt(discriminant)) / (2 * k);
+}
+
+/** How close to equilibrium counts as "at equilibrium", as a fraction. */
+const EQUILIBRIUM_TOLERANCE = 0.01;
+
 export const reactionVesselBehavior: ComponentBehavior<VesselState> = {
   type: 'chemistry.reaction-vessel',
 
@@ -407,13 +482,17 @@ export const reactionVesselBehavior: ComponentBehavior<VesselState> = {
     const s = state as VesselState;
     const outputs = s.outputs ?? {};
     const total = (s.a ?? 0) + (s.c ?? 0);
+    // Published under the port ids. A connection is resolved by looking up the
+    // source's port id in its published outputs, so an output that does not
+    // use its own port id is a value no wire can ever carry.
     return {
       product: outputs.product ?? quantity(s.c ?? 0, 'mol_per_L'),
-      reactantA: outputs.reactantA ?? quantity(s.a ?? 0, 'mol_per_L'),
-      reactantB: outputs.reactantB ?? quantity(s.b ?? 0, 'mol_per_L'),
-      extent: outputs.extent ?? quantity(0, 'mol_per_L'),
-      heat: outputs.heat ?? quantity(0, 'J'),
-      stoichiometricBalance: outputs.stoichiometricBalance ?? quantity(total, 'mol_per_L'),
+      reactant_a: outputs.reactant_a ?? quantity(s.a ?? 0, 'mol_per_L'),
+      reactant_b: outputs.reactant_b ?? quantity(s.b ?? 0, 'mol_per_L'),
+      extent: outputs.extent ?? quantity(s.extentOfReaction ?? 0, 'mol_per_L'),
+      heat: outputs.heat ?? quantity(s.heatReleased ?? 0, 'J'),
+      stoichiometric_balance:
+        outputs.stoichiometric_balance ?? quantity(total, 'mol_per_L'),
     };
   },
 
@@ -426,6 +505,7 @@ export const reactionVesselBehavior: ComponentBehavior<VesselState> = {
       __param_activation_energy?: number;
       __param_reference_temperature?: number;
       __param_equilibrium_constant?: number;
+      __param_catalyst?: number;
       __param_enthalpy?: number;
       __param_volume?: number;
     };
@@ -434,6 +514,7 @@ export const reactionVesselBehavior: ComponentBehavior<VesselState> = {
     const activationEnergy = s.__param_activation_energy ?? 25000;
     const referenceCelsius = s.__param_reference_temperature ?? 25;
     const equilibriumConstant = s.__param_equilibrium_constant ?? 4;
+    const catalyst = s.__param_catalyst ?? 1;
     const enthalpy = s.__param_enthalpy ?? -30000;
     const volume = s.__param_volume ?? 1;
 
@@ -456,7 +537,10 @@ export const reactionVesselBehavior: ComponentBehavior<VesselState> = {
     const kelvin = celsius + 273.15;
     const referenceKelvin = referenceCelsius + 273.15;
 
-    const k = arrheniusRate(rateConstant, activationEnergy, kelvin, referenceKelvin);
+    // The catalyst multiplies the rate constant. It multiplies the forward and
+    // the reverse rate by the same factor, so it changes how fast the vessel
+    // gets to equilibrium and not where equilibrium is.
+    const k = arrheniusRate(rateConstant, activationEnergy, kelvin, referenceKelvin) * catalyst;
 
     // Mass-action forward rate, and the reverse rate derived from K.
     const forward = k * a * b;
@@ -466,14 +550,31 @@ export const reactionVesselBehavior: ComponentBehavior<VesselState> = {
     // The extent of reaction over this step, signed: positive is forward.
     // The reaction cannot run past the point where a reactant is exhausted.
     const raw = net * context.dt;
-    const extent = raw > 0 ? Math.min(raw, Math.min(a, b)) : Math.max(raw, -c);
+    const stepExtent = raw > 0 ? Math.min(raw, Math.min(a, b)) : Math.max(raw, -c);
 
-    a = Math.max(0, a - extent);
-    b = Math.max(0, b - extent);
-    c = Math.max(0, c + extent);
+    // The cumulative extent of reaction: how far the mixture has moved from
+    // where it started. This is the number the port publishes.
+    const extentOfReaction = (s.extentOfReaction ?? 0) + stepExtent;
+
+    a = Math.max(0, a - stepExtent);
+    b = Math.max(0, b - stepExtent);
+    c = Math.max(0, c + stepExtent);
 
     // A negative enthalpy means the reaction releases heat.
-    heatReleased += -enthalpy * extent * volume;
+    heatReleased += -enthalpy * stepExtent * volume;
+
+    // Has the vessel arrived at the equilibrium its own constants describe?
+    // The comparison is against the solved equilibrium extent, not against a
+    // rate that "looks small" — that way the claim is checkable.
+    const equilibrium = equilibriumExtent(
+      s.__param_initial_a ?? 1,
+      s.__param_initial_b ?? 1,
+      equilibriumConstant,
+    );
+    const atEquilibrium =
+      equilibrium > 0 &&
+      Math.abs(extentOfReaction - equilibrium) <= equilibrium * EQUILIBRIUM_TOLERANCE;
+    const justReached = atEquilibrium && s.__equilibriumReported !== true;
 
     return {
       ...s,
@@ -481,60 +582,43 @@ export const reactionVesselBehavior: ComponentBehavior<VesselState> = {
       b,
       c,
       heatReleased,
+      extentOfReaction,
       __initialised: true,
-      // Track previous extent for transition detection in observe.
-      __prev_extent: s.outputs?.extent?.value ?? 0,
+      // Track the previous cumulative extent so observe can work out the net
+      // rate of change.
+      __prev_extent: s.extentOfReaction ?? 0,
+      __equilibriumReported: atEquilibrium ? true : s.__equilibriumReported,
+      __equilibriumJustReached: justReached,
       outputs: {
         product: quantity(c, 'mol_per_L'),
-        reactantA: quantity(a, 'mol_per_L'),
-        reactantB: quantity(b, 'mol_per_L'),
-        extent: quantity(extent, 'mol_per_L'),
+        reactant_a: quantity(a, 'mol_per_L'),
+        reactant_b: quantity(b, 'mol_per_L'),
+        extent: quantity(extentOfReaction, 'mol_per_L'),
         heat: quantity(heatReleased, 'J'),
-        stoichiometricBalance: quantity(a + c, 'mol_per_L'),
+        stoichiometric_balance: quantity(a + c, 'mol_per_L'),
       },
     };
   },
 
   observe(state, context) {
     const s = state as VesselState;
-    const outputs = s.outputs ?? {};
-    const currentExtent = Math.abs(outputs.extent?.value ?? 0);
-    const previousExtent = s.__prev_extent ?? 0;
     const observations: Observation[] = [];
 
-    // Calculate the equilibrium extent based on the initial conditions and K.
-    // For A + B ⇌ C with initial concentrations a0, b0, the equilibrium extent
-    // satisfies: K = c / (a * b) where c = extent, a = a0 - extent, b = b0 - extent.
-    // Solving: K * (a0 - x) * (b0 - x) = x
-    // This gives a quadratic: K*x² - K*(a0+b0)*x + K*a0*b0 - x = 0
-    const a0 = s.__param_initial_a ?? 1;
-    const b0 = s.__param_initial_b ?? 1;
-    // Simplified: the max possible extent is min(a0, b0). At equilibrium, use the
-    // approximation that extent/K is small relative to initial concentrations.
-    const maxExtent = Math.min(a0, b0);
-
-    // Detect when the reaction rate becomes negligible (approaching equilibrium).
-    // The net rate is |forward - reverse|. When this is small compared to the
-    // initial forward rate, we're near equilibrium.
-    const netRate = Math.abs(currentExtent - previousExtent) / context.dt;
-    const initialForwardRate = (s.__param_rate_constant ?? 0.01) * a0 * b0;
-    const rateRatio = initialForwardRate > 0 ? netRate / initialForwardRate : 0;
-
-    // Report equilibrium once when rate drops below 1% of initial rate.
-    if (previousExtent !== 0 && rateRatio < 0.01 && currentExtent > 0) {
-      // Check if we already reported this (using a flag would be cleaner, but
-      // we detect it by checking if extent is already close to max).
-      const fractionReacted = currentExtent / maxExtent;
-      if (fractionReacted > 0.5) {
-        // Only report when we've made significant progress toward equilibrium.
-        observations.push({
-          time: context.time,
-          componentId: context.componentId,
-          severity: 'info',
-          code: 'chemistry.equilibrium',
-          message: 'The reaction has approached equilibrium.',
-        });
-      }
+    // The vessel has arrived at the equilibrium its constants describe.
+    // Reported once, on the step it happens.
+    if (s.__equilibriumJustReached) {
+      const equilibrium = equilibriumExtent(
+        s.__param_initial_a ?? 1,
+        s.__param_initial_b ?? 1,
+        s.__param_equilibrium_constant ?? 4,
+      );
+      observations.push({
+        time: context.time,
+        componentId: context.componentId,
+        severity: 'info',
+        code: 'chemistry.equilibrium',
+        message: `The reaction has reached equilibrium at ${equilibrium.toFixed(3)} mol/L.`,
+      });
     }
 
     return observations;

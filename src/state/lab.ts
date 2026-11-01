@@ -24,12 +24,15 @@ import type {
   ExperimentDefinition,
   Observation,
   ParameterValue,
+  TrackedSeries,
   PortRef,
   Quantity,
 } from '@/kernel/types';
 import { createBioCircuit } from '@/scenarios/biocircuit';
+import { findExperiment } from '@/scenarios';
 import { createWorld } from '@/world';
 import { LocalExplainProvider, type AssistantContext, type AssistantMessage } from '@/assistant/assistant';
+import { guardResponse } from '@/assistant/trust';
 
 export interface SeriesPoint {
   readonly t: number;
@@ -48,24 +51,40 @@ const SERIES_LIMIT = 600;
 export const DEFAULT_SPEED: Speed = 'slow';
 
 /**
- * Speed values in simulated hours per wall-clock second.
+ * How long a run takes on the wall clock, at each speed.
  *
- * The flagship is 576 simulated hours. Slow puts the alert about 29 seconds
- * in and the wilting about 56 seconds in, which is long enough to follow.
- * Fast gets to the end state in about six seconds.
+ * The speed is a target wall time for the whole experiment, not a fixed
+ * number of simulated hours per second. A chemistry experiment steps once a
+ * minute and the flagship steps once an hour, and both should take about the
+ * same time to watch. The rate is worked out from the experiment's own
+ * duration, so "slow" means the same thing for every experiment.
  */
-export const SPEED_VALUES: Record<Speed, number> = {
-  slow: 9, // 576 hours / 9 = 64 seconds
-  fast: 100, // 576 hours / 100 = 6 seconds
+export const SPEED_TARGET_SECONDS: Record<Speed, number> = {
+  slow: 64,
+  fast: 6,
 };
 
-/** Readings the panels and the chart care about, in the order they appear. */
-export const TRACKED_SERIES = [
-  { key: 'substrate.moisture', label: 'Available moisture' },
-  { key: 'sensor.signal', label: 'Probe reading' },
-  { key: 'plant.biomass', label: 'Biomass' },
-  { key: 'comparator.decision', label: 'Alert' },
+/**
+ * The readings the flagship follows, in the order they appear.
+ *
+ * Each experiment carries its own list. This is the flagship's.
+ */
+export const BIOCIRCUIT_SERIES = [
+  { key: 'substrate.moisture', label: 'Available moisture', colour: '#7bc96f' },
+  { key: 'sensor.signal', label: 'Probe reading', colour: '#4fd1c5' },
+  { key: 'plant.biomass', label: 'Biomass', colour: '#c2a084' },
+  { key: 'comparator.decision', label: 'Alert', colour: '#ef6461' },
 ] as const;
+
+/**
+ * The readings an experiment follows.
+ *
+ * An experiment that does not declare its own falls back to the flagship's,
+ * so an experiment nobody has thought about still shows something sensible.
+ */
+export function trackedSeriesFor(experiment: ExperimentDefinition): readonly TrackedSeries[] {
+  return experiment.trackedSeries ?? BIOCIRCUIT_SERIES;
+}
 
 /** A port on a component, as the bench refers to it. */
 export type { PortRef } from '@/kernel/types';
@@ -91,6 +110,10 @@ export interface LabStore {
   select(id: string | null): void;
   /** Pick out a wire on the bench. */
   selectConnection(id: string | null): void;
+  /** Open a different experiment from the catalogue. */
+  loadExperiment(id: string): void;
+  /** Change one of the experiment's environment variables. */
+  setEnvironmentVariable(id: string, value: number): void;
   start(): void;
   pause(): void;
   reset(): void;
@@ -135,7 +158,10 @@ interface Snapshot {
   readonly observations: readonly Observation[];
 }
 
-function takeSnapshot(simulation: Simulation): Snapshot {
+function takeSnapshot(
+  simulation: Simulation,
+  tracked: readonly TrackedSeries[],
+): Snapshot {
   const snap = simulation.snapshot();
 
   // readings: all outputs keyed by component.port
@@ -150,7 +176,7 @@ function takeSnapshot(simulation: Simulation): Snapshot {
   const seriesPoint: SeriesPoint = {
     t: simulation.elapsed,
     values: Object.fromEntries(
-      TRACKED_SERIES.map(({ key }) => {
+      tracked.map(({ key }) => {
         const [componentId, portId] = key.split('.');
         const value = snap.outputs[componentId!]?.[portId!];
         return [key, value?.value ?? 0];
@@ -202,12 +228,12 @@ function defaultParameters(definition: ComponentDefinition): Record<string, Para
 export const useLabStore = create<LabStore>((set, get) => {
   const experiment = createBioCircuit();
   const simulation = buildSimulation(experiment);
-  const initial = takeSnapshot(simulation);
+  const initial = takeSnapshot(simulation, trackedSeriesFor(experiment));
 
   /** Rebuild the simulation from an edited experiment and publish it. */
   const rebuild = (next: ExperimentDefinition) => {
     const fresh = buildSimulation(next);
-    const snap = takeSnapshot(fresh);
+    const snap = takeSnapshot(fresh, trackedSeriesFor(next));
     set({
       experiment: next,
       simulation: fresh,
@@ -244,6 +270,32 @@ export const useLabStore = create<LabStore>((set, get) => {
       set({ selectedConnectionId: id, selectedId: null });
     },
 
+    loadExperiment(id) {
+      const entry = findExperiment(id);
+      if (!entry) {
+        set({ notice: `There is no experiment called "${id}".` });
+        return;
+      }
+      rebuild(entry.create());
+      set({
+        selectedId: null,
+        selectedConnectionId: null,
+        notice: `${entry.name} is on the bench.`,
+      });
+    },
+
+    setEnvironmentVariable(id, value) {
+      const { experiment: current } = get();
+      const variable = current.environment.variables.find((v) => v.id === id);
+      if (!variable) return;
+
+      const variables = current.environment.variables.map((v) =>
+        v.id === id ? { ...v, value: { ...v.value, value } } : v,
+      );
+      rebuild({ ...current, environment: { ...current.environment, variables } });
+      set({ notice: `${variable.label} is now ${value} ${variable.value.unit}. The run has restarted.` });
+    },
+
     start() {
       if (get().status === 'complete') get().reset();
       set({ status: 'running' });
@@ -255,7 +307,7 @@ export const useLabStore = create<LabStore>((set, get) => {
 
     reset() {
       const fresh = buildSimulation(get().experiment);
-      const snap = takeSnapshot(fresh);
+      const snap = takeSnapshot(fresh, trackedSeriesFor(get().experiment));
       set({
         simulation: fresh,
         status: 'idle',
@@ -279,7 +331,7 @@ export const useLabStore = create<LabStore>((set, get) => {
         current.tick();
       }
 
-      const snap = takeSnapshot(current);
+      const snap = takeSnapshot(current, trackedSeriesFor(get().experiment));
       const next = [...series, snap.seriesPoint];
       set({
         elapsed: current.elapsed,
@@ -323,7 +375,7 @@ export const useLabStore = create<LabStore>((set, get) => {
         set({ experiment: next });
 
         // Publish updated readings without advancing the simulation.
-        const snap = takeSnapshot(current);
+        const snap = takeSnapshot(current, trackedSeriesFor(get().experiment));
         set({ readings: snap.readings });
 
         // Return false to indicate no restart happened.
@@ -510,13 +562,25 @@ export const useLabStore = create<LabStore>((set, get) => {
       };
 
       const provider = new LocalExplainProvider();
-      const reply = await provider.respond({
+      const rawReply = await provider.respond({
         messages: [...get().messages],
         context,
       });
 
+      // Every reply goes through the trust guard, whatever produced it. The
+      // guard removes numbers the simulation did not produce and ends the
+      // answer with what it is worth trusting for.
+      const guarded = guardResponse(rawReply, context);
+
       set({
-        messages: [...get().messages, { role: 'assistant', content: reply }],
+        messages: [
+          ...get().messages,
+          {
+            role: 'assistant',
+            content: guarded.text,
+            confidence: guarded.trust.level,
+          },
+        ],
         assistantBusy: false,
       });
     },

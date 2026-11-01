@@ -198,6 +198,7 @@ const VISUAL_SOURCES: Readonly<Record<string, string>> = {
   'electronics.sensor': 'signal',
   'electronics.comparator': 'decision',
   'electronics.led': 'brightness',
+  'chemistry.reaction-vessel': 'product',
 };
 
 interface ComponentNode {
@@ -945,6 +946,19 @@ export class LabScene {
           for (const material of node.emissiveMaterials) {
             material.emissiveIntensity = decision * 1.6;
             material.emissive.set(decision > 0.5 ? 0xff8f5e : 0x1b2740);
+          }
+          break;
+        }
+        case 'chemistry.reaction-vessel': {
+          // An empty vessel is pale glass. As the product builds, the liquid
+          // takes on its colour.
+          const product = Math.min(1, (value ?? 0) / 0.7);
+          const empty = new THREE.Color(0x9fb4c7);
+          const full = new THREE.Color(0xf0b350);
+          const colour = empty.clone().lerp(full, product);
+          for (const material of node.emissiveMaterials) {
+            material.color.copy(colour);
+            material.emissiveIntensity = product * 0.35;
           }
           break;
         }

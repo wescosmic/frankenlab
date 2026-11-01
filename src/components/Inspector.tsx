@@ -31,6 +31,59 @@ const CONFIDENCE_COPY: Record<string, { label: string; blurb: string }> = {
   },
 };
 
+/**
+ * The experiment's environment.
+ *
+ * Some parts of an experiment are driven by the world around them rather
+ * than by another part on the bench. The temperature a reaction vessel runs
+ * at is one of those. The section shows whatever the current experiment
+ * actually declares, so an experiment with no environment does not get one.
+ */
+function EnvironmentPanel() {
+  const experiment = useLabStore((s) => s.experiment);
+  const setEnvironmentVariable = useLabStore((s) => s.setEnvironmentVariable);
+  const variables = experiment.environment.variables;
+
+  if (variables.length === 0) return null;
+
+  return (
+    <div className="border-b border-lab-line px-4 py-3">
+      <div className="lab-label">Environment</div>
+      <div className="mt-2 space-y-3">
+        {variables.map((variable) => {
+          const min = variable.min.value;
+          const max = variable.max.value;
+          const value = variable.value.value;
+          return (
+            <label key={variable.id} className="block">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-[12px] text-lab-muted">{variable.label}</span>
+                <span className="lab-value text-[12px] text-lab-text">
+                  {Number(value.toFixed(2))} {variable.value.unit}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={min}
+                max={max}
+                step={(max - min) / 100 || 1}
+                value={value}
+                onChange={(event) =>
+                  setEnvironmentVariable(variable.id, Number(event.target.value))
+                }
+                className="mt-1.5 w-full accent-[var(--color-lab-accent)]"
+              />
+              <p className="mt-1 text-[11px] leading-snug text-lab-dim">
+                {variable.description}
+              </p>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function Inspector() {
   const experiment = useLabStore((s) => s.experiment);
   const registry = useLabStore((s) => s.registry);
@@ -85,6 +138,8 @@ export function Inspector() {
           </p>
         </div>
 
+        <EnvironmentPanel />
+
         <div className="px-4 py-3">
           <button
             type="button"
@@ -103,12 +158,15 @@ export function Inspector() {
 
   if (!instance || !definition) {
     return (
-      <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-        <div className="lab-label">Nothing selected</div>
-        <p className="mt-2 text-[13px] leading-relaxed text-lab-dim">
-          Pick a component on the bench or from the library to see how it behaves
-          and what it assumes.
-        </p>
+      <div className="flex h-full flex-col overflow-y-auto">
+        <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+          <div className="lab-label">Nothing selected</div>
+          <p className="mt-2 text-[13px] leading-relaxed text-lab-dim">
+            Pick a component on the bench or from the library to see how it behaves
+            and what it assumes.
+          </p>
+        </div>
+        <EnvironmentPanel />
       </div>
     );
   }
@@ -123,6 +181,7 @@ export function Inspector() {
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
+      <EnvironmentPanel />
       <div className="border-b border-lab-line px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full" style={{ background: colour }} aria-hidden />

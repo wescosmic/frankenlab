@@ -61,6 +61,12 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
     // recovery off mid-sentence.
     duration: 86400 * 24, // twenty-four simulated days
     seed,
+    trackedSeries: [
+      { key: 'substrate.moisture', label: 'Available moisture', colour: '#7bc96f' },
+      { key: 'sensor.signal', label: 'Probe reading', colour: '#4fd1c5' },
+      { key: 'plant.biomass', label: 'Biomass', colour: '#c2a084' },
+      { key: 'comparator.decision', label: 'Alert', colour: '#ef6461' },
+    ],
     components: [
       {
         id: 'substrate',

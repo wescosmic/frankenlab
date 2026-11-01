@@ -8,7 +8,7 @@
  */
 
 import { useState } from 'react';
-import { useLabStore, TRACKED_SERIES } from '@/state/lab';
+import { useLabStore, trackedSeriesFor } from '@/state/lab';
 
 const SERIES_COLOURS: Record<string, string> = {
   'substrate.moisture': '#7bc96f',
@@ -35,6 +35,8 @@ function formatElapsed(seconds: number): string {
 
 function SeriesChart() {
   const series = useLabStore((s) => s.series);
+  const experiment = useLabStore((s) => s.experiment);
+  const tracked = trackedSeriesFor(experiment);
   const width = 620;
   const height = 132;
   const padding = 4;
@@ -51,17 +53,31 @@ function SeriesChart() {
   const last = series.at(-1)!.t;
   const span = Math.max(1, last - first);
 
-  const pathFor = (key: string): string =>
-    series
+  // Each series is drawn against its own largest value, so a chart of molar
+  // concentrations fills the same space as a chart of ratios. The number is
+  // not changed — only where the line is drawn.
+  const peakFor = (key: string): number => {
+    let peak = 0;
+    for (const point of series) {
+      const value = point.values[key];
+      if (value !== undefined && value > peak) peak = value;
+    }
+    return peak > 0 ? peak : 1;
+  };
+
+  const pathFor = (key: string): string => {
+    const peak = peakFor(key);
+    return series
       .map((point, index) => {
         const value = point.values[key];
         if (value === undefined) return '';
         const x = padding + ((point.t - first) / span) * (width - padding * 2);
-        const y = height - padding - value * (height - padding * 2);
+        const y = height - padding - (value / peak) * (height - padding * 2);
         return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
       })
       .filter(Boolean)
       .join(' ');
+  };
 
   return (
     <svg
@@ -82,12 +98,12 @@ function SeriesChart() {
         />
       ))}
 
-      {TRACKED_SERIES.map(({ key }) => (
+      {tracked.map(({ key, colour }) => (
         <path
           key={key}
           d={pathFor(key)}
           fill="none"
-          stroke={SERIES_COLOURS[key]}
+          stroke={colour ?? SERIES_COLOURS[key] ?? '#4fd1c5'}
           strokeWidth={1.6}
           strokeLinejoin="round"
           strokeLinecap="round"
@@ -99,25 +115,27 @@ function SeriesChart() {
 
 function ReadingsTab() {
   const readings = useLabStore((s) => s.readings);
+  const experiment = useLabStore((s) => s.experiment);
+  const tracked = trackedSeriesFor(experiment);
 
   return (
     <>
       <div className="grid grid-cols-2 gap-px bg-lab-line md:grid-cols-4">
-        {TRACKED_SERIES.map(({ key, label }) => {
+        {tracked.map(({ key, label, colour }) => {
           const quantity = readings[key];
           const value = quantity?.value ?? 0;
-          const colour = SERIES_COLOURS[key] ?? '#4fd1c5';
+          const tone = colour ?? SERIES_COLOURS[key] ?? '#4fd1c5';
 
           return (
             <div key={key} className="bg-lab-panel px-4 py-3">
               <div className="lab-label">{label}</div>
-              <div className="lab-value mt-1 text-[20px] leading-none" style={{ color: colour }}>
+              <div className="lab-value mt-1 text-[20px] leading-none" style={{ color: tone }}>
                 {value.toFixed(3)}
               </div>
               <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-lab-line">
                 <div
                   className="h-full rounded-full transition-[width] duration-150"
-                  style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%`, background: colour }}
+                  style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%`, background: tone }}
                 />
               </div>
             </div>

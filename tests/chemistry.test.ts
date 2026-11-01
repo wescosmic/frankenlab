@@ -12,7 +12,7 @@
 import { describe, expect, it } from 'vitest';
 import { createTestRegistry } from './world';
 import { Simulation } from '../src/kernel/simulator';
-import { arrheniusRate, chemistryEngine } from '../src/engines/chemistry/engine';
+import { arrheniusRate, chemistryEngine, equilibriumExtent } from '../src/engines/chemistry/engine';
 import { validateExperiment } from '../src/kernel/validate';
 import type { ExperimentDefinition } from '../src/kernel/types';
 
@@ -105,7 +105,7 @@ describe('the reaction', () => {
     const result = new Simulation(createVessel(), registry).run();
 
     for (const point of result.dataPoints) {
-      const balance = point.values['vessel.stoichiometricBalance']!.value;
+      const balance = point.values['vessel.stoichiometric_balance']!.value;
       // A + B ⇌ C takes one A and one B for every C it makes, so A + C is
       // the quantity that must not change. The plain sum of concentrations
       // does fall, because two moles become one.
@@ -154,12 +154,79 @@ describe('the reaction', () => {
 
     for (const point of result.dataPoints) {
       expect(point.values['vessel.product']!.value).toBeGreaterThanOrEqual(0);
-      expect(point.values['vessel.reactantA']!.value).toBeGreaterThanOrEqual(0);
-      expect(point.values['vessel.reactantB']!.value).toBeGreaterThanOrEqual(0);
+      expect(point.values['vessel.reactant_a']!.value).toBeGreaterThanOrEqual(0);
+      expect(point.values['vessel.reactant_b']!.value).toBeGreaterThanOrEqual(0);
       // B + C is conserved on the B side: 5 + 0.
-      const bSide = point.values['vessel.reactantB']!.value + point.values['vessel.product']!.value;
+      const bSide = point.values['vessel.reactant_b']!.value + point.values['vessel.product']!.value;
       expect(bSide).toBeCloseTo(5, 9);
     }
+  });
+
+  it('publishes the extent as a total, not a per-step increment', () => {
+    const result = new Simulation(createVessel(), registry).run();
+    const extents = result.dataPoints.map((point) => point.values['vessel.extent']!.value);
+
+    // The extent is how far the reaction has moved from the starting
+    // mixture, so it only ever grows on a forward reaction.
+    for (let index = 1; index < extents.length; index += 1) {
+      expect(extents[index]!).toBeGreaterThan(extents[index - 1]!);
+    }
+    // And it ends at the product concentration, because the vessel started
+    // with no product at all.
+    expect(extents.at(-1)!).toBeCloseTo(result.measurements['vessel.product']!.value, 9);
+  });
+});
+
+describe('the equilibrium extent', () => {
+  it('satisfies the mass-action law it is solved from', () => {
+    for (const [a0, b0, k] of [
+      [1, 1, 4],
+      [1, 5, 4],
+      [0.5, 0.5, 1],
+      [1, 1, 1000],
+    ] as const) {
+      const x = equilibriumExtent(a0, b0, k);
+      const a = a0 - x;
+      const b = b0 - x;
+      const c = x;
+      // K = c / (a * b)
+      expect(c / (a * b)).toBeCloseTo(k, 6);
+    }
+  });
+
+  it('is never larger than the smaller starting concentration', () => {
+    expect(equilibriumExtent(1, 5, 4)).toBeLessThanOrEqual(1);
+    expect(equilibriumExtent(0.2, 0.8, 50)).toBeLessThanOrEqual(0.2);
+  });
+
+  it('does not depend on the rate constant or the catalyst', () => {
+    // This is the whole point of the catalysis experiment: the catalyst
+    // changes the rate constant, and the equilibrium cannot move.
+    const plain = new Simulation(
+      createVessel({ rateConstant: 0.0002 }),
+      registry,
+    ).run();
+    const fast = new Simulation(
+      createVessel({ rateConstant: 0.002 }),
+      registry,
+    ).run();
+
+    // Both are heading for the same place; the faster one just gets there
+    // sooner.
+    expect(equilibriumExtent(1, 1, 4)).toBeCloseTo(0.6096118, 7);
+    expect(plain.dataPoints.at(-1)!.values['vessel.product']!.value).toBeLessThan(0.609611);
+    expect(fast.dataPoints.at(-1)!.values['vessel.product']!.value).toBeGreaterThan(
+      plain.dataPoints.at(-1)!.values['vessel.product']!.value,
+    );
+  });
+
+  it('is reported as an observation when the vessel arrives', () => {
+    const result = new Simulation(
+      createVessel({ rateConstant: 0.05, dt: 1, duration: 300 }),
+      registry,
+    ).run();
+    const codes = result.observations.map((observation) => observation.code);
+    expect(codes).toContain('chemistry.equilibrium');
   });
 });
 

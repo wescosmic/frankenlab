@@ -135,6 +135,7 @@ export const UNITS: readonly UnitDefinition[] = [
   { id: 'mL', symbol: 'mL', dimension: base(0, 3, 0, 0, 0, 0, 0), factor: 1e-6, description: 'Millilitre.' },
   { id: 'mol_per_L', symbol: 'mol/L', dimension: base(0, -3, 0, 0, 0, 1, 0), factor: 1000, description: 'Molar concentration.' },
   { id: 'mmol_per_L', symbol: 'mmol/L', dimension: base(0, -3, 0, 0, 0, 1, 0), factor: 1, description: 'Millimolar concentration.' },
+  { id: 'g_per_mol', symbol: 'g/mol', dimension: base(1, 0, 0, 0, 0, -1, 0), factor: 0.001, description: 'Molar mass.' },
 
   // --- Energy ---
   { id: 'J', symbol: 'J', dimension: base(1, 2, -2, 0, 0, 0, 0), factor: 1, description: 'Joule.' },

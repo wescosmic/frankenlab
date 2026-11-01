@@ -11,6 +11,7 @@
 import { useLabStore } from '@/state/lab';
 import { DISCIPLINE_COLOURS, DISCIPLINE_ORDER } from '@/world';
 import { DRAG_TYPE } from '@/drag';
+import { EXPERIMENTS } from '@/scenarios';
 
 const CONFIDENCE_LABEL: Record<string, string> = {
   'physical-law': 'Physical law',
@@ -24,6 +25,7 @@ export function Library() {
   const experiment = useLabStore((s) => s.experiment);
   const selectedId = useLabStore((s) => s.selectedId);
   const select = useLabStore((s) => s.select);
+  const loadExperiment = useLabStore((s) => s.loadExperiment);
 
   const disciplines = registry.listDisciplines().filter((d) => d.id !== '__couplings__');
   const ordered = [
@@ -35,6 +37,48 @@ export function Library() {
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-lab-line bg-lab-panel">
+      <div className="border-b border-lab-line px-4 py-3">
+        <div className="lab-label">Experiments</div>
+        <p className="mt-1 text-[13px] leading-snug text-lab-muted">
+          One bench, several sciences. Open one and run it.
+        </p>
+      </div>
+
+      <div className="border-b border-lab-line px-2 py-2">
+        {EXPERIMENTS.map((entry) => {
+          const active = experiment.id === entry.id;
+          return (
+            <button
+              key={entry.id}
+              type="button"
+              onClick={() => loadExperiment(entry.id)}
+              title={entry.summary}
+              className={[
+                'mb-1 w-full rounded-md border px-2.5 py-2 text-left transition-colors',
+                active
+                  ? 'border-lab-accent/60 bg-lab-accent/10'
+                  : 'border-transparent hover:border-lab-line hover:bg-lab-panel-raised',
+              ].join(' ')}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[13px] text-lab-text">{entry.name}</span>
+                <span className="flex gap-1">
+                  {entry.disciplines.map((discipline) => (
+                    <span
+                      key={discipline}
+                      className="h-2 w-2 rounded-full"
+                      style={{ background: DISCIPLINE_COLOURS[discipline] ?? '#4fd1c5' }}
+                      aria-hidden
+                    />
+                  ))}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] leading-snug text-lab-dim">{entry.summary}</p>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="border-b border-lab-line px-4 py-3">
         <div className="lab-label">Components</div>
         <p className="mt-1 text-[13px] leading-snug text-lab-muted">

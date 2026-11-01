@@ -18,6 +18,7 @@ import type { ComponentRegistry } from '../kernel/registry';
 import { validateExperiment } from '../kernel/validate';
 import type {
   ComponentDefinition,
+  ConfidenceLevel,
   ExperimentDefinition,
   SimulationResult,
 } from '../kernel/types';
@@ -36,6 +37,13 @@ export interface AssistantContext {
 export interface AssistantMessage {
   readonly role: 'user' | 'assistant';
   readonly content: string;
+  /**
+   * The confidence of the weakest model behind an assistant reply.
+   *
+   * Set by the trust guard, so the panel can show it without reading the
+   * text. Absent on user messages.
+   */
+  readonly confidence?: ConfidenceLevel;
 }
 
 /** A tool the assistant may call. */
@@ -503,35 +511,8 @@ function explainCouplings(context: AssistantContext): string {
  *
  * A response that mentions a measurement must only mention measurements that
  * exist in the result. Used by the provider layer and by the test suite.
+ *
+ * The implementation lives in the trust guard, because the guard and this
+ * check have to agree on what "a number the experiment contains" means.
  */
-export function findUnsupportedNumbers(
-  response: string,
-  context: AssistantContext,
-): string[] {
-  const result = context.latestResult;
-  const allowed = new Set<string>();
-
-  if (result) {
-    for (const value of Object.values(result.measurements)) {
-      allowed.add(String(value.value));
-      allowed.add(value.value.toFixed(2));
-    }
-    for (const point of result.dataPoints) {
-      for (const value of Object.values(point.values)) {
-        allowed.add(String(value.value));
-        allowed.add(value.value.toFixed(2));
-      }
-    }
-  }
-
-  const candidates = response.match(/-?\d+(?:\.\d+)?/g) ?? [];
-  const suspicious = candidates.filter((token) => {
-    const numeric = Number(token);
-    if (!Number.isFinite(numeric)) return false;
-    if (Math.abs(numeric) <= 1) return false; // small integers are usually prose
-    if (allowed.has(token)) return false;
-    return true;
-  });
-
-  return [...new Set(suspicious)];
-}
+export { findUnsupportedNumbers } from './trust';

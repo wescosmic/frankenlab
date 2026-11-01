@@ -334,6 +334,25 @@ export interface ExperimentDefinition {
   readonly seed: number;
   /** Version of the engine bundle that produced this experiment. */
   readonly modelVersion: string;
+  /**
+   * The readings this experiment's chart follows.
+   *
+   * Each experiment watches different things, so the list belongs to the
+   * experiment rather than to the product. A chemistry experiment tracks the
+   * concentration in each vessel; the flagship tracks the moisture, the probe
+   * reading, the biomass and the alert.
+   */
+  readonly trackedSeries?: readonly TrackedSeries[];
+}
+
+/** One reading on the live chart. */
+export interface TrackedSeries {
+  /** The measurement key, `component.port`. */
+  readonly key: string;
+  /** The label shown beside it. */
+  readonly label: string;
+  /** The colour the line is drawn in. */
+  readonly colour?: string;
 }
 
 /** Options for a simulation run. */
