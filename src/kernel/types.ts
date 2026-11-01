@@ -259,6 +259,17 @@ export interface Connection {
   readonly notes?: string;
 }
 
+/**
+ * A port on a component, as the bench refers to it.
+ *
+ * The workbench draws and drags ports, and the store's wiring intent takes
+ * them, so the reference lives in the kernel rather than in either of them.
+ */
+export interface PortRef {
+  readonly componentId: string;
+  readonly portId: string;
+}
+
 /** A recorded observation emitted by the simulation. */
 export interface Observation {
   readonly time: number;

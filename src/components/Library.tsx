@@ -10,6 +10,7 @@
 
 import { useLabStore } from '@/state/lab';
 import { DISCIPLINE_COLOURS, DISCIPLINE_ORDER } from '@/world';
+import { DRAG_TYPE } from '@/drag';
 
 const CONFIDENCE_LABEL: Record<string, string> = {
   'physical-law': 'Physical law',
@@ -37,7 +38,7 @@ export function Library() {
       <div className="border-b border-lab-line px-4 py-3">
         <div className="lab-label">Components</div>
         <p className="mt-1 text-[13px] leading-snug text-lab-muted">
-          The parts you can put on the bench.
+          Drag a part onto the bench to add it.
         </p>
       </div>
 
@@ -66,9 +67,17 @@ export function Library() {
                     <li key={definition.type}>
                       <button
                         type="button"
+                        draggable
+                        onDragStart={(event) => {
+                          // The bench takes the part type and puts a part of
+                          // that type where it is dropped.
+                          event.dataTransfer.setData(DRAG_TYPE, definition.type);
+                          event.dataTransfer.effectAllowed = 'copy';
+                        }}
                         onClick={() => select(used[0]?.id ?? null)}
+                        title={`Drag onto the bench to add a ${definition.name}`}
                         className={[
-                          'w-full rounded-md border px-2.5 py-2 text-left transition-colors',
+                          'w-full cursor-grab rounded-md border px-2.5 py-2 text-left transition-colors active:cursor-grabbing',
                           active
                             ? 'border-lab-accent/60 bg-lab-accent/10'
                             : 'border-transparent hover:border-lab-line hover:bg-lab-panel-raised',

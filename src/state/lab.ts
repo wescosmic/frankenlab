@@ -15,7 +15,18 @@
 import { create } from 'zustand';
 import { Simulation } from '@/kernel/simulator';
 import type { ComponentRegistry } from '@/kernel/registry';
-import type { DataPoint, ExperimentDefinition, Observation, Quantity } from '@/kernel/types';
+import { validateConnection } from '@/kernel/validate';
+import type {
+  ComponentDefinition,
+  ComponentInstance,
+  Connection,
+  DataPoint,
+  ExperimentDefinition,
+  Observation,
+  ParameterValue,
+  PortRef,
+  Quantity,
+} from '@/kernel/types';
 import { createBioCircuit } from '@/scenarios/biocircuit';
 import { createWorld } from '@/world';
 import { LocalExplainProvider, type AssistantContext, type AssistantMessage } from '@/assistant/assistant';
@@ -56,6 +67,9 @@ export const TRACKED_SERIES = [
   { key: 'comparator.decision', label: 'Alert' },
 ] as const;
 
+/** A port on a component, as the bench refers to it. */
+export type { PortRef } from '@/kernel/types';
+
 export interface LabStore {
   readonly experiment: ExperimentDefinition;
   readonly registry: ComponentRegistry;
@@ -68,10 +82,15 @@ export interface LabStore {
   readonly series: readonly SeriesPoint[];
   readonly observations: readonly Observation[];
   readonly selectedId: string | null;
+  readonly selectedConnectionId: string | null;
   readonly messages: readonly AssistantMessage[];
   readonly assistantBusy: boolean;
+  /** A plain-English note about the last thing the user tried to do. */
+  readonly notice: string | null;
 
   select(id: string | null): void;
+  /** Pick out a wire on the bench. */
+  selectConnection(id: string | null): void;
   start(): void;
   pause(): void;
   reset(): void;
@@ -81,6 +100,15 @@ export interface LabStore {
   /** @returns true if the run was restarted, false if it was a live update. */
   setParameter(componentId: string, parameterId: string, value: number): boolean;
   setSubstrate(substrate: 'sandy' | 'loamy' | 'clay' | 'hydrogel'): void;
+  /** Put a new part on the bench. @returns the new component's id. */
+  addComponent(type: string, position: { x: number; y: number; z: number }): string | null;
+  /** Wire two ports together. @returns true if the connection was made. */
+  connect(source: PortRef, target: PortRef): boolean;
+  /** Take a part off the bench, and any wire that was attached to it. */
+  removeComponent(id: string): void;
+  /** Cut a wire. */
+  removeConnection(id: string): void;
+  dismissNotice(): void;
   ask(question: string): Promise<void>;
 }
 
@@ -136,6 +164,41 @@ function takeSnapshot(simulation: Simulation): Snapshot {
   return { readings, seriesPoint, observations };
 }
 
+/** A short, readable name for a component type: `materials.substrate` becomes `substrate`. */
+function shortName(type: string): string {
+  return type.split('.').pop() ?? type;
+}
+
+/** A component id that is not already on the bench. */
+function uniqueComponentId(experiment: ExperimentDefinition, type: string): string {
+  const base = shortName(type);
+  const taken = new Set(experiment.components.map((c) => c.id));
+  if (!taken.has(base)) return base;
+  let n = 2;
+  while (taken.has(`${base}-${n}`)) n += 1;
+  return `${base}-${n}`;
+}
+
+/** A connection id that is not already on the bench. */
+function uniqueConnectionId(experiment: ExperimentDefinition): string {
+  const taken = new Set(experiment.connections.map((c) => c.id));
+  let n = 1;
+  while (taken.has(`c-user-${n}`)) n += 1;
+  return `c-user-${n}`;
+}
+
+/** The default parameter values for a part, taken from its definition. */
+function defaultParameters(definition: ComponentDefinition): Record<string, ParameterValue> {
+  const parameters: Record<string, ParameterValue> = {};
+  for (const parameter of definition.parameters) {
+    parameters[parameter.id] = {
+      value: parameter.defaultValue,
+      ...(parameter.unit ? { unit: parameter.unit } : {}),
+    };
+  }
+  return parameters;
+}
+
 export const useLabStore = create<LabStore>((set, get) => {
   const experiment = createBioCircuit();
   const simulation = buildSimulation(experiment);
@@ -168,11 +231,17 @@ export const useLabStore = create<LabStore>((set, get) => {
     series: [initial.seriesPoint],
     observations: initial.observations,
     selectedId: null,
+    selectedConnectionId: null,
     messages: [],
     assistantBusy: false,
+    notice: null,
 
     select(id) {
-      set({ selectedId: id });
+      set({ selectedId: id, selectedConnectionId: null });
+    },
+
+    selectConnection(id) {
+      set({ selectedConnectionId: id, selectedId: null });
     },
 
     start() {
@@ -293,6 +362,117 @@ export const useLabStore = create<LabStore>((set, get) => {
           : component,
       );
       rebuild({ ...current, components });
+    },
+
+    addComponent(type, position) {
+      const { experiment: current, registry: reg } = get();
+      const definition = reg.tryGetDefinition(type);
+      if (!definition) {
+        set({ notice: `There is no part called "${type}".` });
+        return null;
+      }
+
+      const instance: ComponentInstance = {
+        id: uniqueComponentId(current, type),
+        type,
+        parameters: defaultParameters(definition),
+        position,
+      };
+
+      rebuild({ ...current, components: [...current.components, instance] });
+      set({
+        selectedId: instance.id,
+        notice: `${definition.name} is on the bench. The run has restarted.`,
+      });
+      return instance.id;
+    },
+
+    connect(source, target) {
+      const { experiment: current, registry: reg } = get();
+
+      // The bench and the simulator must agree about what a legal wire is, so
+      // the bench asks the kernel's own validator.
+      const issues = validateConnection(current, reg, source, target);
+      const errors = issues.filter((issue) => issue.severity === 'error');
+      if (errors.length > 0) {
+        set({ notice: errors.map((error) => error.message).join(' ') });
+        return false;
+      }
+
+      const sourceInstance = current.components.find((c) => c.id === source.componentId);
+      const targetInstance = current.components.find((c) => c.id === target.componentId);
+      if (!sourceInstance || !targetInstance) {
+        set({ notice: 'That connection refers to a part that is not on the bench.' });
+        return false;
+      }
+
+      const sourceDefinition = reg.tryGetDefinition(sourceInstance.type);
+      const targetDefinition = reg.tryGetDefinition(targetInstance.type);
+      const sourcePort = sourceDefinition?.ports.find((p) => p.id === source.portId);
+      const targetPort = targetDefinition?.ports.find((p) => p.id === target.portId);
+      if (!sourceDefinition || !targetDefinition || !sourcePort || !targetPort) {
+        set({ notice: 'That connection refers to a port that does not exist.' });
+        return false;
+      }
+
+      const rule = reg.findRule(
+        { discipline: sourceDefinition.discipline, channel: sourcePort.channel },
+        { discipline: targetDefinition.discipline, channel: targetPort.channel },
+      );
+      if (!rule) {
+        set({
+          notice:
+            `No defined transfer exists from ${sourceDefinition.name} to ` +
+            `${targetDefinition.name}. These disciplines cannot be coupled directly.`,
+        });
+        return false;
+      }
+
+      const connection: Connection = {
+        id: uniqueConnectionId(current),
+        source,
+        target,
+        channel: sourcePort.channel,
+        transfer: rule.transfer,
+      };
+
+      rebuild({ ...current, connections: [...current.connections, connection] });
+      set({ notice: 'Wired. The run has restarted.' });
+      return true;
+    },
+
+    removeComponent(id) {
+      const { experiment: current } = get();
+      const instance = current.components.find((c) => c.id === id);
+      if (!instance) return;
+
+      rebuild({
+        ...current,
+        components: current.components.filter((c) => c.id !== id),
+        connections: current.connections.filter(
+          (c) => c.source.componentId !== id && c.target.componentId !== id,
+        ),
+      });
+      set({
+        selectedId: null,
+        selectedConnectionId: null,
+        notice: `${instance.label ?? instance.type} taken off the bench. The run has restarted.`,
+      });
+    },
+
+    removeConnection(id) {
+      const { experiment: current } = get();
+      if (!current.connections.some((c) => c.id === id)) return;
+
+      rebuild({
+        ...current,
+        connections: current.connections.filter((c) => c.id !== id),
+      });
+      set({ selectedConnectionId: null, notice: 'Wire cut. The run has restarted.' });
+    },
+
+    dismissNotice() {
+      set({ notice: null });
     },
 
     async ask(question) {

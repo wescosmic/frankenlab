@@ -22,6 +22,8 @@ export function Lab() {
   const experiment = useLabStore((s) => s.experiment);
   const status = useLabStore((s) => s.status);
   const speed = useLabStore((s) => s.speed);
+  const notice = useLabStore((s) => s.notice);
+  const dismissNotice = useLabStore((s) => s.dismissNotice);
   const start = useLabStore((s) => s.start);
   const pause = useLabStore((s) => s.pause);
   const reset = useLabStore((s) => s.reset);
@@ -103,8 +105,23 @@ export function Lab() {
         <main className="flex min-w-0 flex-1 flex-col">
           <div className="relative min-h-0 flex-1">
             <Workbench />
+            {notice && (
+              <div
+                role="status"
+                className="absolute bottom-10 left-1/2 flex max-w-lg -translate-x-1/2 items-start gap-3 rounded-md border border-lab-accent/40 bg-lab-panel/95 px-3 py-2 text-[12px] leading-snug text-lab-text shadow-lg"
+              >
+                <span className="flex-1">{notice}</span>
+                <button
+                  type="button"
+                  onClick={dismissNotice}
+                  className="shrink-0 text-[11px] uppercase tracking-wider text-lab-dim transition-colors hover:text-lab-text"
+                >
+                  Close
+                </button>
+              </div>
+            )}
             <div className="pointer-events-none absolute bottom-3 left-3 rounded-md border border-lab-line bg-lab-void/70 px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-lab-dim">
-              Drag to orbit · scroll to zoom · click a part to inspect it
+              Drag a part in · drag between the dots to wire · drag to orbit
             </div>
           </div>
           <Readouts />

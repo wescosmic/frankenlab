@@ -45,14 +45,24 @@ export function Workbench() {
   const experiment = useLabStore((s) => s.experiment);
   const registry = useLabStore((s) => s.registry);
   const selectedId = useLabStore((s) => s.selectedId);
+  const selectedConnectionId = useLabStore((s) => s.selectedConnectionId);
   const select = useLabStore((s) => s.select);
+  const selectConnection = useLabStore((s) => s.selectConnection);
+  const connect = useLabStore((s) => s.connect);
+  const addComponent = useLabStore((s) => s.addComponent);
 
   // Build the scene once.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const scene = new LabScene({ container, onSelect: (id) => select(id) });
+    const scene = new LabScene({
+      container,
+      onSelect: (id) => select(id),
+      onConnect: (source, target) => connect(source, target),
+      onDropComponent: (type, position) => addComponent(type, position),
+      onSelectConnection: (id) => selectConnection(id),
+    });
     sceneRef.current = scene;
 
     const handleResize = () => scene.resize();
@@ -115,7 +125,7 @@ export function Workbench() {
       scene.dispose();
       sceneRef.current = null;
     };
-  }, [select]);
+  }, [select, selectConnection, connect, addComponent]);
 
   // Rebuild the bench when the experiment changes.
   useEffect(() => {
@@ -125,6 +135,10 @@ export function Workbench() {
   useEffect(() => {
     sceneRef.current?.setSelection(selectedId);
   }, [selectedId]);
+
+  useEffect(() => {
+    sceneRef.current?.setSelectedConnection(selectedConnectionId);
+  }, [selectedConnectionId]);
 
   return <div ref={containerRef} className="absolute inset-0" />;
 }

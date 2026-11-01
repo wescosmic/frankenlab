@@ -9,6 +9,7 @@
 import type { ComponentRegistry } from './registry';
 import type {
   ComponentInstance,
+  Connection,
   Environment,
   ExperimentDefinition,
   ValidationIssue,
@@ -126,106 +127,7 @@ function validateConnections(
 
   for (const connection of experiment.connections) {
     if (issues.length > MAX_CONNECTION_ERRORS) break;
-
-    const sourceInstance = byId.get(connection.source.componentId);
-    const targetInstance = byId.get(connection.target.componentId);
-
-    if (!sourceInstance || !targetInstance) {
-      issues.push({
-        severity: 'error',
-        code: 'connection-dangling',
-        message: `Connection "${connection.id}" references a component that does not exist.`,
-        connectionId: connection.id,
-      });
-      continue;
-    }
-
-    const sourceDefinition = registry.tryGetDefinition(sourceInstance.type);
-    const targetDefinition = registry.tryGetDefinition(targetInstance.type);
-    if (!sourceDefinition || !targetDefinition) continue;
-
-    const sourcePort = sourceDefinition.ports.find((p) => p.id === connection.source.portId);
-    const targetPort = targetDefinition.ports.find((p) => p.id === connection.target.portId);
-
-    if (!sourcePort) {
-      issues.push({
-        severity: 'error',
-        code: 'unknown-source-port',
-        message: `Connection "${connection.id}" uses a port "${connection.source.portId}" that ${sourceDefinition.name} does not have.`,
-        connectionId: connection.id,
-      });
-      continue;
-    }
-    if (!targetPort) {
-      issues.push({
-        severity: 'error',
-        code: 'unknown-target-port',
-        message: `Connection "${connection.id}" uses a port "${connection.target.portId}" that ${targetDefinition.name} does not have.`,
-        connectionId: connection.id,
-      });
-      continue;
-    }
-
-    if (sourcePort.direction === 'input') {
-      issues.push({
-        severity: 'error',
-        code: 'source-port-is-input',
-        message: `Connection "${connection.id}" reads from "${sourcePort.label}", which is an input on ${sourceDefinition.name}.`,
-        connectionId: connection.id,
-      });
-    }
-    if (targetPort.direction === 'output') {
-      issues.push({
-        severity: 'error',
-        code: 'target-port-is-output',
-        message: `Connection "${connection.id}" writes into "${targetPort.label}", which is an output on ${targetDefinition.name}.`,
-        connectionId: connection.id,
-      });
-    }
-
-    const rule = registry.findRule(
-      { discipline: sourceDefinition.discipline, channel: sourcePort.channel },
-      { discipline: targetDefinition.discipline, channel: targetPort.channel },
-    );
-
-    if (!rule) {
-      const crossDiscipline =
-        sourceDefinition.discipline !== targetDefinition.discipline;
-      issues.push({
-        severity: 'error',
-        code: crossDiscipline ? 'no-interdisciplinary-rule' : 'no-connection-rule',
-        message: crossDiscipline
-          ? `No defined transfer exists from ${sourceDefinition.name} (${sourcePort.channel}) to ${targetDefinition.name} (${targetPort.channel}). These disciplines cannot be coupled directly.`
-          : `No defined transfer exists from "${sourcePort.label}" to "${targetPort.label}".`,
-        connectionId: connection.id,
-      });
-      continue;
-    }
-
-    if (!registry.isTransferCompatible(rule, sourcePort.unit, targetPort.unit)) {
-      issues.push({
-        severity: 'error',
-        code: 'incompatible-units',
-        message: `"${sourcePort.label}" (${sourcePort.unit}) cannot drive "${targetPort.label}" (${targetPort.unit}) — incompatible physical dimensions.`,
-        connectionId: connection.id,
-      });
-    }
-
-    // A cross-discipline coupling is allowed to change the semantic channel
-    // (a moisture reading can legitimately become a normalised electrical
-    // signal). What matters is that a rule explicitly sanctions the pair,
-    // which `findRule` above has already established.
-    if (
-      sourcePort.channel !== targetPort.channel &&
-      rule.sourceChannel === rule.targetChannel
-    ) {
-      issues.push({
-        severity: 'error',
-        code: 'channel-mismatch',
-        message: `Connection "${connection.id}" carries ${sourcePort.channel} into a ${targetPort.channel} port, and no rule permits that change.`,
-        connectionId: connection.id,
-      });
-    }
+    checkConnection(connection, byId, registry, issues);
   }
 
   // Required ports must be connected.
@@ -247,6 +149,162 @@ function validateConnections(
       }
     }
   }
+}
+
+/**
+ * Check one connection and report what is wrong with it.
+ *
+ * Both the whole-experiment validation and the workbench's live wiring use
+ * this, so a connection refused on the bench is refused for exactly the same
+ * reason as one that would fail a run. The two can never disagree.
+ */
+function checkConnection(
+  connection: Connection,
+  byId: Map<string, ComponentInstance>,
+  registry: ComponentRegistry,
+  issues: ValidationIssue[],
+): void {
+  const sourceInstance = byId.get(connection.source.componentId);
+  const targetInstance = byId.get(connection.target.componentId);
+
+  if (!sourceInstance || !targetInstance) {
+    issues.push({
+      severity: 'error',
+      code: 'connection-dangling',
+      message: 'A wire refers to a part that is not on the bench.',
+      connectionId: connection.id,
+    });
+    return;
+  }
+
+  const sourceDefinition = registry.tryGetDefinition(sourceInstance.type);
+  const targetDefinition = registry.tryGetDefinition(targetInstance.type);
+
+  if (!sourceDefinition || !targetDefinition) return;
+
+  const sourcePort = sourceDefinition.ports.find((p) => p.id === connection.source.portId);
+  const targetPort = targetDefinition.ports.find((p) => p.id === connection.target.portId);
+
+  if (!sourcePort) {
+    issues.push({
+      severity: 'error',
+      code: 'unknown-source-port',
+      message: `${sourceDefinition.name} has no port called "${connection.source.portId}".`,
+      connectionId: connection.id,
+    });
+    return;
+  }
+  if (!targetPort) {
+    issues.push({
+      severity: 'error',
+      code: 'unknown-target-port',
+      message: `${targetDefinition.name} has no port called "${connection.target.portId}".`,
+      connectionId: connection.id,
+    });
+    return;
+  }
+
+  if (sourcePort.direction === 'input') {
+    issues.push({
+      severity: 'error',
+      code: 'source-port-is-input',
+      message: `"${sourcePort.label}" is an input on ${sourceDefinition.name}, so nothing comes out of it.`,
+      connectionId: connection.id,
+    });
+  }
+  if (targetPort.direction === 'output') {
+    issues.push({
+      severity: 'error',
+      code: 'target-port-is-output',
+      message: `"${targetPort.label}" is an output on ${targetDefinition.name}, so nothing goes into it.`,
+      connectionId: connection.id,
+    });
+  }
+
+  const rule = registry.findRule(
+    { discipline: sourceDefinition.discipline, channel: sourcePort.channel },
+    { discipline: targetDefinition.discipline, channel: targetPort.channel },
+  );
+
+  if (!rule) {
+    const crossDiscipline = sourceDefinition.discipline !== targetDefinition.discipline;
+    issues.push({
+      severity: 'error',
+      code: crossDiscipline ? 'no-interdisciplinary-rule' : 'no-connection-rule',
+      message: crossDiscipline
+        ? `No defined transfer exists from ${sourceDefinition.name} (${sourcePort.channel}) to ${targetDefinition.name} (${targetPort.channel}). These disciplines cannot be coupled directly.`
+        : `No defined transfer exists from "${sourcePort.label}" to "${targetPort.label}".`,
+      connectionId: connection.id,
+    });
+    return;
+  }
+
+  if (!registry.isTransferCompatible(rule, sourcePort.unit, targetPort.unit)) {
+    issues.push({
+      severity: 'error',
+      code: 'incompatible-units',
+      message: `"${sourcePort.label}" (${sourcePort.unit}) cannot drive "${targetPort.label}" (${targetPort.unit}) — incompatible physical dimensions.`,
+      connectionId: connection.id,
+    });
+  }
+
+  // A cross-discipline coupling is allowed to change the semantic channel
+  // (a moisture reading can legitimately become a normalised electrical
+  // signal). What matters is that a rule explicitly sanctions the pair,
+  // which `findRule` above has already established.
+  if (sourcePort.channel !== targetPort.channel && rule.sourceChannel === rule.targetChannel) {
+    issues.push({
+      severity: 'error',
+      code: 'channel-mismatch',
+      message: `A wire carries ${sourcePort.channel} into a ${targetPort.channel} port, and no rule permits that change.`,
+      connectionId: connection.id,
+    });
+  }
+}
+
+/**
+ * Check a connection the user is about to make on the bench.
+ *
+ * Returns the reasons it cannot be made. An empty list means the connection
+ * is allowed. The reasons come from the same code the whole-experiment
+ * validation uses, so the message the user reads on the bench is the same
+ * message the simulator would have given.
+ */
+export function validateConnection(
+  experiment: ExperimentDefinition,
+  registry: ComponentRegistry,
+  source: { readonly componentId: string; readonly portId: string },
+  target: { readonly componentId: string; readonly portId: string },
+): readonly ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  if (source.componentId === target.componentId) {
+    issues.push({
+      severity: 'error',
+      code: 'connection-to-self',
+      message: 'A part cannot be wired to itself.',
+    });
+    return issues;
+  }
+
+  const byId = new Map<string, ComponentInstance>(
+    experiment.components.map((c) => [c.id, c]),
+  );
+
+  checkConnection(
+    {
+      id: 'proposed',
+      source,
+      target,
+      channel: 'electrical-potential',
+      transfer: { kind: 'identity' },
+    },
+    byId,
+    registry,
+    issues,
+  );
+
+  return issues;
 }
 
 function validateEnvironment(environment: Environment, issues: ValidationIssue[]): void {

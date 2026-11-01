@@ -1,10 +1,9 @@
 {
   "mcpServers": {
     "fetch": {
-      "command": "npx",
+      "command": "node",
       "args": [
-        "-y",
-        "mcp-fetch-server"
+        "node_modules/mcp-fetch-server/dist/index.js"
       ],
       "env": {}
     }

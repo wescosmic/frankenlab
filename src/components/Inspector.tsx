@@ -37,14 +37,69 @@ export function Inspector() {
   const simulation = useLabStore((s) => s.simulation);
   const status = useLabStore((s) => s.status);
   const selectedId = useLabStore((s) => s.selectedId);
+  const selectedConnectionId = useLabStore((s) => s.selectedConnectionId);
   const setParameter = useLabStore((s) => s.setParameter);
   const setSubstrate = useLabStore((s) => s.setSubstrate);
+  const removeComponent = useLabStore((s) => s.removeComponent);
+  const removeConnection = useLabStore((s) => s.removeConnection);
 
   // Track whether the last parameter change caused a restart.
   const [lastRestarted, setLastRestarted] = React.useState(false);
 
   const instance = experiment.components.find((c) => c.id === selectedId) ?? null;
   const definition = instance ? registry.tryGetDefinition(instance.type) : null;
+  const connection = experiment.connections.find((c) => c.id === selectedConnectionId) ?? null;
+
+  // The name of a part, for a wire that runs between two of them.
+  const partName = (componentId: string, portId: string): string => {
+    const part = experiment.components.find((c) => c.id === componentId);
+    const partDefinition = part ? registry.tryGetDefinition(part.type) : null;
+    const port = partDefinition?.ports.find((p) => p.id === portId);
+    return `${part?.label ?? partDefinition?.name ?? componentId} · ${port?.label ?? portId}`;
+  };
+
+  if (connection) {
+    return (
+      <div className="flex h-full flex-col overflow-y-auto">
+        <div className="border-b border-lab-line px-4 py-3">
+          <div className="lab-label">Wire</div>
+          <h2 className="mt-1 text-[15px] font-medium text-lab-text">
+            {partName(connection.source.componentId, connection.source.portId)}
+          </h2>
+          <p className="mt-1 text-[12px] leading-relaxed text-lab-muted">
+            to {partName(connection.target.componentId, connection.target.portId)}
+          </p>
+        </div>
+
+        <div className="border-b border-lab-line px-4 py-3">
+          <div className="lab-label">What it carries</div>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-lab-muted">
+            {connection.channel}
+            {connection.transfer.kind !== 'identity' && (
+              <> · {connection.transfer.kind} transfer</>
+            )}
+          </p>
+          <p className="mt-2 text-[11px] leading-relaxed text-lab-dim">
+            A wire is only allowed when a named rule says this coupling exists.
+            Cut it and the two parts stop talking to each other.
+          </p>
+        </div>
+
+        <div className="px-4 py-3">
+          <button
+            type="button"
+            onClick={() => removeConnection(connection.id)}
+            className="w-full rounded-md border border-lab-warn/40 bg-lab-warn/10 px-3 py-2 text-[12px] text-lab-warn transition-colors hover:bg-lab-warn/20"
+          >
+            Cut this wire
+          </button>
+          <p className="mt-2 text-[11px] leading-relaxed text-lab-dim">
+            Cutting a wire restarts the run.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!instance || !definition) {
     return (
@@ -60,6 +115,11 @@ export function Inspector() {
 
   const colour = DISCIPLINE_COLOURS[definition.discipline] ?? '#4fd1c5';
   const confidence = CONFIDENCE_COPY[definition.confidence];
+
+  // The wires attached to this part, so they can be cut from here too.
+  const attachedWires = experiment.connections.filter(
+    (c) => c.source.componentId === instance.id || c.target.componentId === instance.id,
+  );
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
@@ -214,6 +274,43 @@ export function Inspector() {
             </li>
           ))}
         </ul>
+      </div>
+
+      {attachedWires.length > 0 && (
+        <div className="border-t border-lab-line px-4 py-3">
+          <div className="lab-label">Wires</div>
+          <ul className="mt-2 space-y-2">
+            {attachedWires.map((wire) => (
+              <li key={wire.id} className="flex items-center justify-between gap-2">
+                <span className="text-[12px] leading-snug text-lab-muted">
+                  {partName(wire.source.componentId, wire.source.portId)}
+                  {' → '}
+                  {partName(wire.target.componentId, wire.target.portId)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeConnection(wire.id)}
+                  className="shrink-0 rounded border border-lab-line px-2 py-0.5 text-[10px] uppercase tracking-wider text-lab-dim transition-colors hover:border-lab-warn/50 hover:text-lab-warn"
+                >
+                  Cut
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="border-t border-lab-line px-4 py-3">
+        <button
+          type="button"
+          onClick={() => removeComponent(instance.id)}
+          className="w-full rounded-md border border-lab-warn/40 bg-lab-warn/10 px-3 py-2 text-[12px] text-lab-warn transition-colors hover:bg-lab-warn/20"
+        >
+          Take this part off the bench
+        </button>
+        <p className="mt-2 text-[11px] leading-relaxed text-lab-dim">
+          Taking a part off, or changing the experiment, restarts the run.
+        </p>
       </div>
     </div>
   );
