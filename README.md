@@ -196,6 +196,7 @@ npm run verify       # all three
 npm run build        # production build
 npm run build:static # static export into out/
 npm run measure      # re-measure every day this project quotes
+npm run measure:nutrients # the nutrient reservoir's balance
 ```
 
 Requires Node 20.9 or newer. No API key. No database. No network calls.
@@ -324,7 +325,7 @@ appears in the catalogue, the validator and the workbench.
 npm test
 ```
 
-170 tests across fourteen files. The interesting ones are the property-based
+182 tests across fifteen files. The interesting ones are the property-based
 invariants in `tests/properties/`:
 
 - The source delivers exactly the power the resistors dissipate.
@@ -355,6 +356,14 @@ And the contracts that keep the product honest:
   defined does not fail, it does not exist, and the element falls back to
   whatever it inherited. It also checks that every text colour clears WCAG AA
   against the panel it sits on.
+- **`tests/observations.test.ts`** asserts the days the flagship reaches, the
+  ones the README, the spec and the demonstration all quote. A test that
+  asserts a shape is worth less than a test that asserts a day.
+- **`tests/interactions.test.ts`** checks that the nutrient reservoir is a real
+  coupling: that the plant's demand is a rate, so that over one step the
+  reservoir gives back its regeneration and loses the demand multiplied by the
+  step. The plant used to compute a demand and throw it away, and nothing
+  caught it until this test did.
 
 ## Honest limitations
 
