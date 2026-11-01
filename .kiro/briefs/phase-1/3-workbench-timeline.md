@@ -21,9 +21,12 @@ observations, in this order:
 
 | Day | Observation | Severity |
 |---|---|---|
-| 8.25 | the alert fires | warning |
+| 8.25 | the alert fires | error |
 | 15.96 | plant growth stalls | warning |
-| 16.46 | the medium wilts | error |
+| 16.46 | the medium wilts | warning |
+
+The severity is set by the engine, not by the panel. Read it from the
+observation and do not decide it in React.
 
 A fourth event, the medium recovering, exists in the engine but cannot happen
 yet: recovery needs a discrete watering action, and the workbench cannot do

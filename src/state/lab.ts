@@ -15,7 +15,7 @@
 import { create } from 'zustand';
 import { Simulation } from '@/kernel/simulator';
 import type { ComponentRegistry } from '@/kernel/registry';
-import type { DataPoint, ExperimentDefinition, Quantity } from '@/kernel/types';
+import type { DataPoint, ExperimentDefinition, Observation, Quantity } from '@/kernel/types';
 import { createBioCircuit } from '@/scenarios/biocircuit';
 import { createWorld } from '@/world';
 import { LocalExplainProvider, type AssistantContext, type AssistantMessage } from '@/assistant/assistant';
@@ -47,6 +47,7 @@ export interface LabStore {
   readonly elapsed: number;
   readonly readings: Readonly<Record<string, Quantity>>;
   readonly series: readonly SeriesPoint[];
+  readonly observations: readonly Observation[];
   readonly selectedId: string | null;
   readonly messages: readonly AssistantMessage[];
   readonly assistantBusy: boolean;
@@ -79,31 +80,58 @@ function snapshotReadings(simulation: Simulation): Record<string, Quantity> {
   return readings;
 }
 
-function snapshotSeries(simulation: Simulation): SeriesPoint {
-  const outputs = simulation.snapshot().outputs;
-  const values: Record<string, number> = {};
-  for (const { key } of TRACKED_SERIES) {
-    const [componentId, portId] = key.split('.');
-    const value = outputs[componentId!]?.[portId!];
-    if (value) values[key] = value.value;
+interface Snapshot {
+  readonly readings: Record<string, Quantity>;
+  readonly seriesPoint: SeriesPoint;
+  readonly observations: readonly Observation[];
+}
+
+function takeSnapshot(simulation: Simulation): Snapshot {
+  const snap = simulation.snapshot();
+
+  // readings: all outputs keyed by component.port
+  const readings: Record<string, Quantity> = {};
+  for (const [componentId, values] of Object.entries(snap.outputs)) {
+    for (const [portId, value] of Object.entries(values)) {
+      readings[`${componentId}.${portId}`] = value;
+    }
   }
-  return { t: simulation.elapsed, values };
+
+  // seriesPoint: the four tracked series
+  const seriesPoint: SeriesPoint = {
+    t: simulation.elapsed,
+    values: Object.fromEntries(
+      TRACKED_SERIES.map(({ key }) => {
+        const [componentId, portId] = key.split('.');
+        const value = snap.outputs[componentId!]?.[portId!];
+        return [key, value?.value ?? 0];
+      }),
+    ),
+  };
+
+  // observations: all observations from the kernel
+  const observations = snap.observations;
+
+  return { readings, seriesPoint, observations };
 }
 
 export const useLabStore = create<LabStore>((set, get) => {
   const experiment = createBioCircuit();
   const simulation = buildSimulation(experiment);
+  const initial = takeSnapshot(simulation);
 
   /** Rebuild the simulation from an edited experiment and publish it. */
   const rebuild = (next: ExperimentDefinition) => {
     const fresh = buildSimulation(next);
+    const snap = takeSnapshot(fresh);
     set({
       experiment: next,
       simulation: fresh,
       status: 'idle',
       elapsed: 0,
-      readings: snapshotReadings(fresh),
-      series: [snapshotSeries(fresh)],
+      readings: snap.readings,
+      series: [snap.seriesPoint],
+      observations: snap.observations,
     });
   };
 
@@ -114,8 +142,9 @@ export const useLabStore = create<LabStore>((set, get) => {
 
     status: 'idle',
     elapsed: 0,
-    readings: snapshotReadings(simulation),
-    series: [snapshotSeries(simulation)],
+    readings: initial.readings,
+    series: [initial.seriesPoint],
+    observations: initial.observations,
     selectedId: null,
     messages: [],
     assistantBusy: false,
@@ -135,12 +164,14 @@ export const useLabStore = create<LabStore>((set, get) => {
 
     reset() {
       const fresh = buildSimulation(get().experiment);
+      const snap = takeSnapshot(fresh);
       set({
         simulation: fresh,
         status: 'idle',
         elapsed: 0,
-        readings: snapshotReadings(fresh),
-        series: [snapshotSeries(fresh)],
+        readings: snap.readings,
+        series: [snap.seriesPoint],
+        observations: snap.observations,
       });
     },
 
@@ -153,12 +184,13 @@ export const useLabStore = create<LabStore>((set, get) => {
         current.tick();
       }
 
-      const point = snapshotSeries(current);
-      const next = [...series, point];
+      const snap = takeSnapshot(current);
+      const next = [...series, snap.seriesPoint];
       set({
         elapsed: current.elapsed,
-        readings: snapshotReadings(current),
+        readings: snap.readings,
         series: next.length > SERIES_LIMIT ? next.slice(next.length - SERIES_LIMIT) : next,
+        observations: snap.observations,
         status: current.elapsed >= experiment.duration ? 'complete' : 'running',
       });
     },
@@ -196,7 +228,7 @@ export const useLabStore = create<LabStore>((set, get) => {
     },
 
     async ask(question) {
-      const { experiment: current, registry: reg, simulation: live, series } = get();
+      const { experiment: current, registry: reg, simulation: live, series, observations } = get();
       set({
         messages: [...get().messages, { role: 'user', content: question }],
         assistantBusy: true,
@@ -217,7 +249,7 @@ export const useLabStore = create<LabStore>((set, get) => {
         latestResult: {
           success: true,
           measurements: snapshotReadings(live),
-          observations: [],
+          observations,
           warnings: [],
           dataPoints,
           modelVersion: current.modelVersion,
