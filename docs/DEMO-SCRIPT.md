@@ -1,9 +1,9 @@
 # FrankenLab — demo script
 
-Target length: **2 minutes 41 seconds**. The rules allow under 3 minutes.
+Target length: **2 minutes 18 seconds**. The rules allow under 3 minutes.
 
 The last fifteen seconds must show one concrete Kiro moment that changed the
-product, with a visible outcome. That is section 9, and it is not optional.
+product, with a visible outcome. That is section 11, and it is not optional.
 
 Every number quoted below is a measured number. Run
 `npx tsx scripts/measure-beats.ts` for the flagship and
@@ -11,9 +11,13 @@ Every number quoted below is a measured number. Run
 recording. If a number on screen does not match, re-measure and re-record the
 caption.
 
+The timings below are the narration timings. The recording starts a few
+seconds earlier, while the page loads, and the narration is shifted onto the
+video at the mux step.
+
 ---
 
-## 1 · 0:00 — 0:12 · Cold open
+## 1 · 0:00 — 0:11 · Cold open
 
 **Screen.** The bench, already running. Slow speed. The plant, the substrate,
 the sensor, the battery, the comparator and the LED lit on a dark bench.
@@ -26,123 +30,126 @@ the sensor, the battery, the comparator and the LED lit on a dark bench.
 
 ---
 
-## 2 · 0:12 — 0:32 · The bench
+## 2 · 0:11 — 0:27 · The bench
 
-**Screen.** Slow pan across the bench. Hover the substrate so its label and
-its confidence badge show: **established-simplified**.
+**Screen.** Slow pan across the bench. The parts carry their own labels and
+their own confidence badges.
 
 **Voiceover.**
-> Every part on this bench comes from a different discipline. Every part says
-> how much it can be trusted. The solver is real. The electronics are solved
-> with modified nodal analysis, not a lookup table.
+> Every part on this bench comes from a different discipline, and every part
+> says how much it can be trusted. The electronics are solved with modified
+> nodal analysis, not looked up from a table. Change the reference resistor
+> and the day the alarm goes off moves with it.
 
-**On screen.** The confidence badges: physical-law, established-simplified,
+**On screen.** The confidence badges: physical law, simplified model,
 illustrative.
 
 ---
 
-## 3 · 0:32 — 0:54 · The run tells a story
+## 3 · 0:27 — 0:40 · The run tells a story
 
 **Screen.** Switch to the **Timeline** tab. The run is at around day 11.
 
 **Voiceover.**
 > The run is not a graph of noise. It is a sequence of events. On day eleven
 > the moisture falls below the threshold and the alert fires. On day twenty
-> the plant's vigour drops and growth stalls. On day twenty-one the medium
-> dries past the point where the plant can draw water, and it wilts.
+> the plant's vigour drops and its growth stalls.
 
 **On screen.** The timeline entries, each with its time and severity:
-ERROR "The alert has fired", WARNING "The plant's vigour is falling",
-WARNING "The medium dried past the point where the plant can draw water."
+ERROR "The alert has fired", WARNING "The plant's vigour is falling."
 
 ---
 
-## 4 · 0:54 — 1:08 · Every number has a unit
+## 4 · 0:40 — 0:51 · Every number has a unit
 
-**Screen.** Switch to the **Measurements** tab. Scroll the substrate group.
+**Screen.** Switch to the **Measurements** tab.
 
 **Voiceover.**
 > Every quantity the simulation produced is named, with its unit. Field
-> capacity. Wilting point. Saturation. Biomass. Signal. Nothing is a bare
+> capacity. Wilting point. Saturation. Biomass. Signal. Nothing here is a bare
 > float.
 
 **On screen.** `Field capacity 0.18 ratio`, `Wilting point 0.06 ratio`,
-`Saturation 0.38 ratio`, `Biomass 0.42 g`.
+`Saturation 0.38 ratio`, `Biomass` in grams.
 
 ---
 
-## 5 · 1:08 — 1:34 · You can save the plant
+## 5 · 0:51 — 1:03 · You can save the plant
 
-**Screen.** The run has reached day 21 and the timeline shows the medium
-wilting. Press **Pause**.
+**Screen.** The timeline shows the growth stall and the medium wilting. Press
+**Pause**. The clock stops.
 
 **Voiceover.**
-> Here is the part that matters. The plant is dying. You can stop the run, open
-> the inspector, turn the irrigation up, and press run again.
+> Now the plant is failing. Its growth has stalled, and the medium has dried
+> past the point where it can draw water. Stop the run, turn the irrigation up
+> in the inspector, and press run again.
 
-**Screen.** Inspector, **Moisture source** selected. Drag **Delivery rate**
-from 0 to 0.05. The badge next to it says **live**, not *restarts*. Press
-**Run**.
+**Screen.** Inspector, **Moisture source** selected. Drag **Delivery rate** from
+0 to 0.05. The badge next to it says **live**, not *restarts*. Press **Run**.
 
-**Screen.** The timeline. Two new entries, one green and one blue:
+---
+
+## 6 · 1:03 — 1:12 · The recovery
+
+**Screen.** The timeline again. Two new entries, one green and one blue.
+
+**Voiceover.**
+> The medium comes back above its wilting point and the alert clears. The
+> simulation is deterministic, and you are in the loop.
+
+**On screen.**
 
 - SUCCESS "The medium has recovered above the wilting point." (21d 8h)
 - INFO "The alert has cleared." (23d 3h)
 
-**Voiceover.**
-> The medium recovers. The alert clears. The simulation is deterministic, and
-> the user is in the loop.
-
 ---
 
-## 6 · 1:34 — 1:54 · The catalyst
+## 7 · 1:12 — 1:35 · The catalyst
 
-**Screen.** Open the experiment catalogue. Choose **Catalysis Comparison**.
-Two vessels appear. Press **Run**, then **Fast**.
+**Screen.** Open the experiment catalogue. Choose **Catalysis Comparison**. Two
+vessels appear. Press **Run**, then **slow**. Switch to **Measurements**.
 
 **Voiceover.**
-> The same reaction, twice. One vessel has a catalyst, eight times stronger.
-> The catalysed one races ahead and flattens out in twelve minutes. The other
-> is still climbing at one hundred and ten.
+> Here is the same reaction, twice. One vessel has a catalyst eight times
+> stronger. The catalysed vessel settles in twelve minutes. The other takes a
+> hundred and ten.
 
-**Screen.** The readings panel. Two numbers side by side: product, no
-catalyst, and product, catalysed.
+**On screen.** Two vessels side by side. The catalysed one has flattened on its
+equilibrium; the plain one is still climbing.
+
+**Then.** Press **fast**. Both vessels arrive together.
+
+**Voiceover.**
+> And they finish in the same place, forty-three millionths of a mole apart. A
+> catalyst changes how fast you get there. It does not change where there is.
 
 **On screen.** `Product, no catalyst 0.610`, `Product, catalysed 0.610`. The
-same place. Then the timeline: "The reaction has reached equilibrium at
-0.610 mol/L."
-
-**Voiceover.**
-> And they end in the same place. Four three-millionths of a mole per litre
-> apart. A catalyst changes how fast you get there. It does not change where
-> there is. That is not a claim. It is solved from the equilibrium constant
-> and then measured.
+same place.
 
 ---
 
-## 7 · 1:54 — 2:06 · Build it yourself
+## 8 · 1:35 — 1:43 · Build it yourself
 
-**Screen.** Drag a **Resistor** from the catalogue onto the bench. Drag from
-one of its dots to the dot on the battery. Try to drag from the comparator's
-output to the LED's input.
+**Screen.** Back to **Project BioCircuit**. Drag a **Resistor** from the
+catalogue onto the bench. It arrives selected.
 
 **Voiceover.**
-> You can build on the bench. Drag a part in, drag between the dots to wire it.
-> And if the wire makes no sense, the bench refuses it and tells you why, in
-> plain English.
+> You can build on the bench as well. Drag a part in and it arrives with its
+> ports, its assumptions, and how much it can be trusted.
 
-**On screen.** The refusal: *"Trigger" is an input on LED, so nothing comes
-out of it.*
+**On screen.** The new part on the bench with its port markers. The inspector
+shows the part's confidence badge and what it assumes.
 
 ---
 
-## 8 · 2:06 — 2:18 · The assistant does not guess
+## 9 · 1:43 — 1:54 · The assistant does not guess
 
-**Screen.** The assistant panel. Type: *How much should I trust these models?*
+**Screen.** The assistant panel. Ask: *How much should I trust these models?*
 
 **Voiceover.**
-> The assistant reads the run. It quotes only the numbers the simulation
-> produced, and it ends every answer by saying what that answer is worth.
+> Our assistant reads the run. It quotes only the numbers the simulation
+> produced, and it ends every answer by saying what that answer is worth, and
+> which model to trust least.
 
 **On screen.** The reply, ending with:
 
@@ -150,11 +157,11 @@ out of it.*
 > (Irrigation). It is illustrative. It shows what the model does, not what
 > would really happen.
 
-And the badge in the corner of the reply: **ILLUSTRATIVE**.
+And the badge on the reply: **ILLUSTRATIVE**.
 
 ---
 
-## 9 · 2:18 — 2:26 · The Frankenstein part
+## 10 · 1:54 — 2:05 · The Frankenstein part
 
 **Screen.** The bench, wide shot. The connections between the four
 disciplines.
@@ -166,48 +173,51 @@ disciplines.
 
 ---
 
-## 10 · 2:26 — 2:41 · The Kiro moment
+## 11 · 2:05 — 2:18 · The Kiro moment
 
 **This is the last fifteen seconds. It must show the change, not a file tree.**
 
-**2:26 — 2:31.** Cut to a terminal running the Kiro CLI. Show the audit brief
+**2:03 — 2:09.** Cut to a terminal running the Kiro CLI. Show the audit brief
 and the reviewer's decision table for sand: field capacity 0.12 becomes 0.18,
 wilting point 0.04 becomes 0.06.
 
 **Caption.** Kiro's science reviewer checked the soil physics against
 published data.
 
-**2:31 — 2:38.** Cut back to the app. The Timeline tab. The alert on day
+**2:09 — 2:18.** Cut back to the app. The Timeline tab. The alert on day
 eleven, the wilting on day twenty-one.
 
 **Caption.** Before the audit: day 8 and day 16. The audit moved the whole
 story by three days.
 
-**2:38 — 2:41.** The Measurements tab. Field capacity 0.18.
-
 **Voiceover.**
-> Kiro found a number that was wrong against the published data. The timeline
-> moved. That is the whole story of this build.
+> We built this with Kiro. Its science reviewer checked our soil physics
+> against published data, found a field capacity that was below the published
+> range, and the whole timeline moved three days. That is the whole story of
+> this build.
 
 ---
 
 ## Recording notes
 
 - Record at 1920 by 1080, 30 frames a second.
-- Use **Slow** for the run sections and **Fast** for any transition.
+- Use **slow** for the run sections and **fast** for any transition.
 - The timeline and the measurements are the two screens that must be legible.
   Zoom, do not cut.
 - Every number on screen must match `scripts/measure-beats.ts` and
   `scripts/measure-catalysis.ts`. If the simulation changes, re-measure and
   re-record the captions.
-- The last fifteen seconds are shot separately, so they can be redone if the
-  numbers move.
-- Section 6 needs the catalysis experiment to have been run once at least, so
-  the numbers are on screen rather than computed on the spot.
+- Clicking is done from inside the page, not through Playwright's own click
+  helper. Playwright waits for an element to be stable before it clicks, and
+  on a page that is drawing three dimensions that wait costs three to six
+  seconds. On a busy page the simulation keeps running while it waits, so the
+  run loses hours and the picture drifts away from the voice.
+- The run is never fast-forwarded. The recovery happens because the user
+  pauses, turns the irrigation up, and presses run again.
 
 ## What to show if there is no time
 
-The minimum is sections 1, 5 and 10. The run, the recovery, and the Kiro
+The minimum is sections 1, 5, 6 and 11. The run, the recovery, and the Kiro
 moment. Everything else is cuttable. If there is room for exactly one more,
-cut section 7 and keep section 6: the catalyst is the clearest proof that
+cut section 8 and keep section 7: the catalyst is the clearest proof that
 the simulation is real rather than scripted.
