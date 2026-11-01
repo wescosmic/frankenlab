@@ -257,5 +257,5 @@ npm run dev
 No API key. No database. No network calls. Open the laboratory, press **Run**,
 and watch a plant drink a soil dry.
 
-The code is at the repository linked below, and `.kiro/` is tracked at the
-root, so the whole build is inspectable.
+The code is at [github.com/wescosmic/frankenlab](https://github.com/wescosmic/frankenlab),
+and `.kiro/` is tracked at the root, so the whole build is inspectable.

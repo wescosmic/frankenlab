@@ -7,8 +7,8 @@ Post the **main version** unless you have a reason not to. The two shorter
 versions are there for a platform that truncates, or for a second post on a
 different day.
 
-Add the demo video link once it is uploaded. Add the repository link once the
-repository is public.
+Add the demo video link once it is uploaded. The repository link is already
+filled in: https://github.com/wescosmic/frankenlab
 
 ---
 
@@ -45,8 +45,8 @@ audit was the product.
 
 No API key. No network calls. Runs in a browser.
 
-Demo: <link>
-Code: <link>
+Demo: <paste the YouTube link here>
+Code: https://github.com/wescosmic/frankenlab
 ```
 
 ---
@@ -70,8 +70,8 @@ the experiment.
 Built with Kiro, including a science-reviewer agent that caught our soil
 physics being wrong against published data and moved the whole timeline.
 
-Demo: <link>
-Code: <link>
+Demo: <paste the YouTube link here>
+Code: https://github.com/wescosmic/frankenlab
 ```
 
 ---
