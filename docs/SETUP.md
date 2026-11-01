@@ -127,6 +127,49 @@ build, because it is the same application.
 The export is opt-in on purpose: an ordinary `npm run build` stays a server
 build so that `npm start` keeps working for a local review.
 
+### Publishing to Vercel
+
+The app is live at <https://frankenlab.vercel.app>. To publish a new build:
+
+```bash
+npx vercel --prod --yes
+```
+
+**One trap worth knowing.** Vercel matches the commit author of the uploaded
+source against the members of the Vercel team, and it blocks the deployment
+if that author is not one of them. A GitHub noreply address
+(`1234+name@users.noreply.github.com`) is not the same address as the Vercel
+account, so the deployment sits at `Blocked` with no build and the CLI waits
+forever on `Building…`.
+
+The reason is in the deployment's own record:
+
+```bash
+npx vercel inspect <deployment-url>
+```
+
+```
+status  ● Blocked
+reason  The deployment was blocked because the commit author doesn't have
+        permission to create deployments for this project.
+```
+
+The fix is to publish from a commit whose author is the Vercel member's
+email, without changing the published history. A detached worktree does it:
+
+```bash
+git worktree add --detach ../frankenlab-deploy HEAD
+cp -r .vercel ../frankenlab-deploy/.vercel
+git -C ../frankenlab-deploy -c user.name="<your Vercel username>" \
+    -c user.email="<your Vercel email>" commit --allow-empty -m "Deploy"
+npx vercel --cwd ../frankenlab-deploy --prod --yes
+git worktree remove --force ../frankenlab-deploy
+```
+
+The empty commit exists only in the worktree. The repository keeps its
+GitHub noreply authorship, and the published site is byte-for-byte the same
+build.
+
 ### Other scripts
 
 ```bash
@@ -427,6 +470,11 @@ MCP servers.
 **A Kiro guard hook says no but the command runs anyway.** It exited 1, which
 is a warning, not a block. It must exit 2. See the exit-code table in
 section 4.5.
+
+**`npx vercel --prod` hangs on "Building…" and nothing is deployed.** The
+deployment is blocked because the commit author is not a member of the Vercel
+team. `npx vercel inspect <deployment-url>` says so, and the fix is in
+"Publishing to Vercel" above.
 
 ## 9. Before you commit
 
