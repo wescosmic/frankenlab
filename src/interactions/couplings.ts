@@ -102,10 +102,10 @@ export const materialsToBiology: InteractionCoupling = {
  */
 export const biologyToMaterials: InteractionCoupling = {
   id: 'biology-to-materials',
-  name: 'Transpiration and uptake',
+  name: 'Water exchange with the medium',
   disciplines: ['biology', 'materials'],
   chain:
-    'A plant draws water from the substrate and returns a portion of it to the environment as transpiration. The substrate therefore dries because the plant is alive, not because time passed.',
+    'A plant and the medium it grows in exchange water. Roots draw water out of the medium and return a portion of it to the environment as transpiration, and a moisture source can put water back. The medium therefore dries because the plant is alive, not because time passed.',
   confidence: 'established-simplified',
   notes: [
     'Uptake is modelled as a normalised rate, not a volumetric flow.',

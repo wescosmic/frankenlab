@@ -9,6 +9,7 @@
 
 import { useState } from 'react';
 import { useLabStore, trackedSeriesFor } from '@/state/lab';
+import { Couplings } from '@/components/Couplings';
 
 const SERIES_COLOURS: Record<string, string> = {
   'substrate.moisture': '#7bc96f',
@@ -265,7 +266,7 @@ function MeasurementsTab() {
   );
 }
 
-type TabId = 'readings' | 'timeline' | 'measurements';
+type TabId = 'readings' | 'timeline' | 'measurements' | 'couplings';
 
 export function Readouts() {
   const elapsed = useLabStore((s) => s.elapsed);
@@ -277,6 +278,7 @@ export function Readouts() {
     { id: 'readings', label: 'Readings' },
     { id: 'timeline', label: 'Timeline' },
     { id: 'measurements', label: 'Measurements' },
+    { id: 'couplings', label: 'Couplings' },
   ];
 
   return (
@@ -322,6 +324,7 @@ export function Readouts() {
         {tab === 'readings' && <ReadingsTab />}
         {tab === 'timeline' && <TimelineTab />}
         {tab === 'measurements' && <MeasurementsTab />}
+        {tab === 'couplings' && <Couplings />}
       </div>
     </div>
   );

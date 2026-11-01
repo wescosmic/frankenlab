@@ -19,33 +19,11 @@
 
 import type { ConfidenceLevel, Quantity } from '../kernel/types';
 import type { AssistantContext } from './assistant';
+import { CONFIDENCE_LABEL, CONFIDENCE_NOTE, CONFIDENCE_ORDER } from '../confidence';
 
-/** Confidence levels, strongest first. */
-export const CONFIDENCE_ORDER: readonly ConfidenceLevel[] = [
-  'physical-law',
-  'established-simplified',
-  'illustrative',
-  'hypothetical',
-];
-
-export const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = {
-  'physical-law': 'Physical law',
-  'established-simplified': 'Simplified model',
-  illustrative: 'Illustrative',
-  hypothetical: 'Hypothetical',
-};
-
-/** What each level means, in one sentence a non-specialist can act on. */
-export const CONFIDENCE_NOTE: Record<ConfidenceLevel, string> = {
-  'physical-law':
-    'It follows from a law that is conserved and checkable, so you can verify it yourself.',
-  'established-simplified':
-    'It comes from an established model that has been simplified for teaching. Trust the direction more than the last decimal.',
-  illustrative:
-    'It is illustrative. It shows what the model does, not what would really happen.',
-  hypothetical:
-    'It is speculative by design. It is here to explore, not to predict.',
-};
+// The confidence vocabulary lives in one place, because four different panels
+// show it and a label that drifts between them is a label that lies.
+export { CONFIDENCE_LABEL, CONFIDENCE_NOTE, CONFIDENCE_ORDER } from '../confidence';
 
 /** A component that sets the confidence limit of the experiment. */
 export interface WeakestModel {

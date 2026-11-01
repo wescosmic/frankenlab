@@ -59,6 +59,21 @@ the run:
 | Clay     | day 17             |
 | Hydrogel | not within 24 days |
 
+### The rules that carry it
+
+A circuit cannot know about a plant, and a plant cannot know about a circuit.
+What they share is a named rule, declared in
+`src/interactions/couplings.ts`, that says which quantity crosses the
+boundary and how much the crossing is worth.
+
+The **Couplings** tab lists the rules carrying the experiment on the bench
+right now: which part sends what to which part, on which channel, and what the
+rule leaves out. It is derived from the live graph, so cutting a wire removes
+the rule that wire was carrying. Open the Threshold Alarm and it says nothing
+crosses over, because in that experiment nothing does.
+
+![The couplings panel, listing the declared rules carrying the flagship](docs/images/couplings.png)
+
 ## Three experiments, not one
 
 The bench opens with a catalogue, because a sandbox with a single experiment
@@ -149,11 +164,12 @@ and carry on: the medium comes back above its wilting point, the timeline
 records the recovery, and the LED goes out. The simulation computes, the
 timeline shows what happened, and you decide what to do about it.
 
-Under the bench there are three tabs. **Readings** shows the headline numbers
+Under the bench there are four tabs. **Readings** shows the headline numbers
 for whichever experiment is open and their history. **Timeline** lists every
 moment the simulation reported, in order, with a severity and a plain-English
 explanation. **Measurements** lists every quantity the kernel produced,
-grouped by the part it came from, with its unit.
+grouped by the part it came from, with its unit. **Couplings** lists the named
+rules carrying the experiment across its disciplines.
 
 ![Every quantity the simulation produced, named and with its unit](docs/images/measurements.png)
 
@@ -285,7 +301,7 @@ appears in the catalogue, the validator and the workbench.
 npm test
 ```
 
-149 tests across eleven files. The interesting ones are the property-based
+157 tests across twelve files. The interesting ones are the property-based
 invariants in `tests/properties/`:
 
 - The source delivers exactly the power the resistors dissipate.
@@ -294,7 +310,7 @@ invariants in `tests/properties/`:
 - No normalised reading leaves 0–1.
 - The same seed gives the same result, every time.
 
-And the two contracts that keep the product honest:
+And the three contracts that keep the product honest:
 
 - **`tests/ports.test.ts`** wires every component in the world into one graph
   and checks that every output port publishes its value under its own port id.
@@ -303,6 +319,10 @@ And the two contracts that keep the product honest:
   on the bench collapsing the whole circuit solve.
 - **`tests/trust.test.ts`** checks that the assistant cannot cite a number the
   simulation did not produce, and that every answer states what it is worth.
+- **`tests/couplings.test.ts`** checks that the couplings panel names the same
+  rule the kernel itself applies to each wire, and that nothing is shown that
+  is not declared in the coupling file. A panel that invents a rule is as bad
+  as an assistant that invents a measurement.
 
 ## Honest limitations
 

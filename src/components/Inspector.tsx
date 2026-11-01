@@ -11,25 +11,7 @@
 import React from 'react';
 import { useLabStore } from '@/state/lab';
 import { DISCIPLINE_COLOURS } from '@/world';
-
-const CONFIDENCE_COPY: Record<string, { label: string; blurb: string }> = {
-  'physical-law': {
-    label: 'Physical law',
-    blurb: 'Conserved and independently verifiable. Follows from established physics.',
-  },
-  'established-simplified': {
-    label: 'Simplified model',
-    blurb: 'An established model reduced for teaching. Directionally sound, not a prediction.',
-  },
-  illustrative: {
-    label: 'Illustrative',
-    blurb: 'Qualitative. Useful for feel, not for numbers you would publish.',
-  },
-  hypothetical: {
-    label: 'Hypothetical',
-    blurb: 'Speculative by design.',
-  },
-};
+import { CONFIDENCE_BLURB, CONFIDENCE_LABEL } from '@/confidence';
 
 /**
  * The experiment's environment.
@@ -172,7 +154,8 @@ export function Inspector() {
   }
 
   const colour = DISCIPLINE_COLOURS[definition.discipline] ?? '#4fd1c5';
-  const confidence = CONFIDENCE_COPY[definition.confidence];
+  const confidenceLabel = CONFIDENCE_LABEL[definition.confidence] ?? definition.confidence;
+  const confidenceBlurb = CONFIDENCE_BLURB[definition.confidence];
 
   // The wires attached to this part, so they can be cut from here too.
   const attachedWires = experiment.connections.filter(
@@ -206,11 +189,11 @@ export function Inspector() {
               border: `1px solid ${colour}55`,
             }}
           >
-            {confidence?.label ?? definition.confidence}
+            {confidenceLabel}
           </span>
         </div>
         <p className="mt-2 text-[12px] leading-relaxed text-lab-dim">
-          {confidence?.blurb}
+          {confidenceBlurb}
         </p>
         <ul className="mt-2 space-y-1">
           {definition.assumptions.map((assumption) => (

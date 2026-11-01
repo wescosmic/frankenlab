@@ -11,7 +11,7 @@
 import { useState } from 'react';
 import { useLabStore } from '@/state/lab';
 import { Markdown } from '@/components/Markdown';
-import { CONFIDENCE_LABEL } from '@/assistant/trust';
+import { CONFIDENCE_LABEL, CONFIDENCE_TONE } from '@/confidence';
 
 const SUGGESTIONS = [
   'What is this experiment?',
@@ -19,14 +19,6 @@ const SUGGESTIONS = [
   'How much should I trust these models?',
   'How do the disciplines interact?',
 ];
-
-/** The colour a confidence badge takes. */
-const CONFIDENCE_TONE: Record<string, string> = {
-  'physical-law': 'text-lab-biology border-lab-biology/40 bg-lab-biology/10',
-  'established-simplified': 'text-lab-accent border-lab-accent/40 bg-lab-accent/10',
-  illustrative: 'text-lab-chemistry border-lab-chemistry/40 bg-lab-chemistry/10',
-  hypothetical: 'text-lab-muted border-lab-line bg-lab-line/30',
-};
 
 export function Assistant() {
   const messages = useLabStore((s) => s.messages);

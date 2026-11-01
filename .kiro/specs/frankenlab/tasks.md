@@ -458,3 +458,29 @@ chart and the timeline.
 **Done when:** a stranger can clone, run and extend it from the README alone,
 and the video shows the app running for real.
 
+## Phase 6 — Make the thesis visible
+
+**Why.** The Frankenstein claim was true in the architecture and invisible in
+the interface. A judge who ran the app saw mixed parts on a bench and had to
+take the claim on trust. The rules that hold the disciplines together were
+declared, and never shown.
+
+**6.1 A couplings panel.** The fourth tab under the bench lists the declared
+rules carrying the experiment right now: which part sends what to which part,
+on which channel, with the rule's confidence level and its stated
+limitations.
+
+**6.2 Derive it from the live graph.** A wire counts as a coupling only when a
+declared coupling rule governs it, and the panel follows the bench, so cutting
+a wire removes the rule that wire was carrying.
+
+**6.3 Say when nothing crosses over.** The Threshold Alarm and the Catalysis
+Comparison have no couplings, and the panel says so instead of showing a
+decorative list.
+
+**6.4 One confidence vocabulary.** Four panels show a confidence badge and
+three copies of the label map. One copy now, in `src/confidence.ts`.
+
+**Done when:** a judge can open the Couplings tab and read the rule that
+carries the experiment, and the panel is still true after they cut a wire.
+

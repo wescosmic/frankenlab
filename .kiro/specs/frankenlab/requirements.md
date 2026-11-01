@@ -156,6 +156,21 @@ because the representation they share knows neither of them.
 - **FR-1.55** A real measurement restated with fewer digits shall survive the
   guard.
 
+### 1.10 The couplings panel
+
+- **FR-1.56** The product shall show, in the interface, which declared
+  coupling rules are carrying the experiment on the bench.
+- **FR-1.57** A wire shall count as a coupling only when a declared coupling
+  rule governs it. An ordinary link inside one discipline shall not.
+- **FR-1.58** The panel shall be derived from the live graph, so that cutting a
+  wire removes the rule that wire was carrying.
+- **FR-1.59** Each rule shown shall carry its own confidence level and its
+  stated limitations.
+- **FR-1.60** When nothing crosses a discipline boundary, the panel shall say
+  so rather than showing a list.
+- **FR-1.61** The panel shall name the same rule the kernel applies to the
+  wire.
+
 ---
 
 ## 2. Non-functional requirements
@@ -234,6 +249,20 @@ without.
   equals the product concentration.
 - **AC-21** The two vessels end within two per cent of each other, and the
   catalysed one settles at least five times sooner.
+
+### Couplings panel
+
+- **AC-22** The flagship shows three disciplines, four declared couplings and
+  six governed wires.
+- **AC-23** The Threshold Alarm and the Catalysis Comparison show no couplings,
+  because nothing crosses a discipline boundary in either.
+- **AC-24** Cutting the wire that carries the substrate's moisture into the
+  probe removes the coupling it was carrying, and the count drops by one.
+- **AC-25** Every rule the panel names is the rule the kernel applies to that
+  wire: same source discipline, target discipline, source channel and target
+  channel.
+- **AC-26** The panel never names a coupling that is not declared in the
+  coupling file.
 
 ---
 

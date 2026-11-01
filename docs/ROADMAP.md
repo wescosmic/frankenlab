@@ -15,17 +15,17 @@ What is built, what is next, and what each piece waits for.
 | Biology | **Working** | Logistic growth, transpiration, nutrients. Teaching scale. |
 | Materials | **Working** | Two-reservoir water balance, four presets, conductors. |
 | Chemistry | **Working** | One reversible reaction in one closed vessel, a catalyst parameter, a solved equilibrium. |
-| Interdisciplinary coupling | **Working** | Five named couplings, specificity-ordered rules. |
+| Interdisciplinary coupling | **Working** | Five named couplings, specificity-ordered rules, and a panel that shows which ones carry the experiment. |
 | Observations | **Working** | The kernel collects them; the four engines report them. |
 | AI assistant | **Working, offline** | Five tools, a deterministic local explainer, and a trust guard on every reply. |
 | 3D workbench | **Working** | Scene, selection, animation, labels, drag-and-drop wiring. |
-| Timeline and measurements | **Working** | Three tabs under the bench. |
+| Timeline, measurements and couplings | **Working** | Four tabs under the bench. |
 | Experiment catalogue | **Three experiments** | BioCircuit, Threshold Alarm, Catalysis Comparison. |
 | Experiment builder | **Working** | Parts are dragged onto the bench and wired by dragging. |
 | Run comparison | **Not built** | |
 | Missions and notebooks | **Not built** | |
 | Persistence | **Not built** | In-memory only. |
-| Deployment | **Not done** | Builds locally. |
+| Deployment | **Prepared** | The static export is verified. It has not been published. |
 
 The full, ordered task list is in `.kiro/specs/frankenlab/tasks.md`. This
 document is the shape of the road; that file is the work list.
@@ -61,7 +61,8 @@ in the ten seconds a judge spends deciding whether the project is real.
 | 2 | The user builds experiments: drag-and-drop wiring, live parameters | High | Done |
 | 3 | More science: chemistry end to end, a catalyst, three experiments | Medium-high | Done |
 | 4 | The assistant earns trust: the guard, the confidence badge | Medium | Done, except run comparison |
-| 5 | Ship and present: deployment, video, README, screenshots, public repo | Medium | Next |
+| 5 | Ship and present: deployment, video, README, screenshots, public repo | Medium | Partly done |
+| 6 | Make the thesis visible: the couplings panel | Medium | Done |
 
 The full brief for each phase is in `.kiro/specs/frankenlab/tasks.md`, and the
 per-task briefs Kiro actually runs from are in `.kiro/briefs/`.
@@ -173,20 +174,52 @@ additive rather than urgent. It is the natural next change.
 
 ## Phase 5 — Shipping
 
-The next phase, and the one the clock is now on.
+**Partly done.** The repository is built, the video is cut and the writing is
+drafted. What is left needs the account holder, not the developer.
 
-- **The public repository**, with the licence visible and `.kiro/` tracked
-  at the root.
-- **Deployment** to a public URL, working with no API key set, reachable
-  free of charge.
-- **The three-minute demonstration.** The best beat in it is the catalysis
-  comparison: two vessels, one catalyst, and a number that proves the
-  catalyst changed the speed and not the destination. The last fifteen
-  seconds are the Kiro moment — the science audit moving the timeline from
-  day 8 and day 16 to day 11 and day 21.
-- **Screenshots** of the workbench, the catalogue, the inspector and a
-  mid-run chart.
-- **The blog post** and the social post.
+- **The demonstration.** Cut and verified: 2 minutes 18 seconds, 1920 by 1080,
+  with the narration in sync. Committed at `docs/demo/frankenlab-demo.mp4`. It
+  still has to be uploaded to YouTube and made public. The best beat in it is
+  the catalysis comparison: two vessels, one catalyst, and a number that
+  proves the catalyst changed the speed and not the destination. The last
+  fifteen seconds are the Kiro moment — the science audit moving the timeline
+  from day 8 and day 16 to day 11 and day 21.
+- **The public repository**, with the licence visible and `.kiro/` tracked at
+  the root. The MIT licence and the README are in place; the repository itself
+  has not been created.
+- **Deployment** to a public URL, working with no API key set, reachable free
+  of charge. The static export is prepared and verified. It has not been
+  published.
+- **Screenshots** of the workbench, the measurements, the catalysis
+  comparison, the assistant, the couplings panel and the Kiro audit. The first
+  five are frames taken from the demo itself, so the README cannot drift from
+  the product.
+- **The blog post** and the social post. Both are drafted and waiting on the
+  two links they need.
+
+## Phase 6 — Make the thesis visible
+
+**Done.**
+
+The Frankenstein claim was true in the architecture and invisible in the
+interface. The coupling rules existed in `src/interactions/couplings.ts`, the
+assistant could explain them, and no panel showed them. A judge who ran the
+app would have seen mixed parts on a bench and had to take the thesis on
+trust.
+
+- **A couplings panel.** The fourth tab under the bench lists the named rules
+  carrying the experiment right now: which part sends what to which part, on
+  which channel, with the rule's own confidence level and what it leaves out.
+- **It is derived from the live graph.** Cut a wire and the rule that wire was
+  carrying goes with it. The panel cannot drift from the simulation, and
+  `tests/couplings.test.ts` checks that it names the same rule the kernel
+  applies.
+- **It says when nothing crosses over.** The Threshold Alarm is the flagship's
+  circuit with the biology taken out, so it has no couplings, and the panel
+  says so instead of showing a decorative list.
+- **The confidence vocabulary now lives in one place.** Four panels show a
+  confidence badge and they shared three copies of the label map, which could
+  and would have drifted apart. They share one now, in `src/confidence.ts`.
 
 ---
 

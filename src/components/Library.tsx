@@ -12,13 +12,7 @@ import { useLabStore } from '@/state/lab';
 import { DISCIPLINE_COLOURS, DISCIPLINE_ORDER } from '@/world';
 import { DRAG_TYPE } from '@/drag';
 import { EXPERIMENTS } from '@/scenarios';
-
-const CONFIDENCE_LABEL: Record<string, string> = {
-  'physical-law': 'Physical law',
-  'established-simplified': 'Simplified model',
-  illustrative: 'Illustrative',
-  hypothetical: 'Hypothetical',
-};
+import { CONFIDENCE_LABEL } from '@/confidence';
 
 export function Library() {
   const registry = useLabStore((s) => s.registry);

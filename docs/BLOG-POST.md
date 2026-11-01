@@ -39,6 +39,23 @@ solved circuit quantity, not the moisture that drove it. Change the reference
 resistor and the day the alarm goes off moves with it. That is the test of
 whether a simulator is honest, and FrankenLab passes it.
 
+## The rules, and showing them
+
+A coupling is not allowed to be implicit. When a soil's moisture becomes a
+probe's resistance, that is a named rule, declared in one file, that says which
+quantity crosses the boundary and how much the crossing is worth.
+
+The **Couplings** tab lists the rules carrying the experiment on the bench
+right now. For the flagship it says: three disciplines, four declared
+couplings, six wires. It names the part that sends, the part that receives,
+the channel in between, the confidence the rule carries, and what the rule
+leaves out. It is derived from the live graph, so cutting a wire removes the
+rule that wire was carrying.
+
+Open the Threshold Alarm and the same panel says nothing crosses over, because
+in that experiment nothing does. A panel that always showed a list would be
+decoration. This one measures the bench.
+
 ## Three experiments, not one
 
 A sandbox with a single experiment in it is a demonstration, so there are
