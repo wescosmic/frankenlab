@@ -33,19 +33,19 @@ export type Speed = 'slow' | 'fast';
 /** How many series points to keep in memory. */
 const SERIES_LIMIT = 600;
 
-/** Default speed: the full 21-day run takes about 56 seconds. */
+/** Default speed: the full 24-day run takes about 64 seconds. */
 export const DEFAULT_SPEED: Speed = 'slow';
 
 /**
  * Speed values in simulated hours per wall-clock second.
  *
- * The flagship is 504 simulated hours. Slow puts the alert about 21 seconds
- * in and the wilting about 43 seconds in, which is long enough to follow.
- * Fast gets to the end state in about five seconds.
+ * The flagship is 576 simulated hours. Slow puts the alert about 29 seconds
+ * in and the wilting about 56 seconds in, which is long enough to follow.
+ * Fast gets to the end state in about six seconds.
  */
 export const SPEED_VALUES: Record<Speed, number> = {
-  slow: 9, // 504 hours / 9 = 56 seconds
-  fast: 100, // 504 hours / 100 = 5 seconds
+  slow: 9, // 576 hours / 9 = 64 seconds
+  fast: 100, // 576 hours / 100 = 6 seconds
 };
 
 /** Readings the panels and the chart care about, in the order they appear. */

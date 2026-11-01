@@ -7,6 +7,7 @@ tools:
   - "subagent/engine-builder"
   - "subagent/science-reviewer"
   - "subagent/ui-integration"
+includePowers: true
 permissions:
   rules:
     - capability: subagent
@@ -43,6 +44,7 @@ resources:
   - file://.kiro/specs/frankenlab/design.md
   - file://docs/ARCHITECTURE.md
   - file://docs/ROADMAP.md
+  - skill://.kiro/powers/frankenlab/skills/**/SKILL.md
 welcomeMessage: FrankenLab lead ready. What are we building today?
 ---
 

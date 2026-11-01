@@ -1,15 +1,13 @@
-# Brief 5a — Audit the medium constants against published figures
+# Brief 5a — Check the medium constants against published figures
 
-**Agent:** `science-reviewer` · **Phase:** 5 · **Do not commit.**
+**Agent:** `science-reviewer` (read-only) · **Phase:** 5 · **Do not commit.**
 
 ## Context
 
 FrankenLab, at `C:\Users\Wesley\.mavis\workspace\frankenlab`.
 
-This brief exists to answer two things at once: are our numbers honest, and
-does the Kiro setup actually earn its keep? It is a real audit with a real
-outcome, and it is also the first run that uses the project's own Kiro Power
-and an MCP server.
+You have no write access, by design. This brief asks for research and a
+judgement, not an edit. A later pass applies whatever you conclude.
 
 Two things are new and you should use them.
 
@@ -20,105 +18,121 @@ reference:
 - `add-a-discipline` — how a discipline is added without touching the kernel.
 - `references/confidence-levels.md` — what each confidence level requires.
 
-Read `verify-a-model` before you start. It is the procedure.
+Read `verify-a-model` first. It is the procedure you are about to follow, and
+you are the reason it exists.
 
 **The `fetch` MCP server is configured for this workspace.** It fetches a URL
 and returns the text. Use it to read published figures rather than working
-from memory.
+from memory. That is the point of this brief.
 
-## The task
+**How to fetch, on this machine.** Use the `fetch` MCP tool or the built-in
+web tools. Do **not** fetch with `curl` or `Invoke-WebRequest` in the shell.
+This is Windows PowerShell 5.1, where `curl` is an alias for
+`Invoke-WebRequest`, `head` does not exist, and `&&` is a parser error. The
+shell fetch path fails in three different ways and wastes the run.
 
-The materials engine carries four teaching presets. Each one states a field
-capacity, a wilting point and, as of the Phase 2 work, a saturation point.
-Those numbers are presented in the workbench, in the inspector and to the
-assistant, and they are labelled `established-simplified`, which means they
-claim to be defensible reduced figures rather than invented ones.
+A workable pattern:
 
-**Find out whether they are.**
+1. Use the web search tool to find a page that states the figures, and take
+   the URL from the result.
+2. Fetch that URL with the `fetch` MCP tool.
+3. If a fetch fails or times out, try a different source rather than
+   retrying the same one. Several large government and university sites are
+   slow or blocked from this network.
+
+Aim for **two** solid sources per medium rather than ten flaky ones. A
+university extension service or a reference work is a good source. A blog
+is not.
+
+## The question
+
+The materials engine carries four teaching presets. Each states a field
+capacity, a wilting point and a saturation point. Those numbers are shown in
+the workbench, in the inspector and to the assistant, and the substrate
+carries the confidence level `established-simplified`, which claims they are
+defensible reduced figures rather than invented ones.
+
+**Are they?**
 
 1. Read `src/engines/materials/engine.ts` and list every preset with its
-   three numbers.
-2. For each medium, use the `fetch` MCP server to read a published source
-   for the standard values of:
+   three numbers, and with the assumptions the definition states.
+2. For each medium, use the `fetch` MCP server to read published figures for:
    - field capacity, the water a soil holds against gravity;
    - the wilting point, the water a plant cannot draw;
    - the water content at saturation, or porosity.
 
    Sources worth trying: university extension service pages on soil
-   texture, the USDA or NRCS soil survey documents, FAO irrigation
-   manuals, and encyclopaedia entries on soil water content. Prefer a
-   university, a government agency or a reference work over a blog.
-3. Compare. Write down, for each medium, what the published range is and
-   where our figure sits inside it.
-4. **Decide, do not just report.** If a figure is outside the published
-   range, change it to a defensible value and say what you changed and why.
-   If a figure is inside the range but on the edge, leave it and say so.
-   If the published ranges overlap too much to justify separate figures for
-   the four media, say that too, and keep the figures that are defensible.
+   texture, USDA and NRCS soil survey documents, FAO irrigation manuals,
+   and reference works on soil water content. Prefer a university, a
+   government agency or a reference work over a blog or a forum.
+3. For each medium, compare our figure against the published range and say
+   whether ours sits inside it, above it, or below it.
 
-### On the saturation point
+### The saturation point is the hard one
 
-The saturation figure was added in the Phase 2 work. It is the hardest of
-the three to pin down, because the published quantity is usually porosity
-rather than "water content at saturation", and those are not the same thing.
-Handle that carefully: say which quantity you are comparing against and
-why, rather than quietly treating them as equal.
+The saturation figure is the newest, and the published quantity is usually
+**porosity** rather than "water content at saturation". Those are not the
+same thing. Porosity is the volume of voids in the soil; the water content
+at saturation is the fraction of those voids that are full of water, which
+is usually less than one. Handle the conversion carefully, or say plainly
+that you did not, and do not present the two as if they were the same.
 
-The figure has to satisfy two constraints at once:
+Our figures are normalised fractions of the medium's volume. Published
+figures are often gravimetric (kilograms of water per kilogram of dry soil)
+or given against a bulk density. Where the units differ, convert them and
+show the working, or say that you did not convert and why.
+
+### The two constraints the figure has to satisfy
 
 - **Above field capacity.** A medium cannot hold less water when saturated
   than when merely damp.
-- **Below the level where the model misbehaves.** With the old model, a
-  tap turned up far enough pushed the total water content past 3, because
-  the medium had no ceiling at all.
+- **Usable by the model.** The old model had no ceiling at all, so a tap
+  turned up far enough pushed the total water content past 3 on a scale
+  that runs from 0 to 1.
 
-### On the units
+### Also check the assumptions while you are there
 
-These are normalised fractions of the medium's volume, not percentages of
-gravimetric water content. Where a published figure is in the other units,
-convert it or say that you did not, and do not present the two as if they
-were the same.
+The substrate's assumption list says the values are "representative teaching
+figures, not measurements of a specific product". Is that still true of the
+saturation figure, now that it has one? Is there anything the list should
+say and does not?
+
+## What to report
+
+Report in full, in your reply. This is the output that gets acted on, so
+nothing can be left implicit.
+
+For each of the four media:
+
+| Medium | Our field capacity | Published range | Inside? | Our wilting point | Published range | Inside? | Our saturation | Published range | Inside? |
+|---|---|---|---|---|---|---|---|---|---|
+
+Then:
+
+- the URL for every published figure you used;
+- your conversion working, where the units differ;
+- **a decision per figure**: keep it, or change it to what value and why;
+- which of our four media you believe the published ranges actually
+  distinguish, and which ones the literature does not support
+  separating as sharply as we do;
+- anything in the assumptions that no longer matches the code.
 
 ## Rules
 
+- Every published number carries its URL, beside it.
+- Do not invent a citation. If you cannot fetch a source, say what you could
+  not fetch.
 - Plain English, short sentences, British spellings. No em dashes.
-- Every number you state from a source has to have the source next to it.
-- Do not invent a citation. If you cannot fetch a source, say what you
-  could not fetch.
-- Do not change the model behaviour. This is an audit of the numbers and
-  the stated assumptions, not a rewrite of the engine.
-- If you change a preset, update the assumptions that mention it.
-
-## What to produce
-
-**`docs/MATERIALS-AUDIT.md`**, with:
-
-- a table: medium, field capacity, wilting point, saturation, the published
-  range for each, and whether ours sits inside it;
-- the source for each published range, as a URL;
-- what you changed and why;
-- what you could not verify.
-
-**The engine's assumptions updated** to match anything you changed.
-
-**A test** that asserts every preset's saturation point is above its field
-capacity, and that the water content can never exceed the saturation point
-at any irrigation rate.
+- If the numbers turn out to be fine, say that plainly. A clean audit is a
+  result.
 
 ## Acceptance
 
-- `docs/MATERIALS-AUDIT.md` exists, every published range has a URL beside
-  it, and no figure is stated without a source.
-- Every preset's saturation point is above its field capacity.
-- The medium's total water content never exceeds its saturation point, at
-  any irrigation rate.
-- The stated assumptions match the numbers in the code.
-- `npm run typecheck`, `npm run lint` and `npm test` are clean.
+- Every preset figure has a published range and a URL beside it.
+- Every figure has a decision: keep, or change to what.
+- The unit conversion is shown, or its absence is stated.
+- The assumptions are checked against the code.
 
 ## When you are done
 
-Report what the published sources said, what you changed, and what you could
-not verify. If the numbers turned out to be fine, say that plainly too. A
-clean audit is a result.
-
-Do not commit.
+Report your findings. Do not edit files. Do not commit.

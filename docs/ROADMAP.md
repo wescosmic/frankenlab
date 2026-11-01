@@ -74,8 +74,8 @@ moments that matter, and the workbench shows them.
 - **Observations.** `ComponentBehavior.observe?(state, context)` is the
   sibling of `outputs`. The kernel collects them after the step, stamps each
   one with its component and its time, and the flagship produces three:
-  the alert on day 8, growth stalling on day 16, the medium wilting the
-  same day.
+  the alert on day 11, growth stalling on day 20, the medium wilting on
+  day 21.
 - **A timeline.** Every observation, in time order, with a severity mark
   and a plain-English message.
 - **A measurements panel.** Every measurement the kernel produced, grouped
@@ -86,12 +86,13 @@ moments that matter, and the workbench shows them.
 Three things were corrected along the way, and the corrections are the point:
 
 - The flagship ran 14 days, which was not long enough to reach the wilting
-  and stress beats. It now runs 21.
+  and stress beats. It now runs 24, which is long enough to reach the
+  recovery beat as well.
 - The default medium is sand. It is the only one that reaches all three
   beats inside the run.
 - An earlier claim that the alert never fires in clay turned out to be an
   artefact of the 14-day window rather than a fact about clay. Clay alarms
-  on day 15. The test and the specs now say what the simulation does.
+  on day 17. The test and the specs now say what the simulation does.
 
 ## Phase 2 — The user builds experiments
 

@@ -173,11 +173,11 @@ describe('BioCircuit validation', () => {
 });
 
 describe('BioCircuit simulation', () => {
-  it('runs the full twenty-one-day experiment', () => {
+  it('runs the full twenty-four-day experiment', () => {
     const registry = createTestRegistry();
     const result = new Simulation(createBioCircuit(), registry).run();
     expect(result.success).toBe(true);
-    expect(result.steps).toBe(504); // 21 days at one-hour steps
+    expect(result.steps).toBe(576); // 24 days at one-hour steps
     expect(result.measurements['plant.biomass']).toBeDefined();
     expect(result.measurements['substrate.moisture']).toBeDefined();
     expect(result.measurements['comparator.decision']).toBeDefined();

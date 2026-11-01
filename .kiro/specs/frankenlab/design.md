@@ -137,7 +137,7 @@ Without step 2–4 of construction, the first network solve sees no values on
 any connection. A resistive probe would read "nothing connected" and behave as
 though the medium were bone dry — so a freshly planted experiment would open
 in an alarm state. The initial solve fixes that, and the alert now first
-fires on day 8 in sand, as it should.
+fires on day 11 in sand, as it should.
 
 ### 3.2 The explicit update scheme
 
@@ -201,8 +201,8 @@ battery(+) ──▶ probe.terminal_a
 
 As the medium dries, the probe's resistance rises, the tap voltage falls,
 the comparator (inverted) fires, and the LED lights. With a 10 kΩ reference
-resistor and a 0.4 threshold, the alert fires on day 8 in sand, day 13 in
-loam and day 15 in clay. Hydrogel holds its water for longer than the 21-day
+resistor and a 0.4 threshold, the alert fires on day 11 in sand, day 13 in
+loam and day 17 in clay. Hydrogel holds its water for longer than the 24-day
 run, so it never alarms in this experiment.
 
 ---

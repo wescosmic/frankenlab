@@ -172,15 +172,15 @@ describe('the alert', () => {
 
   it('holds the clay alert off past the day the sand has already alarmed', () => {
     // Clay does eventually dry out and trip the alert, but only after the
-    // twenty-one-day run in this experiment would have ended. An earlier
+    // twenty-four-day run in this experiment would have ended. An earlier
     // version of this test claimed clay never alarmed at all. That was an
     // artefact of a fourteen-day window, not a fact about clay.
-    const clayAt21Days = firstAlertDay(run(createBioCircuit({ substrate: 'clay' })));
-    expect(clayAt21Days).not.toBeNull();
-    expect(clayAt21Days!).toBeGreaterThan(15);
+    const clayAlertDay = firstAlertDay(run(createBioCircuit({ substrate: 'clay' })));
+    expect(clayAlertDay).not.toBeNull();
+    expect(clayAlertDay!).toBeGreaterThan(15);
 
-    const sandAt21Days = firstAlertDay(run(createBioCircuit({ substrate: 'sandy' })));
-    expect(sandAt21Days!).toBeLessThan(clayAt21Days!);
+    const sandAlertDay = firstAlertDay(run(createBioCircuit({ substrate: 'sandy' })));
+    expect(sandAlertDay!).toBeLessThan(clayAlertDay!);
   });
 
   it('never fires on a freshly planted experiment', () => {

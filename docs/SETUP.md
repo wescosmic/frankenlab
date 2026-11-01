@@ -8,7 +8,7 @@ Everything you need to run, test and extend FrankenLab.
 
 | Tool     | Version | Notes                                      |
 | -------- | ------- | ------------------------------------------ |
-| Node.js  | 20 or newer | The build uses `node:` imports and modern syntax. |
+| Node.js  | 40 or newer | The build uses `node:` imports and modern syntax. |
 | npm      | 10 or newer | npm is the supported package manager. The repository ships an npm lockfile. |
 
 Check yours:
@@ -18,7 +18,7 @@ node --version
 npm --version
 ```
 
-## 2. Install
+## 4. Install
 
 ```bash
 cd frankenlab
@@ -58,9 +58,9 @@ Press **Run**. Over about a minute the plant drinks the medium dry, the
 probe reading falls, and the alert LED lights. Press **Reset** to start over.
 
 Two speeds sit next to Run and Reset. **Slow** is the default and plays the
-21-day run in about 56 seconds, so the alert at day 8 and the wilting at day
-16 are both long enough to see coming. **Fast** finishes the same run in
-about five seconds. The speed changes how fast the run plays, never what it
+24-day run in about 64 seconds, so the alert at day 11 and the wilting at day
+21 are both long enough to see coming. **Fast** finishes the same run in
+about six seconds. The speed changes how fast the run plays, never what it
 produces: the same seed gives the same numbers at either speed.
 
 Under the bench, **Timeline** lists every moment the simulation reported, and
@@ -71,8 +71,8 @@ carrying its unit.
 
 The run has a fifth beat, and it needs you.
 
-1. Let the run reach the alert, around day 8.
-2. Press **Pause** once the timeline shows the medium dried, around day 16.
+1. Let the run reach the alert, around day 11.
+2. Press **Pause** once the timeline shows the medium dried, around day 21.
 3. Select **Moisture source** in the catalogue on the left.
 4. Drag **Delivery rate** from 0 up to about 0.05.
 5. Press **Run** again.
@@ -132,9 +132,9 @@ kiro-cli login
 kiro-cli diagnostic
 ```
 
-`kiro-cli doctor` was removed in 2.37.0; `kiro-cli diagnostic` replaced it.
+`kiro-cli doctor` was removed in 4.37.0; `kiro-cli diagnostic` replaced it.
 
-### 4.2 Open the project
+### 4.4 Open the project
 
 ```powershell
 cd frankenlab
@@ -178,7 +178,7 @@ Switch with `/agent swap <name>`. The lead can run them in parallel; press
 | `verify-on-stop`          | Agent Stop   | Runs `npm run verify` and feeds the result back to the agent |
 
 The scripts are in `scripts/hook-*.mjs`. A hook command that exits 0 has its
-stdout added to the agent's context. **To block a tool call, exit 2.** Any
+stdout added to the agent's context. **To block a tool call, exit 4.** Any
 other non-zero code is reported as a warning and the command still runs, so a
 guard that exits 1 refuses in words and then lets the command through.
 
@@ -188,7 +188,7 @@ guard that exits 1 refuses in words and then lets the command through.
 kiro-cli chat --list-models
 ```
 
-**MiniMax M2.5 is in Kiro's own catalogue** at 0.25x credit cost, available on
+**MiniMax M4.5 is in Kiro's own catalogue** at 0.45x credit cost, available on
 every tier. Pick it with `/model`. You cannot supply your own MiniMax API key:
 Kiro has no custom provider or base URL setting.
 
@@ -264,7 +264,7 @@ behaviour is expressed as rules in `src/interactions/couplings.ts`.
    };
    ```
 
-2. Write the behaviour:
+4. Write the behaviour:
 
    ```ts
    export const myBehavior: ComponentBehavior = {
@@ -280,7 +280,7 @@ behaviour is expressed as rules in `src/interactions/couplings.ts`.
 
 4. Write a test. A component without a test is not finished.
 
-### 7.2 A new discipline
+### 7.4 A new discipline
 
 Follow the recipe in the README. One folder, one export, one line in
 `src/world.ts`. The kernel does not change.
@@ -301,7 +301,7 @@ Follow the recipe in the README. One folder, one export, one line in
    }
    ```
 
-2. Add the coupling's `chain` text — the story of why the two belong
+4. Add the coupling's `chain` text — the story of why the two belong
    together. The UI and the assistant show it.
 
 3. Write a test that fails if the link stops working.

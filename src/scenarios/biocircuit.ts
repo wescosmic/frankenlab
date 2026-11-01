@@ -33,15 +33,15 @@ export interface BioCircuitOptions {
 
 export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDefinition {
   // Sand is the default medium because it is the one that tells the whole
-  // story inside the run: the alert fires on day 8, growth stalls on day 16
-  // and the medium wilts the same day. Loam reaches the same beats two weeks
-  // later, clay three, and hydrogel holds its water past the end of the run.
+  // story inside the run: the alert fires on day 11, growth stalls on day 20
+  // and the medium wilts on day 21. Loam reaches the same beats later,
+  // clay later still, and hydrogel holds its water past the end of the run.
   // The workbench still lets the user swap the medium and see the difference.
   const substrate = options.substrate ?? 'sandy';
   const initialMoisture = options.initialMoisture ?? 1;
   const comparatorThreshold = options.comparatorThreshold ?? 0.4;
   // No irrigation by default: the plant drinks the medium dry over the
-  // twenty-one days and the alert fires. Turning irrigation up is the recovery
+  // twenty-four days and the alert fires. Turning irrigation up is the recovery
   // beat in the demonstration.
   const irrigationRate = options.irrigationRate ?? 0;
   const seed = options.seed ?? 20261030;
@@ -55,7 +55,11 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
     tags: ['biology', 'electronics', 'materials', 'flagship', 'interdisciplinary'],
     modelVersion: '1.0.0',
     dt: 3600, // one simulated hour per step
-    duration: 86400 * 21, // twenty-one simulated days
+    // The run is long enough to reach every beat with a day to spare. The
+    // medium wilts on day 21, the recovery lands on day 21 and a third, and
+    // the alert clears a day and a half later. A shorter run would cut the
+    // recovery off mid-sentence.
+    duration: 86400 * 24, // twenty-four simulated days
     seed,
     components: [
       {
@@ -322,21 +326,21 @@ export const BIOCIRCUIT_BEATS = [
   },
   {
     id: 'alert',
-    atDay: 8,
+    atDay: 11,
     label: 'Alert triggered',
     detail: 'The comparator inverts: below the threshold means the medium is too dry.',
     expects: 'The LED lights to signal that the system needs water.',
   },
   {
     id: 'stalled',
-    atDay: 16,
+    atDay: 20,
     label: 'Growth stalled',
     detail: 'The plant can no longer take up enough water to keep building tissue.',
     expects: 'The biomass curve flattens and the vigour reading starts to fall.',
   },
   {
     id: 'wilting',
-    atDay: 16,
+    atDay: 21,
     label: 'Wilting',
     detail: 'The medium has dropped below its wilting point.',
     expects: 'The plant droops and the medium reads dry.',
@@ -356,14 +360,17 @@ export const BIOCIRCUIT_BEATS = [
  *
  * The first three come from a run with no irrigation, which is the default.
  * The recovery needs the user to turn the tap on, so its day depends on when
- * they do it. Measured on a run that is paused at day 17, watered, and then
- * allowed to continue: the medium comes back at 17d 5h and the alert clears
- * at 18d 9h.
+ * they do it. Measured on a run that is paused the moment the medium wilts,
+ * watered, and then allowed to continue: the medium comes back at 21d 8h and
+ * the alert clears at 23d 3h.
+ *
+ * These are measured by `scripts/measure-beats.ts`, not written by hand. If
+ * the numbers here and that script disagree, the script is right.
  */
 export const BIOCIRCUIT_MEASURED_DAYS = {
-  alertFired: 8.25,
-  growthStalled: 15.96,
-  mediumWilting: 16.46,
-  mediumRecovered: 17.21,
-  alertCleared: 18.38,
+  alertFired: 10.96,
+  growthStalled: 20.38,
+  mediumWilting: 21.0,
+  mediumRecovered: 21.33,
+  alertCleared: 23.13,
 } as const;

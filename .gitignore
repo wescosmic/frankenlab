@@ -20,3 +20,6 @@ pnpm-debug.log*
 .idea/
 .vscode/
 *.err
+
+# Kiro Crew task-runner state
+runs.json

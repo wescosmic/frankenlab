@@ -48,10 +48,10 @@ the run:
 
 | Medium   | Alert fires        |
 | -------- | ------------------ |
-| Sand     | day 8              |
+| Sand     | day 11             |
 | Loam     | day 13             |
-| Clay     | day 15             |
-| Hydrogel | not within 21 days |
+| Clay     | day 17             |
+| Hydrogel | not within 24 days |
 
 ## Principles
 
@@ -86,7 +86,7 @@ npm run dev          # http://localhost:4310
 Then open the laboratory, press **Run**, and watch the plant drink the medium
 dry while the readout falls and the alarm lights. The run takes about a
 minute at the default speed, which is slow enough to follow: the alert goes
-off on day 8, growth stalls on day 16 and the medium wilts the same day.
+off on day 11, growth stalls on day 20 and the medium wilts on day 21.
 **Fast** gets to the end state in about five seconds.
 
 And it can be saved. Pause the run, turn the irrigation up in the inspector,

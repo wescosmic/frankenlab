@@ -5,6 +5,7 @@ tools:
   - read
   - write
   - shell
+includePowers: true
 permissions:
   rules:
     - capability: shell
@@ -32,6 +33,7 @@ permissions:
         - "src/engines/**"
       effect: ask
 resources:
+  - skill://.kiro/powers/frankenlab/skills/**/SKILL.md
   - file://docs/ARCHITECTURE.md
   - file://.kiro/steering/engineering-standards.md
   - file://.kiro/steering/product.md

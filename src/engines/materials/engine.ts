@@ -51,9 +51,9 @@ const RECOVERY_MARGIN = 0.08;
 export const SUBSTRATE_PRESETS = {
   sandy: {
     label: 'Sandy soil',
-    fieldCapacity: 0.12,
-    wiltingPoint: 0.04,
-    saturation: 0.24,
+    fieldCapacity: 0.18,
+    wiltingPoint: 0.06,
+    saturation: 0.38,
     percolationRate: 0.35,
     retentionRate: 0.02,
     thermalConductivity: 0.25,
@@ -74,8 +74,8 @@ export const SUBSTRATE_PRESETS = {
   clay: {
     label: 'Clay',
     fieldCapacity: 0.42,
-    wiltingPoint: 0.22,
-    saturation: 0.56,
+    wiltingPoint: 0.18,
+    saturation: 0.50,
     percolationRate: 0.03,
     retentionRate: 0.12,
     thermalConductivity: 0.8,
@@ -85,7 +85,7 @@ export const SUBSTRATE_PRESETS = {
   hydrogel: {
     label: 'Hydrogel substrate',
     fieldCapacity: 0.75,
-    wiltingPoint: 0.15,
+    wiltingPoint: 0.10,
     saturation: 0.95,
     percolationRate: 0.05,
     retentionRate: 0.35,

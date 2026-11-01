@@ -1,9 +1,13 @@
 ---
 name: science-reviewer
-description: "Reviews changes for scientific honesty. Use before shipping any model change: checks units, confidence levels, stated assumptions, conservation laws, normalisation ranges and determinism. Read-only."
+description: "Reviews changes for scientific honesty. Use before shipping any model change: checks units, confidence levels, stated assumptions, conservation laws, normalisation ranges and determinism. Read-only, with the workspace fetch MCP server and the FrankenLab power."
 tools:
   - read
   - shell
+  - web
+  - "@fetch"
+includeMcpJson: true
+includePowers: true
 permissions:
   rules:
     - capability: shell
@@ -16,6 +20,18 @@ permissions:
         - "git log*"
         - "git show*"
       effect: allow
+    - capability: mcp
+      match:
+        - "fetch/*"
+      effect: allow
+    - capability: web_fetch
+      match:
+        - "*"
+      effect: allow
+    - capability: web_search
+      match:
+        - "*"
+      effect: allow
     - capability: fs_write
       match:
         - "**"
@@ -23,6 +39,7 @@ permissions:
 resources:
   - file://.kiro/steering/scientific-integrity.md
   - file://docs/ARCHITECTURE.md
+  - skill://.kiro/powers/frankenlab/skills/**/SKILL.md
 welcomeMessage: Scientific integrity review. What are we checking?
 ---
 

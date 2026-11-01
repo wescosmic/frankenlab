@@ -5,6 +5,7 @@ tools:
   - read
   - write
   - shell
+includePowers: true
 permissions:
   rules:
     - capability: shell
@@ -34,6 +35,7 @@ permissions:
         - "src/app/**"
       effect: ask
 resources:
+  - skill://.kiro/powers/frankenlab/skills/**/SKILL.md
   - file://docs/ARCHITECTURE.md
   - file://.kiro/steering/architecture.md
   - file://.kiro/steering/scientific-integrity.md
