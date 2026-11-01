@@ -177,7 +177,7 @@ additive rather than urgent. It is the natural next change.
 **Partly done.** The repository is built, the video is cut and the writing is
 drafted. What is left needs the account holder, not the developer.
 
-- **The demonstration.** Cut and verified: 2 minutes 18 seconds, 1920 by 1080,
+- **The demonstration.** Cut and verified: 2 minutes 22 seconds, 1920 by 1080,
   with the narration in sync. Committed at `docs/demo/frankenlab-demo.mp4`. It
   still has to be uploaded to YouTube and made public. The best beat in it is
   the catalysis comparison: two vessels, one catalyst, and a number that

@@ -1,6 +1,6 @@
 # FrankenLab — demo script
 
-Target length: **2 minutes 18 seconds**. The rules allow under 3 minutes.
+Target length: **2 minutes 22 seconds**. The rules allow under 3 minutes.
 
 The last fifteen seconds must show one concrete Kiro moment that changed the
 product, with a visible outcome. That is section 11, and it is not optional.
@@ -161,30 +161,37 @@ And the badge on the reply: **ILLUSTRATIVE**.
 
 ---
 
-## 10 · 1:54 — 2:05 · The Frankenstein part
+## 10 · 1:53 — 2:09 · The Frankenstein part
 
-**Screen.** The bench, wide shot. The connections between the four
-disciplines.
+**Screen.** The Couplings tab, under the bench. The flagship's rules, listed:
+which part sends what to which part, on which channel, and what the rule
+leaves out. The panel says how many disciplines are on the bench and how many
+declared couplings are carrying it.
 
 **Voiceover.**
-> Biology, electronics, materials and chemistry, sharing one component graph
-> and one clock. The simulation kernel has never heard of any of them. Each
-> discipline is a plug-in.
+> Four disciplines: biology, electronics, materials and chemistry. Three of them
+> share this bench, one component graph and one clock. The simulation kernel has
+> never heard of any of them. Each discipline is a plug-in.
+
+**Why three and not four.** The voice names all four disciplines the product
+has. The panel reports the three that this bench actually uses, because
+chemistry runs in its own experiment. The screen corrects the voice rather than
+agreeing with it, and that is the point of the whole product.
 
 ---
 
-## 11 · 2:05 — 2:18 · The Kiro moment
+## 11 · 2:09 — 2:22 · The Kiro moment
 
 **This is the last fifteen seconds. It must show the change, not a file tree.**
 
-**2:03 — 2:09.** Cut to a terminal running the Kiro CLI. Show the audit brief
+**2:07 — 2:14.** Cut to a terminal running the Kiro CLI. Show the audit brief
 and the reviewer's decision table for sand: field capacity 0.12 becomes 0.18,
 wilting point 0.04 becomes 0.06.
 
 **Caption.** Kiro's science reviewer checked the soil physics against
 published data.
 
-**2:09 — 2:18.** Cut back to the app. The Timeline tab. The alert on day
+**2:14 — 2:22.** Cut back to the app. The Timeline tab. The alert on day
 eleven, the wilting on day twenty-one.
 
 **Caption.** Before the audit: day 8 and day 16. The audit moved the whole

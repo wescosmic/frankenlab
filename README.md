@@ -8,9 +8,10 @@ Build it. Break it. Discover it.
 
 ![The bench, the alert lit and the timeline showing the alert firing](docs/images/the-bench-alert.png)
 
-**Watch it work:** [the two and a half minute demo](docs/demo/frankenlab-demo.mp4)
-— the run, the recovery, the catalyst, the assistant, and the Kiro moment that
-moved the whole story three days.
+**Watch it work:** [the 2:22 demo](docs/demo/frankenlab-demo.mp4)
+— the run, the recovery, the catalyst, the assistant, the named rules that
+carry the experiment, and the Kiro moment that moved the whole story three
+days.
 
 ---
 
