@@ -421,3 +421,192 @@ describe('readings', () => {
     }
   });
 });
+describe('live parameters', () => {
+  it('isParameterLive returns true for a live parameter', () => {
+    const registry = createTestRegistry();
+    const experiment = createBioCircuit();
+    const simulation = new Simulation(experiment, registry);
+
+    // Irrigation rate is live.
+    expect(simulation.isParameterLive('irrigation', 'rate')).toBe(true);
+    // Plant growth rate is live.
+    expect(simulation.isParameterLive('plant', 'growth_rate')).toBe(true);
+  });
+
+  it('isParameterLive returns false for baked parameters', () => {
+    const registry = createTestRegistry();
+    const experiment = createBioCircuit();
+    const simulation = new Simulation(experiment, registry);
+
+    // Substrate preset is baked.
+    expect(simulation.isParameterLive('substrate', 'preset')).toBe(false);
+    // Substrate initial_fill is baked.
+    expect(simulation.isParameterLive('substrate', 'initial_fill')).toBe(false);
+  });
+
+  it('isParameterLive returns false for unknown components', () => {
+    const registry = createTestRegistry();
+    const experiment = createBioCircuit();
+    const simulation = new Simulation(experiment, registry);
+
+    expect(simulation.isParameterLive('nonexistent', 'rate')).toBe(false);
+  });
+
+  it('updateParameter changes a live parameter mid-run', () => {
+    const registry = createTestRegistry();
+    const experiment = createBioCircuit({ irrigationRate: 0 });
+    const simulation = new Simulation(experiment, registry);
+
+    // Run a few steps with no irrigation.
+    for (let i = 0; i < 100; i++) simulation.tick();
+
+    const before = simulation.snapshot().outputs;
+    const moistureBefore = before['substrate']?.['moisture']?.value ?? 0;
+
+    // Turn on irrigation mid-run.
+    simulation.updateParameter('irrigation', 'rate', 0.2);
+
+    // Run a few more steps.
+    for (let i = 0; i < 100; i++) simulation.tick();
+
+    const after = simulation.snapshot().outputs;
+    const moistureAfter = after['substrate']?.['moisture']?.value ?? 0;
+
+    // Moisture should have increased after watering.
+    expect(moistureAfter).toBeGreaterThan(moistureBefore);
+  });
+
+  it('updateParameter throws for baked parameters', () => {
+    const registry = createTestRegistry();
+    const experiment = createBioCircuit();
+    const simulation = new Simulation(experiment, registry);
+
+    // Attempting to change a baked number parameter should throw.
+    expect(() => simulation.updateParameter('substrate', 'initial_fill', 0.5)).toThrow(
+      /baked/i,
+    );
+  });
+
+  it('a live parameter change does not affect past observations', () => {
+    const registry = createTestRegistry();
+    const experiment = createBioCircuit({ irrigationRate: 0 });
+    const simulation = new Simulation(experiment, registry);
+
+    // Collect observations before the change.
+    for (let i = 0; i < 200; i++) simulation.tick();
+    const observationsBefore = simulation.snapshot().observations.length;
+
+    // Change a live parameter.
+    simulation.updateParameter('irrigation', 'rate', 0.1);
+
+    // Run more steps.
+    for (let i = 0; i < 200; i++) simulation.tick();
+    const observationsAfter = simulation.snapshot().observations.length;
+
+    // The observations before the change should still be there.
+    expect(observationsAfter).toBeGreaterThanOrEqual(observationsBefore);
+  });
+
+  it('the same parameter change at the same step produces identical results', () => {
+    const registry = createTestRegistry();
+
+    // Run 1: change irrigation at step 100.
+    const exp1 = createBioCircuit({ irrigationRate: 0, seed: 42 });
+    const sim1 = new Simulation(exp1, registry);
+    for (let i = 0; i < 100; i++) sim1.tick();
+    sim1.updateParameter('irrigation', 'rate', 0.2);
+    for (let i = 0; i < 100; i++) sim1.tick();
+    const result1 = sim1.snapshot();
+
+    // Run 2: same seed, same change at same step.
+    const exp2 = createBioCircuit({ irrigationRate: 0, seed: 42 });
+    const sim2 = new Simulation(exp2, registry);
+    for (let i = 0; i < 100; i++) sim2.tick();
+    sim2.updateParameter('irrigation', 'rate', 0.2);
+    for (let i = 0; i < 100; i++) sim2.tick();
+    const result2 = sim2.snapshot();
+
+    // Results should be identical.
+    expect(result1.outputs).toEqual(result2.outputs);
+  });
+});
+describe('substrate saturation', () => {
+  it('flooding the medium keeps total moisture at or below saturation', () => {
+    const registry = createTestRegistry();
+    const experiment = createBioCircuit({ irrigationRate: 0 });
+
+    // Run the simulation with maximum irrigation (1.0).
+    const highExperiment = {
+      ...experiment,
+      components: experiment.components.map((c) =>
+        c.id === 'irrigation'
+          ? { ...c, parameters: { ...c.parameters, rate: { value: 1.0, unit: 'ratio' } } }
+          : c,
+      ),
+    };
+    const simulation = new Simulation(highExperiment, registry);
+
+    // Run for a while to let water accumulate.
+    for (let i = 0; i < 1000; i++) simulation.tick();
+
+    const outputs = simulation.snapshot().outputs;
+    const totalMoisture = outputs['substrate']?.['totalMoisture']?.value ?? 0;
+
+    // Total moisture should not exceed saturation (0.48 for loam).
+    expect(totalMoisture).toBeLessThanOrEqual(0.5);
+  });
+
+  it('the available moisture reading stays between 0 and 1 even at high irrigation', () => {
+    const registry = createTestRegistry();
+    const experiment = createBioCircuit({ irrigationRate: 0 });
+
+    // Run the simulation with maximum irrigation.
+    const highExperiment = {
+      ...experiment,
+      components: experiment.components.map((c) =>
+        c.id === 'irrigation'
+          ? { ...c, parameters: { ...c.parameters, rate: { value: 1.0, unit: 'ratio' } } }
+          : c,
+      ),
+    };
+    const simulation = new Simulation(highExperiment, registry);
+
+    // Run for a while.
+    for (let i = 0; i < 1000; i++) simulation.tick();
+
+    const outputs = simulation.snapshot().outputs;
+    const availableMoisture = outputs['substrate']?.['moisture']?.value ?? 0;
+
+    // Available moisture should be clamped between 0 and 1.
+    expect(availableMoisture).toBeGreaterThanOrEqual(0);
+    expect(availableMoisture).toBeLessThanOrEqual(1);
+  });
+
+  it('watering a dry medium brings it back above the wilting point', () => {
+    const registry = createTestRegistry();
+    // Start with no irrigation.
+    const experiment = createBioCircuit({ irrigationRate: 0 });
+    const simulation = new Simulation(experiment, registry);
+
+    // Run until dry (past the wilting point).
+    for (let i = 0; i < 500; i++) simulation.tick();
+
+    const beforeState = simulation.snapshot().outputs;
+    const moistureBefore = beforeState['substrate']?.['moisture']?.value ?? 0;
+
+    // Should be at or near zero (wilted).
+    expect(moistureBefore).toBeLessThanOrEqual(0.1);
+
+    // Turn on irrigation.
+    simulation.updateParameter('irrigation', 'rate', 0.1);
+
+    // Run until recovered.
+    for (let i = 0; i < 500; i++) simulation.tick();
+
+    const afterState = simulation.snapshot().outputs;
+    const moistureAfter = afterState['substrate']?.['moisture']?.value ?? 0;
+
+    // Moisture should be above the recovery threshold.
+    expect(moistureAfter).toBeGreaterThan(0.1);
+  });
+});

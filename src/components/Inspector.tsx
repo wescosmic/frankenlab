@@ -8,6 +8,7 @@
  * stated assumptions sit next to the controls, not behind a menu.
  */
 
+import React from 'react';
 import { useLabStore } from '@/state/lab';
 import { DISCIPLINE_COLOURS } from '@/world';
 
@@ -33,9 +34,14 @@ const CONFIDENCE_COPY: Record<string, { label: string; blurb: string }> = {
 export function Inspector() {
   const experiment = useLabStore((s) => s.experiment);
   const registry = useLabStore((s) => s.registry);
+  const simulation = useLabStore((s) => s.simulation);
+  const status = useLabStore((s) => s.status);
   const selectedId = useLabStore((s) => s.selectedId);
   const setParameter = useLabStore((s) => s.setParameter);
   const setSubstrate = useLabStore((s) => s.setSubstrate);
+
+  // Track whether the last parameter change caused a restart.
+  const [lastRestarted, setLastRestarted] = React.useState(false);
 
   const instance = experiment.components.find((c) => c.id === selectedId) ?? null;
   const definition = instance ? registry.tryGetDefinition(instance.type) : null;
@@ -131,10 +137,37 @@ export function Inspector() {
               const min = parameter.min ?? 0;
               const max = parameter.max ?? 100;
 
+              // Check if this parameter can be changed live (mid-run) or requires a rebuild.
+              const isLive = simulation.isParameterLive(instance.id, parameter.id);
+
+              const handleChange = (newValue: number) => {
+                const restarted = setParameter(instance.id, parameter.id, newValue);
+                // If the run restarted, show a brief notification and clear after 3 seconds.
+                if (restarted) {
+                  setLastRestarted(true);
+                  setTimeout(() => setLastRestarted(false), 3000);
+                }
+              };
+
+              // Disable the slider if running and the parameter is baked (would restart).
+              const isDisabled = status === 'running' && !isLive;
+
               return (
                 <label key={parameter.id} className="block">
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-[12px] text-lab-muted">{parameter.label}</span>
+                    <span className="text-[12px] text-lab-muted">
+                      {parameter.label}
+                      {isLive && status === 'running' && (
+                        <span className="ml-1.5 text-[10px] uppercase tracking-wide text-lab-accent">
+                          · live
+                        </span>
+                      )}
+                      {!isLive && (
+                        <span className="ml-1.5 text-[10px] uppercase tracking-wide text-lab-warn">
+                          · restarts
+                        </span>
+                      )}
+                    </span>
                     <span className="lab-value text-[12px] text-lab-text">
                       {Number(value.toFixed(4))}
                       {parameter.unit ? ` ${parameter.unit}` : ''}
@@ -146,10 +179,9 @@ export function Inspector() {
                     max={max}
                     step={parameter.step ?? 0.01}
                     value={value}
-                    onChange={(event) =>
-                      setParameter(instance.id, parameter.id, Number(event.target.value))
-                    }
-                    className="mt-1.5 w-full accent-[var(--color-lab-accent)]"
+                    disabled={isDisabled}
+                    onChange={(event) => handleChange(Number(event.target.value))}
+                    className="mt-1.5 w-full accent-[var(--color-lab-accent)] disabled:opacity-40"
                   />
                   <p className="mt-1 text-[11px] leading-snug text-lab-dim">
                     {parameter.description}
@@ -157,6 +189,15 @@ export function Inspector() {
                 </label>
               );
             })}
+
+          {/* Notification when a baked parameter change caused a restart */}
+          {lastRestarted && (
+            <div className="mt-3 rounded-md border border-lab-warn/40 bg-lab-warn/10 px-3 py-2">
+              <p className="text-[11px] leading-snug text-lab-warn">
+                This change restarted the run from the beginning.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

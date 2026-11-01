@@ -1,0 +1,30 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "frankenlab",
+  "version": "1.0.0",
+  "description": "Work on FrankenLab, the interdisciplinary scientific sandbox: the simulation kernel, the discipline engines, the component definitions, and the rules that keep a science model honest.",
+  "author": {
+    "name": "Lucid Mind Labs"
+  },
+  "keywords": [
+    "frankenlab",
+    "simulation",
+    "kernel",
+    "engine",
+    "discipline",
+    "component definition",
+    "coupling",
+    "observation",
+    "confidence",
+    "unit",
+    "quantity",
+    "substrate",
+    "wilting point",
+    "field capacity",
+    "voltage divider",
+    "nodal analysis",
+    "experiment definition",
+    "scientific model"
+  ],
+  "license": "MIT"
+}

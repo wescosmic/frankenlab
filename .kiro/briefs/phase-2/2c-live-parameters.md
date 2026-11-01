@@ -11,6 +11,12 @@ FrankenLab, at `C:\Users\Wesley\.mavis\workspace\frankenlab`. Read
 
 This brief is the recovery beat of the demonstration.
 
+The run now plays at **Slow** by default, which takes about 56 seconds for
+the 21-day flagship. So the user has time to watch the medium dry, see the
+alert fire, and then turn the tap on and watch it come back. The alert fires
+on day 8, growth stalls on day 16 and the medium wilts the same day, and the
+run does not end until day 21.
+
 Today `setParameter` in `src/state/lab.ts` rebuilds the whole simulation, so
 moving a slider restarts the run from zero. That is correct but blunt, and it
 means the user cannot water a dry plant and watch it come back.
@@ -106,14 +112,32 @@ causal chain is safe, but the diagnostics are not.
 **Give the medium a saturation point and hold it there.**
 
 - Add a `saturation` figure to each substrate preset: the water content the
-  medium can hold at full saturation, which is above field capacity. Real
-  soils hold roughly 1.5 to 1.9 times their field capacity when saturated.
-  Hydrogel holds far more relative to its field capacity.
+  medium can hold at full saturation, which is above field capacity. Use
+  these:
+
+  | Medium | Field capacity | Saturation |
+  |---|---|---|
+  | Sand | 0.12 | 0.24 |
+  | Loam | 0.28 | 0.48 |
+  | Clay | 0.42 | 0.56 |
+  | Hydrogel | 0.75 | 0.95 |
+
+  Saturated soil holds roughly twice its field capacity. Hydrogel holds far
+  more relative to its field capacity, and it is already close to full at
+  field capacity, which is the point of it.
+
 - The medium cannot hold more than its saturation point. Water above it
-  drains away rather than accumulating.
+  drains away rather than accumulating. The drainage that already exists
+  handles water above *field* capacity; the saturation point is the harder
+  ceiling that the drainage rate cannot outrun.
 - Say so in the substrate's stated assumptions. A medium with a finite pore
   volume is a modelling decision, and the assumptions list is where the
   product keeps honest about its simplifications.
+- The recovery threshold matters here. The medium counts as recovered when
+  its available water climbs back above the wilting point by the recovery
+  margin, which in sand means a total water content above about 0.046. The
+  saturation point is well above that, so a recovered medium is still a
+  recovered medium.
 
 ### Tests
 

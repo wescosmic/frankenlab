@@ -78,7 +78,8 @@ export interface LabStore {
   /** Advance the simulation by a number of steps and publish the readings. */
   advance(steps: number): void;
   setSpeed(speed: Speed): void;
-  setParameter(componentId: string, parameterId: string, value: number): void;
+  /** @returns true if the run was restarted, false if it was a live update. */
+  setParameter(componentId: string, parameterId: string, value: number): boolean;
   setSubstrate(substrate: 'sandy' | 'loamy' | 'clay' | 'hydrogel'): void;
   ask(question: string): Promise<void>;
 }
@@ -220,20 +221,62 @@ export const useLabStore = create<LabStore>((set, get) => {
       });
     },
 
-    setParameter(componentId, parameterId, value) {
-      const { experiment: current } = get();
-      const components = current.components.map((component) =>
-        component.id === componentId
-          ? {
-              ...component,
-              parameters: {
-                ...component.parameters,
-                [parameterId]: { value },
-              },
-            }
-          : component,
-      );
-      rebuild({ ...current, components });
+    /**
+     * Set a parameter on a component.
+     *
+     * For live parameters, updates the running simulation directly.
+     * For baked parameters, rebuilds the simulation (which restarts the run).
+     * Returns true if the run was restarted, false if it was a live update.
+     */
+    setParameter(componentId: string, parameterId: string, value: number): boolean {
+      const { simulation: current, experiment: currentExp } = get();
+      const isLive = current.isParameterLive(componentId, parameterId);
+
+      if (isLive) {
+        // Live update: modify the running simulation directly.
+        // The parameter change takes effect on the next step.
+        current.updateParameter(componentId, parameterId, value);
+
+        // Update the experiment definition too, so the change persists if the
+        // user resets or exports the experiment.
+        const components = currentExp.components.map((component) =>
+          component.id === componentId
+            ? {
+                ...component,
+                parameters: {
+                  ...component.parameters,
+                  [parameterId]: { value },
+                },
+              }
+            : component,
+        );
+        const next = { ...currentExp, components };
+        set({ experiment: next });
+
+        // Publish updated readings without advancing the simulation.
+        const snap = takeSnapshot(current);
+        set({ readings: snap.readings });
+
+        // Return false to indicate no restart happened.
+        return false;
+      } else {
+        // Baked parameter: need to rebuild the simulation (restarts the run).
+        const components = currentExp.components.map((component) =>
+          component.id === componentId
+            ? {
+                ...component,
+                parameters: {
+                  ...component.parameters,
+                  [parameterId]: { value },
+                },
+              }
+            : component,
+        );
+        rebuild({ ...currentExp, components });
+
+        // Return true to indicate a restart happened.
+        return true;
+      }
     },
 
     setSubstrate(substrate) {

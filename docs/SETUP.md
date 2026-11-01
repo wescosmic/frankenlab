@@ -67,6 +67,25 @@ Under the bench, **Timeline** lists every moment the simulation reported, and
 **Measurements** lists every quantity it produced, grouped by part and
 carrying its unit.
 
+### The recovery beat
+
+The run has a fifth beat, and it needs you.
+
+1. Let the run reach the alert, around day 8.
+2. Press **Pause** once the timeline shows the medium dried, around day 16.
+3. Select **Moisture source** in the catalogue on the left.
+4. Drag **Delivery rate** from 0 up to about 0.05.
+5. Press **Run** again.
+
+The run continues from where it stopped. The medium comes back above its
+wilting point within a couple of hours of simulated time, the recovery
+appears on the timeline, and the alert LED goes out a few hours later.
+
+Moving the delivery rate does not restart the experiment, because the rate is
+a live parameter. The substrate's medium and its initial fill are not, since
+they decide the physical constants the water balance is measured against;
+changing either of those rebuilds the run, and the interface says so.
+
 ### Other scripts
 
 ```bash

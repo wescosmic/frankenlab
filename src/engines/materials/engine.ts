@@ -53,6 +53,7 @@ export const SUBSTRATE_PRESETS = {
     label: 'Sandy soil',
     fieldCapacity: 0.12,
     wiltingPoint: 0.04,
+    saturation: 0.24,
     percolationRate: 0.35,
     retentionRate: 0.02,
     thermalConductivity: 0.25,
@@ -63,6 +64,7 @@ export const SUBSTRATE_PRESETS = {
     label: 'Loamy soil',
     fieldCapacity: 0.28,
     wiltingPoint: 0.12,
+    saturation: 0.48,
     percolationRate: 0.12,
     retentionRate: 0.06,
     thermalConductivity: 0.4,
@@ -73,6 +75,7 @@ export const SUBSTRATE_PRESETS = {
     label: 'Clay',
     fieldCapacity: 0.42,
     wiltingPoint: 0.22,
+    saturation: 0.56,
     percolationRate: 0.03,
     retentionRate: 0.12,
     thermalConductivity: 0.8,
@@ -83,6 +86,7 @@ export const SUBSTRATE_PRESETS = {
     label: 'Hydrogel substrate',
     fieldCapacity: 0.75,
     wiltingPoint: 0.15,
+    saturation: 0.95,
     percolationRate: 0.05,
     retentionRate: 0.35,
     thermalConductivity: 0.15,
@@ -106,6 +110,7 @@ export const substrateDefinition: ComponentDefinition = {
   assumptions: [
     'Water is held in two reservoirs: a free reservoir that drains under gravity and a bound reservoir that holds against it.',
     'Field capacity and wilting point are preset values, not measured from the actual medium.',
+    'The medium has a finite saturation point — water above it drains away rather than accumulating.',
     'No capillary rise, no preferential flow, and no root-volume feedback.',
     'Thermal and electrical properties are constant and independent of moisture — a real simplification.',
     'Values are representative teaching figures, not measurements of a specific product.',
@@ -217,6 +222,12 @@ export const substrateDefinition: ComponentDefinition = {
       description: 'Water content below which plants cannot recover.',
     },
     {
+      id: 'saturation',
+      label: 'Saturation',
+      unit: 'ratio',
+      description: 'Maximum water content the medium can hold.',
+    },
+    {
       id: 'thermalConductivity',
       label: 'Thermal conductivity',
       unit: 'W_per_mK',
@@ -289,6 +300,7 @@ function substrateOutputs(readings: SubstrateReadings): Record<string, Quantity>
     boundWater: quantity(bound, 'ratio'),
     fieldCapacity: quantity(preset.fieldCapacity, 'ratio'),
     wiltingPoint: quantity(preset.wiltingPoint, 'ratio'),
+    saturation: quantity(preset.saturation, 'ratio'),
     thermalConductivity: quantity(preset.thermalConductivity, 'W_per_mK'),
     conductivity: quantity(preset.conductivity, 'S_per_m'),
   };
@@ -325,6 +337,19 @@ export const substrateBehavior: ComponentBehavior<SubstrateState> = {
     // medium would automatically receive more water and the comparison
     // between substrates would be meaningless.
     free += supply * days;
+
+    // Saturation ceiling: the medium cannot hold more water than its saturation
+    // point. Water above this drains away immediately. This prevents the
+    // medium from accumulating unlimited water when irrigation outruns drainage.
+    const totalWater = free + bound;
+    if (totalWater > preset.saturation) {
+      const excess = totalWater - preset.saturation;
+      // Drain the excess proportionally from both reservoirs.
+      const freeFraction = free / totalWater;
+      const boundFraction = bound / totalWater;
+      free = Math.max(0, free - excess * freeFraction);
+      bound = Math.max(0, bound - excess * boundFraction);
+    }
 
     // Percolation: only water above field capacity drains away under gravity.
     const excess = Math.max(0, free - preset.fieldCapacity);

@@ -89,6 +89,11 @@ minute at the default speed, which is slow enough to follow: the alert goes
 off on day 8, growth stalls on day 16 and the medium wilts the same day.
 **Fast** gets to the end state in about five seconds.
 
+And it can be saved. Pause the run, turn the irrigation up in the inspector,
+and carry on: the medium comes back above its wilting point, the timeline
+records the recovery, and the LED goes out. The simulation computes, the
+timeline shows what happened, and you decide what to do about it.
+
 Under the bench there are three tabs. **Readings** shows the four headline
 numbers and their history. **Timeline** lists every moment the simulation
 reported, in order, with a severity and a plain-English explanation. **Measurements**

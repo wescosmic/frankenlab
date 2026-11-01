@@ -78,7 +78,7 @@ const child = spawn(resolveCli(), cliArgs, {
 
 const messages = [];
 const hooks = [];
-const blocked = [];
+const failed = [];
 const agents = [];
 const steering = [];
 
@@ -122,7 +122,7 @@ child.stdout.on('data', (chunk) => {
         }
       }
       if (meta.kind === 'turn_completion') {
-        blocked.push(`credits: ${meta.usage ?? 'unreported'}`);
+        failed.push(`credits: ${meta.usage ?? 'unreported'}`);
       }
     }
 
@@ -131,7 +131,12 @@ child.stdout.on('data', (chunk) => {
         update.rawOutput?.message ??
         update.content?.map?.((c) => c.content?.text ?? '').join(' ') ??
         '';
-      blocked.push(`BLOCKED: ${String(text).slice(0, 300)}`);
+      // A failed tool call is not the same thing as a hook block. A hook
+      // block names itself in the agent's reply; a failed command does not.
+      const hookBlocked = /Blocked by:.*hook with exit code/.test(text);
+      failed.push(
+        `${hookBlocked ? 'BLOCKED BY HOOK' : 'FAILED COMMAND'}: ${String(text).slice(0, 300)}`,
+      );
     }
   }
 });
@@ -156,9 +161,9 @@ child.on('close', (code) => {
     console.log('\n=== hooks fired ===');
     console.log(hooks.join(', '));
   }
-  if (blocked.length) {
+  if (failed.length) {
     console.log('\n=== notable events ===');
-    console.log(blocked.join('\n'));
+    console.log(failed.join('\n'));
   }
   const warnings = stderr
     .split('\n')

@@ -368,6 +368,70 @@ export class Simulation {
     return measurements;
   }
 
+  /**
+   * Update a live parameter on a running component.
+   *
+   * The next step will read the new value from `__param_<id>`.
+   *
+   * @param componentId - the component to update
+   * @param parameterId - the parameter to change
+   * @param value - the new numeric value
+   * @throws if the component or parameter does not exist, or if the parameter
+   *           is baked into the initial state (use rebuild() for those)
+   */
+  updateParameter(componentId: string, parameterId: string, value: number): void {
+    const instance = this.#experiment.components.find((c) => c.id === componentId);
+    if (!instance) {
+      throw new SimulationError(`Unknown component "${componentId}".`);
+    }
+
+    const definition = this.#registry.getDefinition(instance.type);
+    const param = definition.parameters.find((p) => p.id === parameterId);
+    if (!param) {
+      throw new SimulationError(`Unknown parameter "${parameterId}" on ${instance.type}.`);
+    }
+
+    // Baked parameters are those whose values are folded into the initial
+    // state and cannot be changed mid-run without breaking the water balance
+    // (e.g., substrate preset determines wilting point and field capacity).
+    const isBaked = this.#isBakedParameter(instance.type, parameterId);
+    if (isBaked) {
+      throw new SimulationError(
+        `Parameter "${parameterId}" is baked into the initial state and cannot be changed mid-run.`,
+      );
+    }
+
+    const state = this.#states.get(componentId);
+    if (state) {
+      this.#states.set(componentId, { ...state, [`__param_${parameterId}`]: value });
+    }
+  }
+
+  /**
+   * Check whether a parameter is baked (cannot be changed mid-run).
+   *
+   * These are parameters that affect the physical constants of the model —
+   * substrate properties that define the water balance, not tunable knobs.
+   */
+  #isBakedParameter(componentType: string, parameterId: string): boolean {
+    // Substrate preset and initial_fill define the physical properties
+    // (wilting point, field capacity) against which the water balance is computed.
+    if (componentType === 'materials.substrate') {
+      return parameterId === 'preset' || parameterId === 'initial_fill';
+    }
+    return false;
+  }
+
+  /**
+   * Check if a parameter can be updated live (mid-run) or requires a rebuild.
+   */
+  isParameterLive(componentId: string, parameterId: string): boolean {
+    const instance = this.#experiment.components.find((c) => c.id === componentId);
+    if (!instance) return false;
+
+    return !this.#isBakedParameter(instance.type, parameterId);
+  }
+
   snapshot(): RuntimeSnapshot {
     const outputs: Record<string, Readonly<Record<string, Quantity>>> = {};
     for (const [componentId, value] of this.#outputs) {

@@ -295,8 +295,8 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
  * measured from the simulation rather than written by hand. Sand is the
  * default medium, so these are the numbers the demonstration is built on. The
  * workbench still lets the user swap the medium, which pushes every beat
- * later. The recovery beat has no day: it needs the user to water the medium,
- * which the workbench cannot do yet.
+ * later. The recovery beat has no day because it needs the user to water the
+ * medium, which they can do at any point in the run.
  */
 export const BIOCIRCUIT_BEATS = [
   {
@@ -349,3 +349,21 @@ export const BIOCIRCUIT_BEATS = [
     expects: 'The LED switches off and growth resumes.',
   },
 ] as const;
+
+/**
+ * The days the flagship's beats actually land on, measured from the
+ * simulation.
+ *
+ * The first three come from a run with no irrigation, which is the default.
+ * The recovery needs the user to turn the tap on, so its day depends on when
+ * they do it. Measured on a run that is paused at day 17, watered, and then
+ * allowed to continue: the medium comes back at 17d 5h and the alert clears
+ * at 18d 9h.
+ */
+export const BIOCIRCUIT_MEASURED_DAYS = {
+  alertFired: 8.25,
+  growthStalled: 15.96,
+  mediumWilting: 16.46,
+  mediumRecovered: 17.21,
+  alertCleared: 18.38,
+} as const;
