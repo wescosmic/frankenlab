@@ -149,8 +149,10 @@ export function collectAllowedNumbers(context: AssistantContext): Set<number> {
 /**
  * Find numbers in a reply that the experiment does not contain.
  *
- * Small numbers are left alone: "two moles" and "0.5" in prose are far more
- * likely to be writing than a measurement.
+ * A bare integer at or below 1 is left alone: "day 1", "one step" and "two
+ * moles" are far more likely to be writing than a measurement. A decimal is
+ * not: "0.75" reads as a measurement, so it has to be one the simulation
+ * actually produced, however small it is.
  */
 export function findUnsupportedNumbers(
   response: string,
@@ -162,7 +164,7 @@ export function findUnsupportedNumbers(
   const suspicious = candidates.filter((token) => {
     const numeric = Number(token);
     if (!Number.isFinite(numeric)) return false;
-    if (Math.abs(numeric) <= 1) return false;
+    if (Math.abs(numeric) <= 1 && !token.includes('.')) return false;
     // A real number may be restated with fewer digits.
     for (const value of allowed) {
       if (Math.abs(numeric - value) <= 5e-4 * Math.max(1, Math.abs(value))) return false;

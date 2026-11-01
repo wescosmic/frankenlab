@@ -5,7 +5,7 @@
 ## Context
 
 This is FrankenLab, a scientific sandbox at
-`C:\Users\Wesley\.mavis\workspace\frankenlab`. Read these before you touch
+`the repository root`. Read these before you touch
 anything:
 
 - `.kiro/steering/scientific-integrity.md`

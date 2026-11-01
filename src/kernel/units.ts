@@ -211,8 +211,11 @@ export function convert(q: Quantity, to: string): Quantity {
   const affine = AFFINE_UNITS[from.id];
   const baseValue = affine ? affine.toBase(q.value) : q.value * from.factor;
   const targetAffine = AFFINE_UNITS[to];
+  // An affine unit's conversion already carries its own scale, so the base
+  // value is handed to it untouched. Dividing by the target's factor first
+  // would scale the kelvin value by 1.8 on the way into degrees Fahrenheit.
   const converted = targetAffine
-    ? targetAffine.fromBase(baseValue / target.factor)
+    ? targetAffine.fromBase(baseValue)
     : baseValue / target.factor;
   return { value: converted, unit: to };
 }

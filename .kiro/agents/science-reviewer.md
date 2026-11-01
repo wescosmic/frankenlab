@@ -80,7 +80,8 @@ in FrankenLab carries a confidence level that is shown to the user:
    result. Any wall-clock time or unseeded randomness in a model is a defect.
 8. **The assistant's honesty.** The assistant must never substitute a plausible
    number for a failed calculation, and `findUnsupportedNumbers` must catch
-   numbers that did not come from the kernel.
+   numbers that did not come from the kernel. Its one exemption is a whole
+   number at or below 1, because "day 1" is writing, not a measurement.
 
 ## How you report
 

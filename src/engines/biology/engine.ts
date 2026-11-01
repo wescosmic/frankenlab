@@ -24,6 +24,8 @@ export interface PlantState extends Record<string, unknown> {
   readonly biomass: number;
   readonly health: number;
   readonly waterUptake: number;
+  /** The demand the plant put on the nutrient reservoir at the last step. */
+  readonly nutrientDemand: number;
   readonly outputs: Record<string, Quantity>;
   readonly __prev_health?: number;
   readonly __prev_biomass?: number;
@@ -197,7 +199,7 @@ export const plantDefinition: ComponentDefinition = {
       description: 'Name shown in the workbench.',
     },
   ],
-  initialState: { biomass: 0.1, health: 1, waterUptake: 0 },
+  initialState: { biomass: 0.1, health: 1, waterUptake: 0, nutrientDemand: 0 },
   visual: { shape: 'organic', color: '#66bb6a', label: '🌱', labelHeight: 2.1 },
 };
 
@@ -208,7 +210,9 @@ export const plantBehavior: ComponentBehavior<PlantState> = {
    * Publish the plant's condition without advancing time.
    *
    * At t = 0 there is no growth yet, so the demand on nutrients is zero and
-   * the transpiration is whatever the plant was already losing.
+   * the transpiration is whatever the plant was already losing. After that
+   * both come from the state the last step left behind, so the reservoir
+   * really is drawn down by the plant that is growing.
    */
   outputs(state) {
     const maxBiomass = state.__param_max_biomass ?? 1;
@@ -217,7 +221,7 @@ export const plantBehavior: ComponentBehavior<PlantState> = {
       transpiration: quantity(state.waterUptake ?? 0, 'ratio'),
       biomass: quantity(biomass / maxBiomass, 'ratio'),
       health: quantity(state.health ?? 0, 'ratio'),
-      nutrientDemand: quantity(0, 'ratio'),
+      nutrientDemand: quantity(state.nutrientDemand ?? 0, 'ratio'),
     };
   },
 
@@ -270,6 +274,10 @@ export const plantBehavior: ComponentBehavior<PlantState> = {
       biomass,
       health: vigour,
       waterUptake: transpiration,
+      // The demand is kept in the state, because the published outputs are
+      // recomputed from the state after every step. A value computed here and
+      // thrown away would never reach the reservoir.
+      nutrientDemand,
       // Track previous values for transition detection in observe.
       __prev_health: state.health,
       __prev_biomass: state.biomass,

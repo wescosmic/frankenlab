@@ -20,7 +20,7 @@
 
   --color-lab-text: #e6ecf7;
   --color-lab-muted: #8b9ab5;
-  --color-lab-dim: #5b6883;
+  --color-lab-dim: #76849f;
 
   --color-lab-accent: #4fd1c5;
   --color-lab-accent-dim: #2a6d67;
@@ -30,6 +30,7 @@
   --color-lab-materials: #c2a084;
   --color-lab-chemistry: #f0b350;
   --color-lab-alert: #ff8f5e;
+  --color-lab-warn: #ff6b6b;
 
   --font-mono: 'SFMono-Regular', 'JetBrains Mono', Consolas, monospace;
 }

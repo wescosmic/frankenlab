@@ -4,7 +4,7 @@
 
 ## Context
 
-FrankenLab, at `C:\Users\Wesley\.mavis\workspace\frankenlab`.
+FrankenLab, at `the repository root`.
 
 The science reviewer audited the substrate presets against published figures
 and found that several of our teaching figures sit outside the published

@@ -4,7 +4,7 @@
 
 ## Context
 
-FrankenLab, at `C:\Users\Wesley\.mavis\workspace\frankenlab`. Read
+FrankenLab, at `the repository root`. Read
 `.kiro/steering/scientific-integrity.md`, `.kiro/steering/architecture.md`
 and `docs/ARCHITECTURE.md` first.
 

@@ -75,6 +75,33 @@ describe('the guard', () => {
     expect(guarded.text).toMatch(/`87\.5`/);
   });
 
+  it('removes a small decimal the simulation did not produce', () => {
+    const experiment = createBioCircuit();
+    // Nothing has run, so there is no measurement in the experiment to cite.
+    const context: AssistantContext = {
+      experiment,
+      components: experiment.components.map((instance) => registry.getDefinition(instance.type)),
+      latestResult: undefined,
+      runCount: 0,
+      validations: [],
+    };
+
+    const guarded = guardResponse('The medium is at 0.75 of its capacity.', context);
+
+    // "0.75" reads as a measurement, so it has to be one the simulation
+    // produced, however small it is.
+    expect(guarded.removed).toContain('0.75');
+  });
+
+  it('leaves a bare count alone', () => {
+    const context = makeContext();
+    const guarded = guardResponse('There is 1 plant on the bench.', context);
+
+    // A whole number at or below 1 is a count or a day number far more often
+    // than it is a measurement.
+    expect(guarded.removed).toEqual([]);
+  });
+
   it('leaves a real measurement alone', () => {
     const context = makeContext();
     const signal = context.latestResult!.measurements['sensor.signal']!.value;

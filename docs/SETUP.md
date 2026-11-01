@@ -8,7 +8,7 @@ Everything you need to run, test and extend FrankenLab.
 
 | Tool     | Version    | Notes                                                              |
 | -------- | ---------- | ------------------------------------------------------------------ |
-| Node.js  | 20.9 or newer | Next.js 16.3.6 requires `>=20.9.0`. The build uses `node:` imports. |
+| Node.js  | 20.9 or newer | Next.js 16.4.3 requires `>=20.9.0`. The build uses `node:` imports. |
 | npm      | 10 or newer | npm is the supported package manager. The repository ships an npm lockfile. |
 
 Check yours:
@@ -96,7 +96,15 @@ npm run build              # server build, for `npm start`
 npm run start              # serve that build on 4310
 ```
 
-To produce the static site instead, set one environment variable:
+To produce the static site instead, run the static build:
+
+```bash
+npm run build:static
+```
+
+That script sets the one environment variable the config needs and then calls
+the build, so it behaves the same on Windows, macOS and Linux. If you would
+rather set it by hand:
 
 ```bash
 # Windows PowerShell
@@ -203,14 +211,16 @@ Switch with `/agent swap <name>`. The lead can run them in parallel; press
 
 ### 4.5 The hooks
 
-| Hook                      | Trigger      | Effect                                                    |
-| ------------------------- | ------------ | --------------------------------------------------------- |
-| `session-context`         | SessionStart | Prints branch, last commit, working tree, next open tasks  |
-| `lint-on-save`            | File Save    | Runs `eslint --fix` on the saved TypeScript file           |
-| `guard-destructive-shell` | Pre Tool Use | Blocks force push, hard reset, `git clean`, repo-wide `rm -rf` |
-| `verify-on-stop`          | Agent Stop   | Runs `npm run verify` and feeds the result back to the agent |
+| Hook                      | Trigger       | Effect                                                    |
+| ------------------------- | ------------- | --------------------------------------------------------- |
+| `session-context`         | `SessionStart` | Prints branch, last commit, working tree, next open tasks |
+| `eslint-on-save`          | `PostFileSave` | Runs `eslint --fix` on the saved TypeScript file           |
+| `guard-destructive-shell` | `PreToolUse`  | Blocks force push, hard reset, `git clean`, repo-wide `rm -rf` |
+| `verify-on-stop`          | `Stop`        | Runs `npm run verify` and feeds the result back to the agent |
 
-The scripts are in `scripts/hook-*.mjs`.
+The name in the table is the hook's own `name` field, which is not always the
+file name: `eslint-on-save` is the hook inside `lint-on-save.json`. The scripts
+are in `scripts/hook-*.mjs`.
 
 A hook communicates through its **exit code**, and the codes are not "zero or
 non-zero":

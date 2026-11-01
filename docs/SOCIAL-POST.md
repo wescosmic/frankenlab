@@ -36,7 +36,8 @@ Three experiments ship:
 Every answer the assistant gives ends with what it is worth: the weakest
 model in the experiment, named, with a plain-English explanation of what its
 confidence level means. A number the simulation did not produce is removed
-from the reply, and the removal is stated.
+from the reply, and the removal is stated. The one exemption is a whole
+number at or below 1, because "day 1" is writing, not a measurement.
 
 Built with Kiro. The part worth watching: a Kiro science-reviewer agent
 checked our soil physics against published data, found a field capacity that

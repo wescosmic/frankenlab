@@ -1,7 +1,7 @@
 # FrankenLab — Design
 
-**Spec status:** foundation complete, product in progress.
-**Last updated:** 2026-10-31.
+**Spec status:** phases 1 to 6 complete, review pass in progress.
+**Last updated:** 2026-11-01.
 
 This document describes how the system is built and, where a choice was not
 obvious, why it was made that way. It is the reference a new contributor reads

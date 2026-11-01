@@ -27,6 +27,17 @@ describe('units', () => {
     expect(convert(quantity(212, 'degF'), 'degC').value).toBeCloseTo(100);
   });
 
+  it('converts into Fahrenheit as well as out of it', () => {
+    // Fahrenheit carries a factor of 1/1.8 as well as its offset, so the
+    // conversion has to leave the kelvin value alone on the way in.
+    expect(convert(quantity(32, 'degF'), 'degF').value).toBeCloseTo(32);
+    expect(convert(quantity(212, 'degF'), 'degF').value).toBeCloseTo(212);
+    expect(convert(quantity(0, 'degC'), 'degF').value).toBeCloseTo(32);
+    expect(convert(quantity(100, 'degC'), 'degF').value).toBeCloseTo(212);
+    expect(convert(quantity(273.15, 'K'), 'degF').value).toBeCloseTo(32);
+    expect(convert(quantity(373.15, 'K'), 'degF').value).toBeCloseTo(212);
+  });
+
   it('refuses to convert between incompatible dimensions', () => {
     expect(() => convert(quantity(1, 'V'), 'g')).toThrow(/incompatible/i);
     expect(areCompatible('V', 'mV')).toBe(true);

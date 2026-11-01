@@ -118,16 +118,16 @@ fallback settings, so you can keep the picker short without losing a model.
 
 | Model           | Context | Credits | Status      | Tiers                     | Regions |
 | --------------- | ------- | ------- | ----------- | ------------------------- | ------- |
-| **MiniMax M2.5** | 200K    | 0.25x   | Active      | Free, Pro, Pro+, Pro Max, Power | US, EU |
-| **MiniMax M2.1** | 200K    | 0.15x   | Experimental | Free and up               | US, EU |
+| **MiniMax M2.5** | 196K    | 0.25x   | Active      | Free, Pro, Pro+, Pro Max, Power | US, EU |
+| **MiniMax M2.1** | 196K    | 0.15x   | Experimental | Free and up               | US, EU |
 
-For scale, Auto is 1.0x, Claude Sonnet 5.5 is 1.3x, Claude Opus 5.5 is 2.0x and
-GPT-5.6 Sol is 4.4x. MiniMax M2.5 is described by Kiro as near-Opus quality at
-a quarter of the cost, which makes it a sensible default for a 4,000-credit
-build.
+For scale, the published Kiro pricing page lists Auto at 1.0x and other models
+above it. MiniMax M2.5 is described by Kiro as near-Opus quality at a quarter
+of the cost, which makes it a sensible default for a 4,000-credit build.
 
-The list your account actually gets is shorter than the published catalogue.
-Verified on Kiro CLI 2.37.0 with this account:
+The list your account actually gets is shorter than the published catalogue,
+and it is worth reading the real one rather than the pricing page. Verified on
+Kiro CLI 2.37.0 with this account, from `chat --list-models --format json`:
 
 ```
 auto                 1.00x    Models chosen by task
@@ -139,6 +139,12 @@ minimax-m2.1         0.15x    Experimental preview
 glm-5                0.50x
 qwen3-coder-next     0.05x    Experimental preview
 ```
+
+Every entry reports `"rate_unit": "Credit"`, so the multiplier is credits
+**per invocation**, not per token. On the 50-credit free tier that is 200
+invocations at M2.5, or 1,000 at the 0.05x model. It also explains why the
+exhausted limit read `MONTHLY_REQUEST_COUNT` rather than a spend balance: the
+account was out of invocations.
 
 MiniMax M2.5 is there at 0.25x and is the cheapest strong option. Qwen3 Coder
 Next is cheaper still at 0.05x, but it is an experimental preview and it is
@@ -216,12 +222,15 @@ guardian is asked before it writes into an engine.
 
 `/hooks` lists them. All four live in `.kiro/hooks/` and work in the IDE too.
 
-| Hook                     | Trigger      | What it does                                          |
-| ------------------------ | ------------ | ----------------------------------------------------- |
-| `session-context`        | SessionStart | Prints branch, last commit, working tree, next tasks   |
-| `lint-on-save`           | File Save    | `eslint --fix` on the saved TypeScript file            |
-| `guard-destructive-shell`| Pre Tool Use | Blocks force push, hard reset, `git clean`, `rm -rf` of the repo |
-| `verify-on-stop`         | Agent Stop   | Runs `npm run verify` and feeds the result back to the agent |
+| Hook                     | Trigger        | What it does                                          |
+| ------------------------ | -------------- | ----------------------------------------------------- |
+| `session-context`        | `SessionStart` | Prints branch, last commit, working tree, next tasks   |
+| `eslint-on-save`         | `PostFileSave` | `eslint --fix` on the saved TypeScript file            |
+| `guard-destructive-shell`| `PreToolUse`   | Blocks force push, hard reset, `git clean`, `rm -rf` of the repo |
+| `verify-on-stop`         | `Stop`         | Runs `npm run verify` and feeds the result back to the agent |
+
+The name in the table is the hook's own `name` field, which is not always the
+file name: `eslint-on-save` is the hook inside `lint-on-save.json`.
 
 A hook command that exits 0 has its stdout added to the agent's context. The
 scripts behind these hooks are in `scripts/hook-*.mjs`.
@@ -476,11 +485,33 @@ Two symptoms look like different problems and are not:
 - **Crew runs that time out on MCP.** The session never starts, so the
   `kirocrew-core` MCP server has nothing to answer and the call times out
   after sixty seconds.
-- **`kiro-cli diagnostic` reports no reset date.** Check the account creation
-  date instead; the cycle resets a month after it.
+- **`kiro-cli diagnostic` reports no reset date.** The CLI exposes no usage
+  command at all. Read the `GetUsageLimits` operation instead (see below).
 
-The account here was created on 30 October 2026, so the cycle resets around
-30 November. Check the quota before a long agent run, not after it fails.
+The account here was created on 30 October 2026, so the first cycle was only
+two days long and the 50 free credits went quickly. Check the quota before a
+long agent run, not after it fails.
+
+### Reading the quota yourself
+
+`kiro-cli` has no `usage` command, but it calls the same operation the Kiro
+account page does. The CLI keeps its Builder ID token in
+`%LOCALAPPDATA%\Kiro-Cli\data.sqlite3`, table `auth_kv`, key
+`kirocli:social:token`, and the profile ARN in table `state`, key
+`api.codewhisperer.profile`. With that token as a bearer credential:
+
+```bash
+curl -s https://codewhisperer.us-east-1.amazonaws.com/ \
+  -H "Content-Type: application/x-amz-json-1.0" \
+  -H "x-amz-target: AmazonCodeWhispererService.GetUsageLimits" \
+  -H "Authorization: Bearer $KIRO_BEARER" \
+  -d '{"profileArn":"'"$PROFILE_ARN"'"}'
+```
+
+The reply carries `usageLimit`, `currentUsage`, `daysUntilReset`,
+`nextDateReset`, `subscriptionTitle` and the overage rate. On the account used
+here it reads `KIRO FREE`, a limit of 50 and a current usage of 50. Do not log
+the token. Do not commit it.
 
 ## 10. Gotchas
 

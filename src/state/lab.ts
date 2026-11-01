@@ -33,6 +33,7 @@ import { findExperiment } from '@/scenarios';
 import { createWorld } from '@/world';
 import { LocalExplainProvider, type AssistantContext, type AssistantMessage } from '@/assistant/assistant';
 import { guardResponse } from '@/assistant/trust';
+import { freeSpot } from '@/state/placement';
 
 export interface SeriesPoint {
   readonly t: number;
@@ -125,6 +126,12 @@ export interface LabStore {
   setSubstrate(substrate: 'sandy' | 'loamy' | 'clay' | 'hydrogel'): void;
   /** Put a new part on the bench. @returns the new component's id. */
   addComponent(type: string, position: { x: number; y: number; z: number }): string | null;
+  /**
+   * Put a new part on the bench without a pointer, on a spot of its own.
+   * This is the keyboard path: the library's add button calls it.
+   * @returns the new component's id.
+   */
+  addComponentHere(type: string): string | null;
   /** Wire two ports together. @returns true if the connection was made. */
   connect(source: PortRef, target: PortRef): boolean;
   /** Take a part off the bench, and any wire that was attached to it. */
@@ -437,6 +444,12 @@ export const useLabStore = create<LabStore>((set, get) => {
         notice: `${definition.name} is on the bench. The run has restarted.`,
       });
       return instance.id;
+    },
+
+    addComponentHere(type) {
+      const { experiment: current } = get();
+      const spot = freeSpot(current.components.map((c) => c.position));
+      return get().addComponent(type, spot);
     },
 
     connect(source, target) {

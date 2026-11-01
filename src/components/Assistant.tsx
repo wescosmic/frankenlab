@@ -109,12 +109,13 @@ export function Assistant() {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Ask about the experiment…"
-          className="min-w-0 flex-1 rounded-md border border-lab-line bg-lab-void px-3 py-2 text-[12px] text-lab-text outline-none placeholder:text-lab-dim focus:border-lab-accent/60"
+          aria-label="Ask about the experiment"
+          className="min-w-0 flex-1 rounded-md border border-lab-line bg-lab-void px-3 py-2 text-[12px] text-lab-text placeholder:text-lab-dim focus:border-lab-accent/60 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent"
         />
         <button
           type="submit"
           disabled={busy || !draft.trim()}
-          className="rounded-md border border-lab-accent/40 bg-lab-accent/10 px-3 py-2 text-[12px] text-lab-accent transition-colors hover:bg-lab-accent/20 disabled:opacity-40"
+          className="rounded-md border border-lab-accent/40 bg-lab-accent/10 px-3 py-2 text-[12px] text-lab-accent transition-colors hover:bg-lab-accent/20 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent disabled:opacity-40"
         >
           Ask
         </button>

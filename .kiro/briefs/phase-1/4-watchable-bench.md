@@ -5,7 +5,7 @@
 ## Context
 
 This is FrankenLab, a scientific sandbox at
-`C:\Users\Wesley\.mavis\workspace\frankenlab`.
+`the repository root`.
 
 Brief 3 added the timeline and the measurements panel. This brief is about the
 two things a judge will judge in the first ten seconds of watching: the run

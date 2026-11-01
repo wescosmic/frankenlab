@@ -129,7 +129,9 @@ names that model and says what its confidence level means:
 > would really happen.
 
 And the guard runs on every reply, whoever wrote it. A number the simulation
-did not produce is removed from the answer, and the removal is stated.
+did not produce is removed from the answer, and the removal is stated. A whole
+number at or below 1 is left alone, because "day 1" and "one step" are far more
+often writing than a measurement. A decimal is checked however small it is.
 
 ![The assistant's reply, ending with what it is worth](docs/images/assistant.png)
 
@@ -158,7 +160,7 @@ Then open the laboratory, press **Run**, and watch the plant drink the medium
 dry while the readout falls and the alarm lights. The run takes about a
 minute at the default speed, which is slow enough to follow: the alert goes
 off on day 11, growth stalls on day 20 and the medium wilts on day 21.
-**Fast** gets to the end state in about five seconds.
+**Fast** gets to the end state in about six seconds.
 
 And it can be saved. Pause the run, turn the irrigation up in the inspector,
 and carry on: the medium comes back above its wilting point, the timeline
@@ -185,9 +187,12 @@ npm run verify       # all three
 npm run build        # production build
 ```
 
-Requires Node 20 or newer. No API key. No database. No network calls.
+Requires Node 20.9 or newer. No API key. No database. No network calls.
 
-See [docs/SETUP.md](docs/SETUP.md) for the full setup and troubleshooting.
+See [docs/SETUP.md](docs/SETUP.md) for the full setup and troubleshooting, and
+[CONTRIBUTING.md](CONTRIBUTING.md) if you intend to change the code. The
+[docs/KIRO-WRITEUP.md](docs/KIRO-WRITEUP.md) covers the eight Kiro surfaces the
+competition asks about.
 
 ## Building it with Kiro
 
@@ -258,6 +263,7 @@ never as an import.
 
 | Folder                | What lives there                                            |
 | --------------------- | ------------------------------------------------------------ |
+| `src/app/`            | The Next.js entry point. Everything runs in the browser.     |
 | `src/kernel/`         | The domain-agnostic core: units, types, registry, validation, lifecycle. |
 | `src/engines/`        | One folder per discipline. Plugins.                           |
 | `src/interactions/`   | The interdisciplinary coupling rules.                         |
@@ -266,6 +272,8 @@ never as an import.
 | `src/three/`          | The Three.js laboratory scene.                                |
 | `src/components/`     | The React panels.                                             |
 | `src/state/`          | The workbench store.                                          |
+| `src/confidence.ts`   | The four confidence levels, what they mean and how they look. |
+| `src/drag.ts`         | The drag-and-drop contract between the catalogue and the bench. |
 | `src/world.ts`        | The one place that builds the registry.                       |
 | `tests/`              | Unit, integration and property tests.                         |
 
@@ -302,7 +310,7 @@ appears in the catalogue, the validator and the workbench.
 npm test
 ```
 
-157 tests across twelve files. The interesting ones are the property-based
+170 tests across fourteen files. The interesting ones are the property-based
 invariants in `tests/properties/`:
 
 - The source delivers exactly the power the resistors dissipate.
@@ -311,7 +319,7 @@ invariants in `tests/properties/`:
 - No normalised reading leaves 0–1.
 - The same seed gives the same result, every time.
 
-And the three contracts that keep the product honest:
+And the contracts that keep the product honest:
 
 - **`tests/ports.test.ts`** wires every component in the world into one graph
   and checks that every output port publishes its value under its own port id.
@@ -324,6 +332,15 @@ And the three contracts that keep the product honest:
   rule the kernel itself applies to each wire, and that nothing is shown that
   is not declared in the coupling file. A panel that invents a rule is as bad
   as an assistant that invents a measurement.
+- **`tests/architecture.test.ts`** reads the import graph and checks the one
+  claim the whole design rests on: the kernel has never heard of any
+  discipline, no engine imports another engine, and every cross-discipline
+  rule lives in one reviewable file.
+- **`tests/design-tokens.test.ts`** checks that every colour the interface asks
+  for is actually declared. A Tailwind utility for a colour that was never
+  defined does not fail, it does not exist, and the element falls back to
+  whatever it inherited. It also checks that every text colour clears WCAG AA
+  against the panel it sits on.
 
 ## Honest limitations
 

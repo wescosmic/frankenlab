@@ -1,6 +1,6 @@
 # FrankenLab — Requirements
 
-**Spec status:** phases 1 to 4 complete, shipping in progress.
+**Spec status:** phases 1 to 6 complete, review pass in progress.
 **Last updated:** 2026-11-01.
 
 FrankenLab is an interactive scientific sandbox. It lets a user assemble

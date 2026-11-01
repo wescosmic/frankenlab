@@ -4,20 +4,27 @@
   "private": true,
   "description": "FrankenLab — a playable experimental universe where scientific disciplines interact inside one shared simulation environment.",
   "license": "MIT",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev -p 4310",
     "build": "next build",
+    "build:static": "node scripts/build-static.mjs",
     "start": "next start -p 4310",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:pbt": "vitest run tests/properties",
+    "measure": "tsx scripts/measure-beats.ts",
+    "measure:catalysis": "tsx scripts/measure-catalysis.ts",
+    "inspect": "tsx scripts/inspect.ts",
     "verify": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "next": "16.3.6",
+    "next": "16.4.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "tailwind-merge": "^3.7.0",
@@ -32,12 +39,13 @@
     "@types/three": "^0.180.0",
     "@vitejs/plugin-react": "^5.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.3.6",
+    "eslint-config-next": "16.4.3",
     "fast-check": "^4.2.0",
     "jsdom": "^26.1.0",
     "mcp-fetch-server": "^1.1.2",
     "postcss": "^8.5.31",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^3.2.4"
   }

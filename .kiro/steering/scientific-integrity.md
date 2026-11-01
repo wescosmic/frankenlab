@@ -21,7 +21,9 @@ Every number the product shows must come out of the simulation kernel.
 
 `findUnsupportedNumbers` in the assistant exists to catch a provider that
 breaks this rule. A number in an assistant reply that is not in the experiment
-is a bug.
+is a bug. The single exemption is a whole number at or below 1: "day 1" and
+"one step" are writing far more often than they are measurements. A decimal is
+checked however small it is.
 
 ## 2. Never present a simplification as a validated prediction
 

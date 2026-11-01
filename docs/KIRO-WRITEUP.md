@@ -10,6 +10,11 @@ they make insufficient use of Kiro a gate rather than a bonus. This document
 covers all eight, says what actually happened on each, and is honest about the
 four things that went wrong.
 
+The eight are four **run surfaces** — IDE, CLI, Web and Crew, in section 1 — and
+four **configuration surfaces** — custom agents, hooks, MCP and Kiro powers, in
+sections 5 to 8. Spec-driven development and steering docs, the other two things
+the rules name, have their own sections at 3 and 4.
+
 Every claim here is checkable against the repository. The `.kiro/` directory is
 the evidence.
 
@@ -105,7 +110,15 @@ decomposes it into steps, runs each step, and verifies each step with a
 command.
 
 The property sweep in section 7 is a Crew task. The spec lives in
-[`.kiro/crew/property-sweep.md`](../.kiro/crew/property-sweep.md).
+[`.kiro/crew/property-sweep.md`](../.kiro/crew/property-sweep.md), and
+[`.kiro/crew/README.md`](../.kiro/crew/README.md) records the configuration and
+where the run got to.
+
+**The sweep has not run to completion.** Two Crew runs were attempted and both
+failed: the first on the account's usage limit, the second on an MCP server
+timeout. It is queued to run when the quota resets. That is stated plainly in
+the Crew directory rather than left for a judge to discover, because a
+committed failed run with no explanation is worse than no run at all.
 
 Crew was also the surface that exposed a real difference in how a model is
 chosen. A Crew chat runs Crew's own agent, `kirocrew`, which ships pinned to
@@ -206,10 +219,15 @@ as aspirations. A few of them, as they stand now:
 
 ```
 AC-2  A 24-day run at a one-hour timestep completes in 576 steps.
-AC-6  Every component publishes a confidence level, and the interface shows it.
-AC-8  The alert fires on day 11 in sand, day 13 in loam and day 17 in clay,
-      and does not fire at all in hydrogel inside a 24-day run.
+AC-6  The probe's reported reading is the solved divider voltage,
+      not the moisture that drove it.
+AC-8  The alert fires on day 11 in sand, on day 13 in loam and on day 17 in
+      clay, and does not fire at all in hydrogel inside a 24-day run.
 ```
+
+AC-6 is the one that makes the electronics load-bearing: the number the probe
+reports is a voltage solved out of the circuit, not the moisture that reached
+it. Change the reference resistor and the reading changes with it.
 
 AC-8 is the one that proves the point. It was written when the default
 medium was loam, and it said the alert fired in sand and loam but not in
@@ -255,12 +273,19 @@ An MCP server is registered in
 {
   "mcpServers": {
     "fetch": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-fetch"]
+      "command": "node",
+      "args": [
+        "node_modules/mcp-fetch-server/dist/index.js"
+      ],
+      "env": {}
     }
   }
 }
 ```
+
+The package is `mcp-fetch-server`, already in `devDependencies`. Nothing is
+downloaded at run time, which matters: the reviewer agent has to work on a
+machine that may not have a network at all.
 
 The point of it is that the science reviewer needed to read published sources.
 The first audit attempt failed completely, and the failure was informative.
@@ -450,6 +475,23 @@ failures that had looked like MCP timeouts: the Crew session never started,
 so the `kirocrew-core` MCP server had nothing to talk to and timed out after
 sixty seconds. `kiro-cli diagnostic` reports no reset date.
 
+The exact figures came from the `GetUsageLimits` operation that the CLI itself
+calls, and they are worth recording because the CLI shows nothing:
+
+```json
+"subscriptionTitle": "KIRO FREE",
+"usageLimit": 50,
+"currentUsage": 50,
+"daysUntilReset": 0,
+"nextDateReset": "2026-12-01T00:00:00Z",
+"overageStatus": "DISABLED"
+```
+
+Fifty credits a month, all fifty spent, and the cycle resets at midnight UTC
+on 1 December. The account had been created on 30 October, so the first cycle
+ran for two days. The lesson is the same one the CLI's own error text gives:
+check the quota before a long agent run, not after it fails.
+
 So two phases were built by hand instead of by an agent:
 
 - **Phase 2b, the drag-and-drop bench.** The wiring model, the port markers,
@@ -473,10 +515,10 @@ had checked the floating-island fix against the MNA spec.
 
 The credit request form for the Kiroween bonus was due on 1 December 2026 at
 12:00 PM Pacific, and the draft answer is in the repository at
-`docs/KIRO-CREDIT-REQUEST.md`. The quota is expected to reset around
-30 November, which is before the demonstration deadline, so the plan was to
-use the remainder of the month for the Crew property sweep and a final agent
-pass over the hand-built phases.
+`docs/KIRO-CREDIT-REQUEST.md`. The quota resets on 1 December 2026, which is
+the same day the form is due and three days before the demonstration deadline,
+so the plan was to use the remainder of the month for the Crew property sweep
+and a final agent pass over the hand-built phases.
 
 ---
 

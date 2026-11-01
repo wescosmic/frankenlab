@@ -4,7 +4,7 @@
 
 ## Context
 
-FrankenLab, at `C:\Users\Wesley\.mavis\workspace\frankenlab`.
+FrankenLab, at `the repository root`.
 
 You have no write access, by design. This brief asks for research and a
 judgement, not an edit. A later pass applies whatever you conclude.

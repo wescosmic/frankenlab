@@ -1,6 +1,6 @@
 # FrankenLab — Tasks
 
-**Spec status:** phases 0 to 4 complete, phase 5 in progress.
+**Spec status:** phases 0 to 6 complete, review pass in progress.
 **Last updated:** 2026-11-01.
 
 Each task names the files it touches, what "done" means, and how you check it.
@@ -263,9 +263,10 @@ work with no API key set.
 
 ### 5.2 The demonstration
 
-**Files:** `docs/DEMO.md`
-A three-minute script built on the five beats in
-`BIOCIRCUIT_BEATS`: planted, growing, drying out, alert triggered, recovery.
+**Files:** `docs/DEMO-SCRIPT.md`, `docs/demo/frankenlab-demo.mp4`
+A script built on the five beats in `BIOCIRCUIT_BEATS`: planted, growing,
+drying out, alert triggered, recovery. Eleven beats in the cut, and the last
+one has to show a Kiro moment that changed the product.
 
 **Done when:** the script has been recorded against the deployed build and
 the recording is under three minutes.

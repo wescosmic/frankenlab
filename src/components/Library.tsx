@@ -19,6 +19,7 @@ export function Library() {
   const experiment = useLabStore((s) => s.experiment);
   const selectedId = useLabStore((s) => s.selectedId);
   const select = useLabStore((s) => s.select);
+  const addComponentHere = useLabStore((s) => s.addComponentHere);
   const loadExperiment = useLabStore((s) => s.loadExperiment);
 
   const disciplines = registry.listDisciplines().filter((d) => d.id !== '__couplings__');
@@ -49,6 +50,7 @@ export function Library() {
               title={entry.summary}
               className={[
                 'mb-1 w-full rounded-md border px-2.5 py-2 text-left transition-colors',
+                'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent',
                 active
                   ? 'border-lab-accent/60 bg-lab-accent/10'
                   : 'border-transparent hover:border-lab-line hover:bg-lab-panel-raised',
@@ -76,7 +78,7 @@ export function Library() {
       <div className="border-b border-lab-line px-4 py-3">
         <div className="lab-label">Components</div>
         <p className="mt-1 text-[13px] leading-snug text-lab-muted">
-          Drag a part onto the bench to add it.
+          Drag a part onto the bench, or press the add button to put it there.
         </p>
       </div>
 
@@ -102,7 +104,7 @@ export function Library() {
                   const active = used.some((c) => c.id === selectedId);
 
                   return (
-                    <li key={definition.type}>
+                    <li key={definition.type} className="flex items-stretch gap-1">
                       <button
                         type="button"
                         draggable
@@ -115,7 +117,8 @@ export function Library() {
                         onClick={() => select(used[0]?.id ?? null)}
                         title={`Drag onto the bench to add a ${definition.name}`}
                         className={[
-                          'w-full cursor-grab rounded-md border px-2.5 py-2 text-left transition-colors active:cursor-grabbing',
+                          'flex-1 cursor-grab rounded-md border px-2.5 py-2 text-left transition-colors active:cursor-grabbing',
+                          'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent',
                           active
                             ? 'border-lab-accent/60 bg-lab-accent/10'
                             : 'border-transparent hover:border-lab-line hover:bg-lab-panel-raised',
@@ -132,6 +135,22 @@ export function Library() {
                         <div className="mt-0.5 text-[10px] uppercase tracking-wider text-lab-dim">
                           {CONFIDENCE_LABEL[definition.confidence] ?? definition.confidence}
                         </div>
+                      </button>
+
+                      {/* Dragging is a pointer gesture. This is the same
+                          action, reachable from the keyboard. */}
+                      <button
+                        type="button"
+                        onClick={() => addComponentHere(definition.type)}
+                        aria-label={`Add a ${definition.name} to the bench`}
+                        title={`Add a ${definition.name} to the bench`}
+                        className={[
+                          'w-8 shrink-0 rounded-md border border-transparent text-[15px] leading-none text-lab-dim',
+                          'transition-colors hover:border-lab-accent/40 hover:text-lab-accent',
+                          'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent',
+                        ].join(' ')}
+                      >
+                        +
                       </button>
                     </li>
                   );

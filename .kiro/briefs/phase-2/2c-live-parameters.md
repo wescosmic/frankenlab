@@ -5,7 +5,7 @@ interface · **Phase:** 2 · **Do not commit.**
 
 ## Context
 
-FrankenLab, at `C:\Users\Wesley\.mavis\workspace\frankenlab`. Read
+FrankenLab, at `the repository root`. Read
 `.kiro/steering/product.md`, `.kiro/steering/engineering-standards.md` and
 `docs/ARCHITECTURE.md` first.
 

@@ -25,7 +25,7 @@ What is built, what is next, and what each piece waits for.
 | Run comparison | **Not built** | |
 | Missions and notebooks | **Not built** | |
 | Persistence | **Not built** | In-memory only. |
-| Deployment | **Prepared** | The static export is verified. It has not been published. |
+| Deployment | **Prepared** | The static export is verified. It has not been published yet. |
 
 The full, ordered task list is in `.kiro/specs/frankenlab/tasks.md`. This
 document is the shape of the road; that file is the work list.
@@ -61,7 +61,7 @@ in the ten seconds a judge spends deciding whether the project is real.
 | 2 | The user builds experiments: drag-and-drop wiring, live parameters | High | Done |
 | 3 | More science: chemistry end to end, a catalyst, three experiments | Medium-high | Done |
 | 4 | The assistant earns trust: the guard, the confidence badge | Medium | Done, except run comparison |
-| 5 | Ship and present: deployment, video, README, screenshots, public repo | Medium | Partly done |
+| 5 | Ship and present: deployment, video, README, screenshots, public repo | Medium | Mostly done, deployment waiting on one authorisation |
 | 6 | Make the thesis visible: the couplings panel | Medium | Done |
 
 The full brief for each phase is in `.kiro/specs/frankenlab/tasks.md`, and the
@@ -174,8 +174,8 @@ additive rather than urgent. It is the natural next change.
 
 ## Phase 5 — Shipping
 
-**Partly done.** The repository is built, the video is cut and the writing is
-drafted. What is left needs the account holder, not the developer.
+**Partly done.** The repository is built and public, the video is cut and the
+writing is drafted. What is left needs the account holder, not the developer.
 
 - **The demonstration.** Cut and verified: 2 minutes 22 seconds, 1920 by 1080,
   with the narration in sync. Committed at `docs/demo/frankenlab-demo.mp4`. It
@@ -185,11 +185,12 @@ drafted. What is left needs the account holder, not the developer.
   fifteen seconds are the Kiro moment — the science audit moving the timeline
   from day 8 and day 16 to day 11 and day 21.
 - **The public repository**, with the licence visible and `.kiro/` tracked at
-  the root. The MIT licence and the README are in place; the repository itself
-  has not been created.
+  the root. **Done.** The repository is live at
+  [github.com/wescosmic/frankenlab](https://github.com/wescosmic/frankenlab),
+  public, MIT licence detected by GitHub, with `.kiro/` at the root.
 - **Deployment** to a public URL, working with no API key set, reachable free
   of charge. The static export is prepared and verified. It has not been
-  published.
+  published yet; the account holder has to finish the one authorisation step.
 - **Screenshots** of the workbench, the measurements, the catalysis
   comparison, the assistant, the couplings panel and the Kiro audit. The first
   five are frames taken from the demo itself, so the README cannot drift from

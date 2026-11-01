@@ -5,7 +5,7 @@
 ## Context
 
 This is FrankenLab, a scientific sandbox at
-`C:\Users\Wesley\.mavis\workspace\frankenlab`. Read these first:
+`the repository root`. Read these first:
 
 - `.kiro/steering/product.md`
 - `.kiro/steering/engineering-standards.md`

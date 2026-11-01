@@ -62,6 +62,16 @@ hand-built work by the `science-reviewer` and `kernel-guardian` agents, the
 Crew property sweep at full strength, and the accessibility and performance
 passes.
 
+Concretely, the remaining agent work is:
+
+| Agent pass | What it produces |
+|---|---|
+| `science-reviewer` over the hand-built chemistry and trust guard | A checked mass-action equilibrium and a checked ungrounded-number guard, with the assumptions restated in the open. |
+| `kernel-guardian` over the floating-island fix and the MNA solve | A solver reviewed against the nodal-analysis specification, plus a regression test for the three real bugs the port contract found. |
+| `ui-integrator` over the workbench and the new Couplings panel | An accessibility pass on the keyboard path, the tab structure and the focus order, plus the contrast check on the confidence badges. |
+| Kiro Crew property sweep | An unattended randomised run over the kernel invariants at full strength, looking for the cases the hand-written tests do not reach. |
+| `lab-lead` final pass | One last review of the whole repository against the spec before submission. |
+
 ## Which Kiro features will you use?
 
 | Feature | How |
@@ -87,10 +97,24 @@ work and a reviewer agent auditing the science. The default model is
 MiniMax M2.5 at 0.25x, which keeps the credit cost low, but the total token
 volume across the whole build still needs the full request.
 
-It also ran into a hard limit. The account's monthly request quota is
-exhausted, so the last phases were built by hand and the remaining agent
-work — the final review of that work, the Crew sweeps and the accessibility
-pass — needs credits to happen at all.
+It also ran into a hard limit, and the numbers are specific. The account is on
+the Kiro Free tier, which allows **50 credits a month**. The build spent all
+50, and every agent run since has returned:
+
+```
+ServiceQuotaExceededException: "You have reached the limit."
+reason: "MONTHLY_REQUEST_COUNT"
+```
+
+The limit counts requests, not spend, so it is the same on every model:
+`minimax-m2.5` at 0.25x, `minimax-m2.1` at 0.15x and `qwen3-coder-next` at
+0.05x all fail identically. The cycle resets on **1 December 2026**, which is
+three days before the submission deadline and too late to be a plan. So the
+last phases were built by hand and the remaining agent work — the final review
+of that work, the Crew sweeps and the accessibility pass — needs credits to
+happen at all. At the M2.5 multiplier, 4,000 credits is roughly 16,000 agent
+invocations, which is more than the remaining build needs by a wide margin and
+leaves room for the Crew sweeps to run unattended overnight.
 
 ## Timeline
 

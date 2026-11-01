@@ -261,7 +261,10 @@ network and no API key, which is what guarantees the demonstration can be
 recorded without a working provider.
 
 `findUnsupportedNumbers` flags any number in an assistant reply that does not
-appear in the experiment. A provider that breaks the rule is caught by a test.
+appear in the experiment, and `guardResponse` removes it and says so. A whole
+number at or below 1 is exempt, because "day 1" and "one step" are far more
+often writing than a measurement; a decimal is checked however small it is. A
+provider that breaks the rule is caught by a test.
 
 ## 9. Error handling
 

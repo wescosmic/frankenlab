@@ -161,7 +161,7 @@ And the badge on the reply: **ILLUSTRATIVE**.
 
 ---
 
-## 10 · 1:53 — 2:09 · The Frankenstein part
+## 10 · 1:54 — 2:09 · The Frankenstein part
 
 **Screen.** The Couplings tab, under the bench. The flagship's rules, listed:
 which part sends what to which part, on which channel, and what the rule
@@ -180,9 +180,13 @@ agreeing with it, and that is the point of the whole product.
 
 ---
 
-## 11 · 2:09 — 2:22 · The Kiro moment
+## 11 · 2:07 — 2:22 · The Kiro moment
 
 **This is the last fifteen seconds. It must show the change, not a file tree.**
+
+The narration for this beat starts at 2:09. The terminal comes up at 2:07, a
+second and a half earlier, so the Kiro moment covers all fifteen of the last
+seconds rather than all but one of them.
 
 **2:07 — 2:14.** Cut to a terminal running the Kiro CLI. Show the audit brief
 and the reviewer's decision table for sand: field capacity 0.12 becomes 0.18,
