@@ -160,3 +160,9 @@ Then check the honest claims:
   the rule in force.
 - If you changed an engine, check the "Honest limitations" section of the
   README still describes the engine you now have.
+- If you changed a number quoted in the competition copy, re-run
+  `python scripts/check-devpost.py`. It checks that the Devpost story is
+  inside Devpost's character limit, that its headings are the seven Devpost
+  asks for, and that every figure in it is still one the project measures.
+  `python scripts/make-gallery.py` rebuilds the submission images from the
+  demo frames.
