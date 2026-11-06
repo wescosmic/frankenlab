@@ -107,6 +107,51 @@ inside the limit. It has to be uploaded to YouTube by hand because there is no
 YouTube connector in this environment, and then the URL goes in the field and
 the `Demo:` line of the social post.
 
+### The upload, ready to make
+
+| Setting | Value |
+| --- | --- |
+| File | `docs/demo/frankenlab-demo.mp4` (11,475,153 bytes, 2:22.36) |
+| Visibility | **Public** or unlisted. Not private. |
+| Thumbnail | `docs/devpost/youtube-thumbnail.png` (1280x720) |
+| Category | Science & Technology |
+
+**Title** (65 characters)
+
+```
+FrankenLab: a plant's thirst trips a real circuit | Kiroween 2026
+```
+
+**Description**
+
+```
+A plant drinks a soil dry. The soil's moisture changes the resistance of a
+probe that sits on the tap of a voltage divider. When the tap voltage crosses
+the comparator's threshold, the LED lights.
+
+None of those parts know about each other. Electronics, biology, materials and
+chemistry share one component graph and one simulation kernel, and the chain is
+real because the electronics is solved, not scripted.
+
+Built with Kiro. The part worth watching: a science-reviewer agent checked our
+soil physics against published data, found a field capacity below the published
+range, and the whole timeline moved three days. The audit was the product.
+
+Try it: https://frankenlab.vercel.app
+Code: https://github.com/wescosmic/frankenlab
+
+#KiroweenHackathon26
+```
+
+**Tags**
+
+```
+frankenlab, kiroween, kiroween2026, kiro, scientific simulation, simulation, sandbox, electronics, biology, materials, chemistry, nextjs, react, three.js, open source
+```
+
+Once the video is up, paste the URL into the `Demo:` line of both versions in
+`docs/SOCIAL-POST.md` and into the blog post at `docs/BLOG-POST.md`.
+
 ---
 
 ## Notes

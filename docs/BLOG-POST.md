@@ -3,6 +3,9 @@
 *How FrankenLab was built with Kiro, what the agents actually did, and the
 moment the bot found a number that was wrong.*
 
+**Watch it run (2:22):** [the demo on YouTube](<paste the YouTube link here>)
+· [or download it from the repository](https://github.com/wescosmic/frankenlab/raw/main/docs/demo/frankenlab-demo.mp4)
+
 ---
 
 Most science simulators teach one subject. You open a circuit simulator, or a
