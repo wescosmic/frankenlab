@@ -43,7 +43,12 @@ function makeDefinition(
       'Unmodelled geometry, noise and material-specific variation are omitted.',
     ],
     visual: { shape, color: colour, label: name.slice(0, 2).toUpperCase() },
-    inventoryVisual: { alt: `${name} technical ${kind}`, kind },
+    inventoryVisual: {
+      model: `/assets/glb/${shape}.glb`,
+      thumbnail: `/assets/inventory/${shape}.svg`,
+      alt: `${name} technical ${kind}`,
+      kind,
+    },
   };
 }
 

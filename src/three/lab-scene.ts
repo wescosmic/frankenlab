@@ -15,6 +15,7 @@ import {
   CSS2DObject,
   CSS2DRenderer,
 } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { ComponentRegistry } from '@/kernel/registry';
 import type {
   ComponentDefinition,
@@ -222,6 +223,7 @@ interface ComponentNode {
   readonly baseColor: THREE.Color;
   readonly glow: THREE.Mesh;
   readonly plant: THREE.Group | null;
+  readonly visualRoot: THREE.Group;
   /**
    * The name floating above the part.
    *
@@ -262,6 +264,7 @@ export class LabScene {
   readonly #camera: THREE.PerspectiveCamera;
   readonly #controls: OrbitControls;
   readonly #raycaster = new THREE.Raycaster();
+  readonly #gltfLoader = new GLTFLoader();
 
   readonly #nodes = new Map<string, ComponentNode>();
   readonly #pickables: THREE.Object3D[] = [];
@@ -295,6 +298,49 @@ export class LabScene {
   #pointerHeld = false;
 
   #disposed = false;
+  #experimentGeneration = 0;
+
+  #loadModel(
+    definition: ComponentDefinition,
+    node: ComponentNode,
+    generation: number,
+  ): void {
+    const modelPath = definition.inventoryVisual?.model
+      ?? (definition.type === 'biology.plant' ? undefined : `/assets/glb/${definition.visual.shape}.glb`);
+    if (!modelPath) return;
+
+    this.#gltfLoader.load(
+      modelPath,
+      (gltf) => {
+        if (this.#disposed || generation !== this.#experimentGeneration || this.#nodes.get(node.id) !== node) return;
+        const model = gltf.scene.clone(true);
+        const bounds = new THREE.Box3().setFromObject(model);
+        const size = bounds.getSize(new THREE.Vector3());
+        const largest = Math.max(size.x, size.y, size.z, 0.001);
+        model.scale.multiplyScalar(0.95 / largest);
+        const centred = new THREE.Box3().setFromObject(model);
+        const centre = centred.getCenter(new THREE.Vector3());
+        model.position.sub(centre);
+        model.position.y += 0.12;
+        model.traverse((child) => {
+          if (!(child instanceof THREE.Mesh)) return;
+          child.castShadow = true;
+          child.receiveShadow = true;
+          child.userData.componentId = node.id;
+          if (child.material instanceof THREE.MeshStandardMaterial) {
+            child.material.roughness = Math.min(child.material.roughness || 0.6, 0.72);
+          }
+          this.#pickables.push(child);
+        });
+        node.visualRoot.clear();
+        node.visualRoot.add(model);
+      },
+      undefined,
+      () => {
+        // GLB art is optional presentation. The procedural fallback remains.
+      },
+    );
+  }
 
   constructor(options: LabSceneOptions) {
     this.#container = options.container;
@@ -702,6 +748,8 @@ export class LabScene {
 
   /** Rebuild the scene for an experiment. */
   setExperiment(experiment: ExperimentDefinition, registry: ComponentRegistry): void {
+    this.#experimentGeneration += 1;
+    const generation = this.#experimentGeneration;
     for (const node of this.#nodes.values()) {
       this.#scene.remove(node.group);
       // The name has to be taken off the page too, or the bench ends up with
@@ -736,6 +784,8 @@ export class LabScene {
       if (!definition) continue;
 
       const group = new THREE.Group();
+      const visualRoot = new THREE.Group();
+      group.add(visualRoot);
       const position = instance.position ?? { x: 0, y: 0, z: 0 };
       group.position.set(position.x, position.y, position.z);
 
@@ -753,7 +803,7 @@ export class LabScene {
       let plant: THREE.Group | null = null;
       if (definition.visual.shape === 'organic') {
         plant = buildPlant();
-        group.add(plant);
+        visualRoot.add(plant);
         plant.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             child.castShadow = true;
@@ -769,7 +819,7 @@ export class LabScene {
         const mesh = new THREE.Mesh(geometryFor(definition.visual.shape), material);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
-        group.add(mesh);
+        visualRoot.add(mesh);
         emissiveMaterials.push(material);
         this.#pickables.push(mesh);
       }
@@ -840,8 +890,10 @@ export class LabScene {
         baseColor: colour,
         glow,
         plant,
+        visualRoot,
         labelElement,
       });
+      this.#loadModel(definition, this.#nodes.get(instance.id)!, generation);
     }
 
     // Connections are drawn as arcs between component centres.
