@@ -355,8 +355,8 @@ export class LabScene {
     this.#labelScale = labelScaleFor(width);
 
     this.#scene = new THREE.Scene();
-    this.#scene.background = new THREE.Color(0x111a28);
-    this.#scene.fog = new THREE.Fog(0x111a28, 18, 42);
+    this.#scene.background = new THREE.Color(0x8ea1b5);
+    this.#scene.fog = new THREE.Fog(0x8ea1b5, 20, 48);
 
     this.#camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 200);
     this.#camera.position.set(8.5, 6, 12.5);
@@ -474,10 +474,10 @@ export class LabScene {
 
   /** The bench, the lights and the floor grid. */
   #buildEnvironment(): void {
-    const hemi = new THREE.HemisphereLight(0xc5ddff, 0x263246, 0.72);
+    const hemi = new THREE.HemisphereLight(0xf4fbff, 0x667588, 1.05);
     this.#scene.add(hemi);
 
-    const key = new THREE.DirectionalLight(0xfff4df, 1.6);
+    const key = new THREE.DirectionalLight(0xfff7e8, 2.35);
     key.position.set(5, 9, 6);
     key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024);
@@ -485,21 +485,46 @@ export class LabScene {
     key.shadow.camera.far = 40;
     this.#scene.add(key);
 
-    const rim = new THREE.DirectionalLight(0x6cb8ff, 0.9);
+    const rim = new THREE.DirectionalLight(0x8bc9ff, 1.2);
     rim.position.set(-8, 5, -8);
     this.#scene.add(rim);
 
     // A room gives the bench a sense of place and scale. The walls are kept
     // outside the interaction raycast, so they can never steal selection.
     const wallMaterial = new THREE.MeshStandardMaterial({
-      color: 0x182337,
-      roughness: 0.88,
+      color: 0xd7e2ea,
+      roughness: 0.78,
       metalness: 0.04,
     });
     const backWall = new THREE.Mesh(new THREE.PlaneGeometry(34, 14), wallMaterial);
     backWall.position.set(0, 6, -8);
     backWall.receiveShadow = true;
     this.#scene.add(backWall);
+
+    const windowGlass = new THREE.Mesh(
+      new THREE.PlaneGeometry(8.5, 3.2),
+      new THREE.MeshStandardMaterial({
+        color: 0x9ed9eb,
+        emissive: 0x5689a6,
+        emissiveIntensity: 0.65,
+        roughness: 0.22,
+        metalness: 0.08,
+      }),
+    );
+    windowGlass.position.set(5.5, 5.2, -7.92);
+    this.#scene.add(windowGlass);
+    const windowFrameMaterial = new THREE.MeshStandardMaterial({ color: 0xf0f5f7, roughness: 0.4, metalness: 0.18 });
+    for (const [x, y, width, height] of [
+      [5.5, 6.8, 8.8, 0.12],
+      [5.5, 3.6, 8.8, 0.12],
+      [1.25, 5.2, 0.12, 3.3],
+      [9.75, 5.2, 0.12, 3.3],
+      [5.5, 5.2, 0.1, 3.3],
+    ] as const) {
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(width, height, 0.08), windowFrameMaterial);
+      frame.position.set(x, y, -7.84);
+      this.#scene.add(frame);
+    }
 
     const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(22, 14), wallMaterial.clone());
     leftWall.rotation.y = Math.PI / 2;
@@ -515,46 +540,46 @@ export class LabScene {
 
     const ceiling = new THREE.Mesh(
       new THREE.PlaneGeometry(34, 22),
-      new THREE.MeshStandardMaterial({ color: 0x101827, roughness: 0.92, metalness: 0 }),
+      new THREE.MeshStandardMaterial({ color: 0xc5d2dc, roughness: 0.86, metalness: 0 }),
     );
     ceiling.rotation.x = Math.PI / 2;
     ceiling.position.y = 13;
     ceiling.receiveShadow = true;
     this.#scene.add(ceiling);
 
-    const roomTrim = new THREE.MeshStandardMaterial({ color: 0x2b3b57, roughness: 0.52, metalness: 0.35 });
+    const roomTrim = new THREE.MeshStandardMaterial({ color: 0x47708d, roughness: 0.46, metalness: 0.28 });
     const backTrim = new THREE.Mesh(new THREE.BoxGeometry(34, 0.08, 0.08), roomTrim);
     backTrim.position.set(0, 0.05, -7.92);
     this.#scene.add(backTrim);
 
     const roomLightMaterial = new THREE.MeshStandardMaterial({
-      color: 0xaedcff,
-      emissive: 0x5aa8d8,
-      emissiveIntensity: 2.2,
+      color: 0xe4f5ff,
+      emissive: 0x93d5f5,
+      emissiveIntensity: 3.4,
       roughness: 0.35,
     });
     for (const x of [-5.5, 0, 5.5]) {
       const panel = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.06, 0.3), roomLightMaterial);
       panel.position.set(x, 7.5, -6.4);
       this.#scene.add(panel);
-      const point = new THREE.PointLight(0x9fdcff, 1.1, 12, 2);
+      const point = new THREE.PointLight(0xb9e6ff, 1.8, 14, 2);
       point.position.set(x, 7.1, -5.5);
       this.#scene.add(point);
     }
 
     const bench = new THREE.Mesh(
       new THREE.PlaneGeometry(60, 60),
-      new THREE.MeshStandardMaterial({ color: 0x1c2737, roughness: 0.82, metalness: 0.08 }),
+      new THREE.MeshStandardMaterial({ color: 0x263443, roughness: 0.72, metalness: 0.12 }),
     );
     bench.rotation.x = -Math.PI / 2;
     bench.position.y = -0.6;
     bench.receiveShadow = true;
     this.#scene.add(bench);
 
-    const grid = new THREE.GridHelper(40, 40, 0x1e2942, 0x141c2e);
+    const grid = new THREE.GridHelper(40, 40, 0x55738b, 0x3b5267);
     grid.position.y = -0.59;
     (grid.material as THREE.Material).transparent = true;
-    (grid.material as THREE.Material).opacity = 0.55;
+    (grid.material as THREE.Material).opacity = 0.4;
     this.#scene.add(grid);
   }
 

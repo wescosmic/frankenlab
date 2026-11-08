@@ -8,6 +8,7 @@
  * in FrankenLab — not a footnote.
  */
 
+import { useState } from 'react';
 import { useLabStore } from '@/state/lab';
 import { DISCIPLINE_COLOURS, DISCIPLINE_ORDER } from '@/world';
 import { DRAG_TYPE } from '@/drag';
@@ -56,6 +57,7 @@ export function Library() {
   const select = useLabStore((s) => s.select);
   const addComponentHere = useLabStore((s) => s.addComponentHere);
   const loadExperiment = useLabStore((s) => s.loadExperiment);
+  const [experimentsOpen, setExperimentsOpen] = useState(false);
 
   const disciplines = registry.listDisciplines().filter((d) => d.id !== '__couplings__');
   const ordered = [
@@ -67,14 +69,21 @@ export function Library() {
 
   return (
     <aside className="flex h-full min-h-0 w-full flex-col bg-lab-panel">
-      <div className="border-b border-lab-line px-4 py-3">
-        <h2 className="lab-label m-0">Experiments</h2>
-        <p className="mt-1 text-[13px] leading-snug text-lab-muted">
-          One bench, several sciences. Open one and run it.
-        </p>
-      </div>
+      <button
+        type="button"
+        onClick={() => setExperimentsOpen((open) => !open)}
+        aria-expanded={experimentsOpen}
+        className="flex w-full items-center justify-between border-b border-lab-line px-4 py-3 text-left hover:bg-lab-panel-raised focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-lab-accent"
+      >
+        <span>
+          <span className="lab-label m-0 block">Experiments</span>
+          <span className="mt-1 block text-[11px] text-lab-dim">{EXPERIMENTS.length} ready-to-run benches</span>
+        </span>
+        <span className="text-[14px] text-lab-dim" aria-hidden>{experimentsOpen ? '−' : '+'}</span>
+      </button>
 
-      <div className="border-b border-lab-line px-2 py-2">
+      {experimentsOpen && (
+      <div className="max-h-48 overflow-y-auto border-b border-lab-line px-2 py-2">
         {EXPERIMENTS.map((entry) => {
           const active = experiment.id === entry.id;
           return (
@@ -109,9 +118,10 @@ export function Library() {
           );
         })}
       </div>
+      )}
 
-      <div className="border-b border-lab-line px-4 py-3">
-        <h2 className="lab-label m-0">Components</h2>
+      <div className="shrink-0 border-b border-lab-line px-4 py-3">
+        <h2 className="lab-label m-0">Components inventory</h2>
         <p className="mt-1 text-[13px] leading-snug text-lab-muted">
           {/* Dragging is a pointer gesture. A phone gets the add button. */}
           <span className="hidden lg:inline">
