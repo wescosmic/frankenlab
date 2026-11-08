@@ -32,6 +32,17 @@ function makeDefinition(
   colour: string,
   kind: NonNullable<ComponentDefinition['inventoryVisual']>['kind'] = 'technical-render',
 ): CatalogueDefinition {
+  const sourcedModels: Readonly<Record<string, string>> = {
+    'biology.microbial-culture': '/assets/catalogue/bottle_glassware_erlenmeyer_flask_medium.glb',
+    'biology.enzyme': '/assets/catalogue/bottle_micropipet.glb',
+    'biology.membrane': '/assets/catalogue/bottle_glassware_filtering_flask_medium.glb',
+    'biology.gas-exchange': '/assets/catalogue/bottle_test_tube_rack.glb',
+    'chemistry.ph-meter': '/assets/catalogue/heating_equipment_electronic_thermometer.glb',
+    'chemistry.catalyst-bed': '/assets/catalogue/bottle_glassware_beaker_medium.glb',
+    'chemistry.heat-bath': '/assets/catalogue/heating_equipment_bunsen_burner.glb',
+    'chemistry.separator': '/assets/catalogue/machine_centrifuge.glb',
+    'materials.filter-media': '/assets/catalogue/bottle_glassware_filtering_flask_medium.glb',
+  };
   return {
     type, name, discipline, category, description, ports,
     parameters: [labelParameter(name)],
@@ -44,7 +55,7 @@ function makeDefinition(
     ],
     visual: { shape, color: colour, label: name.slice(0, 2).toUpperCase() },
     inventoryVisual: {
-      model: `/assets/glb/${shape}.glb`,
+      model: sourcedModels[type] ?? `/assets/glb/${shape}.glb`,
       thumbnail: `/assets/inventory/${shape}.svg`,
       alt: `${name} technical ${kind}`,
       kind,
