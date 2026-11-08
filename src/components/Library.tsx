@@ -13,6 +13,41 @@ import { DISCIPLINE_COLOURS, DISCIPLINE_ORDER } from '@/world';
 import { DRAG_TYPE } from '@/drag';
 import { EXPERIMENTS } from '@/scenarios';
 import { CONFIDENCE_LABEL } from '@/confidence';
+import type { ComponentDefinition } from '@/kernel/types';
+
+function InventoryVisual({ definition, colour }: { definition: ComponentDefinition; colour: string }) {
+  const visual = definition.inventoryVisual;
+  const image = visual?.thumbnail ?? visual?.image;
+  return (
+    <div
+      className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-lab-line bg-[#111820]"
+      style={{ boxShadow: `inset 0 0 18px ${colour}22` }}
+      aria-label={visual?.alt ?? `${definition.name} technical silhouette`}
+    >
+      {image ? (
+        // Local artwork is preferred, but every card has the CSS fallback below.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={image} alt={visual?.alt ?? definition.name} className="h-full w-full object-contain p-1" />
+      ) : (
+        <div className="relative h-9 w-9" aria-hidden>
+          <div
+            className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border-2 ${
+              definition.visual.shape === 'cylinder' ? 'h-8 w-5 rounded-full' :
+              definition.visual.shape === 'sphere' || definition.visual.shape === 'organic' ? 'h-8 w-8 rounded-full' :
+              definition.visual.shape === 'torus' ? 'h-8 w-8 rounded-full border-[5px]' :
+              definition.visual.shape === 'plate' ? 'h-3 w-9 rounded-sm' : 'h-6 w-8 rounded-sm'
+            }`}
+            style={{ borderColor: colour, background: `${colour}22`, boxShadow: `0 0 12px ${colour}44` }}
+          />
+          <span className="absolute bottom-0 left-1/2 h-px w-8 -translate-x-1/2 bg-lab-dim/60" />
+        </div>
+      )}
+      <span className="absolute bottom-0.5 right-1 text-[8px] uppercase tracking-widest text-lab-dim">
+        {visual?.kind === 'cutaway' ? 'CUT' : 'LAB'}
+      </span>
+    </div>
+  );
+}
 
 export function Library() {
   const registry = useLabStore((s) => s.registry);
@@ -129,16 +164,22 @@ export function Library() {
                             : 'border-transparent hover:border-lab-line hover:bg-lab-panel-raised',
                         ].join(' ')}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[13px] text-lab-text">{definition.name}</span>
-                          {used.length > 0 && (
-                            <span className="lab-value rounded bg-lab-line px-1.5 py-0.5 text-[10px] text-lab-muted">
-                              {used.length}
+                        <div className="flex items-center gap-2">
+                          <InventoryVisual definition={definition} colour={colour} />
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center justify-between gap-2">
+                              <span className="truncate text-[13px] text-lab-text">{definition.name}</span>
+                              {used.length > 0 && (
+                                <span className="lab-value rounded bg-lab-line px-1.5 py-0.5 text-[10px] text-lab-muted">
+                                  {used.length}
+                                </span>
+                              )}
                             </span>
-                          )}
-                        </div>
-                        <div className="mt-0.5 text-[10px] uppercase tracking-wider text-lab-dim">
-                          {CONFIDENCE_LABEL[definition.confidence] ?? definition.confidence}
+                            <span className="mt-0.5 block text-[10px] leading-snug text-lab-muted">{definition.description}</span>
+                            <span className="mt-1 block text-[9px] uppercase tracking-wider text-lab-dim">
+                              {CONFIDENCE_LABEL[definition.confidence] ?? definition.confidence} · {definition.inventoryVisual?.kind ?? 'technical silhouette'}
+                            </span>
+                          </span>
                         </div>
                       </button>
 

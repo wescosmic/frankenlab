@@ -20,7 +20,7 @@ What is built, what is next, and what each piece waits for.
 | AI assistant | **Working, offline** | Five tools, a deterministic local explainer, and a trust guard on every reply. |
 | 3D workbench | **Working** | Scene, selection, animation, labels, drag-and-drop wiring. |
 | Timeline, measurements and couplings | **Working** | Four tabs under the bench. |
-| Experiment catalogue | **Four experiments** | BioCircuit, Threshold Alarm, Catalysis Comparison, Bio-Battery. |
+| Experiment catalogue | **Seven experiments** | BioCircuit, Threshold Alarm, Catalysis Comparison, Bio-Battery, Microbial Fuel Cell, Enzyme Optimisation, Water Purification. |
 | Experiment builder | **Working** | Parts are dragged onto the bench and wired by dragging. |
 | Run comparison | **Working** | Named snapshots and side-by-side tracked-series comparison. |
 | Discovery Mode | **Working, local** | Bounded deterministic parameter sweeps with ranked outcomes. |
@@ -243,6 +243,12 @@ makes the cross-disciplinary claim load-bearing.
 - **Visual causal flow.** The Three.js bench uses soft shadows and deterministic
   animated pulses along active connections. The pulses stop cleanly when the
   run pauses, and the renderer remains WebGL-compatible.
+- **Expanded catalogue.** Eighteen additional components now appear in the
+  inventory across biology, chemistry, electronics and materials. Three starter
+  showcase experiments make the new objects discoverable immediately.
+- **Inventory visuals.** Component definitions can carry local technical artwork
+  metadata. The library renders a consistent product-card silhouette when a
+  bespoke image is not present, so no external image URL is required at runtime.
 
 ---
 

@@ -29,6 +29,7 @@ import type {
   Quantity,
 } from '../../kernel/types';
 import { quantity } from '../../kernel/units';
+import { catalogueByDiscipline, catalogueBehaviours } from '../../kernel/catalogue-components';
 
 export interface BranchState {
   resistance: Quantity;
@@ -1276,6 +1277,7 @@ export const electronicsEngine: DisciplineEngine = {
     switchDefinition,
     sensorDefinition,
     comparatorDefinition,
+    ...catalogueByDiscipline('electronics'),
   ],
   behaviors: new Map([
     ['electronics.resistor', resistorBehavior],
@@ -1284,6 +1286,7 @@ export const electronicsEngine: DisciplineEngine = {
     ['electronics.switch', switchBehavior],
     ['electronics.sensor', sensorBehavior],
     ['electronics.comparator', comparatorBehavior],
+    ...catalogueByDiscipline('electronics').map((definition) => [definition.type, catalogueBehaviours.get(definition.type)!] as const),
   ]),
   connectionRules: electronicsRules,
   networkSolver: electronicsNetworkSolver,

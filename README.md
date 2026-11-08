@@ -80,7 +80,7 @@ crosses over, because in that experiment nothing does.
 
 ![The couplings panel, listing the declared rules carrying the flagship](docs/images/couplings.png)
 
-## Four experiments, not one
+## Seven experiments, not one
 
 The bench opens with a catalogue, because a sandbox with a single experiment
 in it is a demonstration.
@@ -91,10 +91,20 @@ in it is a demonstration.
 | **Threshold Alarm** | The same circuit with the biology taken out. Turn the reference resistor from 40 kOhm to 10 kOhm and the alarm goes out. |
 | **Catalysis Comparison** | Two vessels, the same reaction, one catalysed and one not. Same destination, nine times sooner. |
 | **Bio-Battery** | Nutrient activity powers a living cell, a real load resistor, and an indicator LED. |
+| **Microbial Fuel Cell** | A culture, bio-electrode, capacitor and logger form a living energy bench. |
+| **Enzyme Optimisation** | Explore how temperature and acidity shape a catalytic system. |
+| **Water Purification** | Assemble a membrane, filter media and separator into a purification train. |
 
 Runs can be saved as named snapshots and compared side by side. **Discovery
 Mode** sweeps a bounded model parameter locally, ranks the trials, and reports
 the best outcome with the experiment's weakest confidence level.
+
+The component inventory now spans living cultures, enzymes, membranes, gas
+exchange, pH measurement, catalyst beds, heat baths, separators, capacitors,
+photovoltaic cells, motors, data loggers, roots, greenhouses, compost reactors,
+filter media, thermal mass, electrodes, light sources and temperature chambers.
+Each part carries a confidence level, physical ports and a technical inventory
+visual with an accessible fallback silhouette.
 
 The catalysis comparison is the sharpest of the three. The equilibrium is not
 guessed at from a rate that looks small: the mass-action law gives a quadratic

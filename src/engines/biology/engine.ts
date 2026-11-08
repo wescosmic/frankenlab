@@ -19,6 +19,7 @@ import type {
   Quantity,
 } from '../../kernel/types';
 import { quantity } from '../../kernel/units';
+import { catalogueByDiscipline, catalogueBehaviours } from '../../kernel/catalogue-components';
 
 export interface PlantState extends Record<string, unknown> {
   readonly biomass: number;
@@ -592,12 +593,13 @@ export const biologyEngine: DisciplineEngine = {
   id: 'biology',
   name: 'Biology',
   version: '1.0.0',
-  components: [plantDefinition, nutrientSourceDefinition, moistureSourceDefinition, bioBatteryDefinition],
+  components: [plantDefinition, nutrientSourceDefinition, moistureSourceDefinition, bioBatteryDefinition, ...catalogueByDiscipline('biology')],
   behaviors: new Map([
     ['biology.plant', plantBehavior],
     ['biology.nutrient-source', nutrientSourceBehavior],
     ['biology.moisture-source', moistureSourceBehavior],
     ['biology.bio-battery', bioBatteryBehavior],
+    ...catalogueByDiscipline('biology').map((definition) => [definition.type, catalogueBehaviours.get(definition.type)!] as const),
   ]),
   connectionRules: biologyRules,
 };
