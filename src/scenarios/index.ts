@@ -10,6 +10,7 @@ import type { ExperimentDefinition } from '@/kernel/types';
 import { createBioCircuit } from './biocircuit';
 import { createCatalysis } from './catalysis';
 import { createThresholdAlarm } from './threshold-alarm';
+import { createBioBattery } from './bio-battery';
 
 export interface ExperimentEntry {
   readonly id: string;
@@ -45,6 +46,13 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
       'Two reaction vessels running the same reaction, one catalysed and one not. Same destination, different speed.',
     disciplines: ['chemistry'],
     create: () => createCatalysis(),
+  },
+  {
+    id: 'bio-battery',
+    name: 'Bio-Battery',
+    summary: 'Nutrient activity powers a living cell, a real load, and an indicator LED.',
+    disciplines: ['biology', 'electronics'],
+    create: () => createBioBattery(),
   },
 ];
 

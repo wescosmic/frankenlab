@@ -227,9 +227,35 @@ export class Simulation {
       const solver = engine.networkSolver;
       if (!solver) continue;
 
+      const nativeIds = new Set(
+        this.#experiment.components
+          .filter((component) => this.#registry.tryGetDefinition(component.type)?.discipline === engine.id)
+          .map((component) => component.id),
+      );
+      const foreignIds = engine.id === 'electronics'
+        ? new Set(
+            this.#experiment.components
+              .filter((component) => {
+                const definition = this.#registry.tryGetDefinition(component.type);
+                return definition?.discipline !== engine.id && definition?.ports.some(
+                  (port) => port.channel === 'electrical-potential',
+                );
+              })
+              .filter((component) => this.#experiment.connections.some(
+                (connection) => connection.channel === 'electrical-potential' && (
+                  (connection.source.componentId === component.id && nativeIds.has(connection.target.componentId)) ||
+                  (connection.target.componentId === component.id && nativeIds.has(connection.source.componentId))
+                ),
+              ))
+              .map((component) => component.id),
+          )
+        : new Set<string>();
+      // Network solvers may receive a connected component from another
+      // discipline when it exposes the solver's physical channel. Unconnected
+      // foreign parts stay out of the solve, so dropping a part on the bench
+      // cannot make an otherwise valid circuit singular.
       const disciplineComponents = this.#experiment.components.filter(
-        (component) =>
-          this.#registry.tryGetDefinition(component.type)?.discipline === engine.id,
+        (component) => nativeIds.has(component.id) || foreignIds.has(component.id),
       );
       if (disciplineComponents.length === 0) continue;
 

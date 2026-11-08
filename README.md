@@ -80,7 +80,7 @@ crosses over, because in that experiment nothing does.
 
 ![The couplings panel, listing the declared rules carrying the flagship](docs/images/couplings.png)
 
-## Three experiments, not one
+## Four experiments, not one
 
 The bench opens with a catalogue, because a sandbox with a single experiment
 in it is a demonstration.
@@ -90,6 +90,11 @@ in it is a demonstration.
 | **Project BioCircuit** | The flagship. Soil, a plant, a probe and an alarm. |
 | **Threshold Alarm** | The same circuit with the biology taken out. Turn the reference resistor from 40 kOhm to 10 kOhm and the alarm goes out. |
 | **Catalysis Comparison** | Two vessels, the same reaction, one catalysed and one not. Same destination, nine times sooner. |
+| **Bio-Battery** | Nutrient activity powers a living cell, a real load resistor, and an indicator LED. |
+
+Runs can be saved as named snapshots and compared side by side. **Discovery
+Mode** sweeps a bounded model parameter locally, ranks the trials, and reports
+the best outcome with the experiment's weakest confidence level.
 
 The catalysis comparison is the sharpest of the three. The equilibrium is not
 guessed at from a rate that looks small: the mass-action law gives a quadratic

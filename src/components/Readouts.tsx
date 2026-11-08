@@ -266,13 +266,266 @@ function MeasurementsTab() {
   );
 }
 
-type TabId = 'readings' | 'timeline' | 'measurements' | 'couplings';
+function SnapshotsTab() {
+  const snapshots = useLabStore((s) => s.snapshots);
+  const comparingSnapshots = useLabStore((s) => s.comparingSnapshots);
+  const saveSnapshot = useLabStore((s) => s.saveSnapshot);
+  const deleteSnapshot = useLabStore((s) => s.deleteSnapshot);
+  const addToComparison = useLabStore((s) => s.addToComparison);
+  const elapsed = useLabStore((s) => s.elapsed);
+  const status = useLabStore((s) => s.status);
+  const [snapshotName, setSnapshotName] = useState('');
+
+  const handleSave = () => {
+    if (!snapshotName.trim()) return;
+    saveSnapshot(snapshotName.trim());
+    setSnapshotName('');
+  };
+
+  const canSave = status !== 'idle' && elapsed > 0;
+
+  return (
+    <div className="max-h-56 overflow-y-auto px-3 pb-3">
+      <div className="mb-3 flex gap-2">
+        <input
+          type="text"
+          value={snapshotName}
+          onChange={(e) => setSnapshotName(e.target.value)}
+          placeholder="Snapshot name..."
+          className="flex-1 rounded border border-lab-line bg-lab-panel-raised px-2 py-1 text-[12px] text-lab-text placeholder:text-lab-dim focus:border-lab-accent focus:outline-none"
+          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+        />
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!canSave || !snapshotName.trim()}
+          className="rounded bg-lab-accent px-3 py-1 text-[11px] font-medium text-lab-text transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Save
+        </button>
+      </div>
+
+      {snapshots.length === 0 ? (
+        <div className="flex h-20 items-center justify-center text-[12px] text-lab-dim">
+          No saved snapshots. Run the experiment and save to compare.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {snapshots.map((snap) => {
+            const isComparing = comparingSnapshots?.[0] === snap.id || comparingSnapshots?.[1] === snap.id;
+            const day = (snap.elapsed / 86400).toFixed(1);
+            return (
+              <div
+                key={snap.id}
+                className={`flex items-center justify-between rounded border px-3 py-2 ${
+                  isComparing
+                    ? 'border-lab-accent bg-lab-accent/10'
+                    : 'border-lab-line bg-lab-panel-raised'
+                }`}
+              >
+                <div>
+                  <div className="lab-label">{snap.name}</div>
+                  <div className="text-[11px] text-lab-dim">Day {day}</div>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => addToComparison(snap.id)}
+                    className="rounded px-2 py-1 text-[10px] text-lab-accent hover:bg-lab-accent/20"
+                  >
+                    Compare
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteSnapshot(snap.id)}
+                    className="rounded px-2 py-1 text-[10px] text-lab-electronics hover:bg-lab-electronics/20"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CompareTab() {
+  const snapshots = useLabStore((s) => s.snapshots);
+  const comparingSnapshots = useLabStore((s) => s.comparingSnapshots);
+  const clearComparison = useLabStore((s) => s.clearComparison);
+
+  const snapshotA = comparingSnapshots?.[0] ? snapshots.find((s) => s.id === comparingSnapshots[0]) : null;
+  const snapshotB = comparingSnapshots?.[1] ? snapshots.find((s) => s.id === comparingSnapshots[1]) : null;
+
+  if (!snapshotA) {
+    return (
+      <div className="flex h-32 items-center justify-center text-[12px] text-lab-dim">
+        Select two snapshots from the Snapshots tab to compare.
+      </div>
+    );
+  }
+
+  // Keep the comparison readable: use the experiment's labels and units,
+  // while still tolerating a snapshot captured before a series was populated.
+  const tracked = trackedSeriesFor(snapshotA.experiment).filter((series) =>
+    snapshotA.series.some((point) => Object.prototype.hasOwnProperty.call(point.values, series.key)),
+  );
+
+  return (
+    <div className="max-h-56 overflow-y-auto px-3 pb-3">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex gap-4">
+          <div className="rounded border border-lab-line bg-lab-panel-raised px-3 py-2">
+            <div className="lab-label text-lab-biology">{snapshotA.name}</div>
+            <div className="text-[11px] text-lab-dim">Day {(snapshotA.elapsed / 86400).toFixed(1)}</div>
+          </div>
+          {snapshotB && (
+            <div className="rounded border border-lab-line bg-lab-panel-raised px-3 py-2">
+              <div className="lab-label text-lab-chemistry">{snapshotB.name}</div>
+              <div className="text-[11px] text-lab-dim">Day {(snapshotB.elapsed / 86400).toFixed(1)}</div>
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={clearComparison}
+          className="rounded px-2 py-1 text-[10px] text-lab-dim hover:bg-lab-line"
+        >
+          Clear
+        </button>
+      </div>
+
+      {tracked.length === 0 ? (
+        <div className="text-[12px] text-lab-dim">No series data to compare.</div>
+      ) : (
+        <div className="space-y-2">
+          {tracked.map((series) => {
+            const key = series.key;
+            const unit = snapshotA.readings[key]?.unit ?? '';
+            const valA = snapshotA.series.at(-1)?.values[key] ?? 0;
+            const valB = snapshotB ? (snapshotB.series.at(-1)?.values[key] ?? 0) : null;
+            const diff = valB !== null ? valB - valA : null;
+
+            return (
+              <div key={key} className="grid grid-cols-3 gap-2 rounded border border-lab-line bg-lab-panel-raised px-3 py-2 text-[12px]">
+                <span className="text-lab-dim">{series.label}{unit ? ` (${unit})` : ''}</span>
+                <span className="text-lab-biology">{valA.toFixed(3)}{unit ? ` ${unit}` : ''}</span>
+                <span className={diff !== null ? (diff > 0 ? 'text-lab-biology' : diff < 0 ? 'text-lab-chemistry' : 'text-lab-dim') : 'text-lab-dim'}>
+                  {valB !== null ? `${valB.toFixed(3)}${unit ? ` ${unit}` : ''}` : '—'}
+                  {diff !== null && diff !== 0 && (
+                    <span className="ml-1 text-[10px]">
+                      ({diff > 0 ? '+' : ''}{diff.toFixed(3)})
+                    </span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Show final observations from each snapshot */}
+      {(snapshotA.observations.length > 0 || (snapshotB && snapshotB.observations.length > 0)) && (
+        <div className="mt-4">
+          <div className="lab-label mb-2">Observations</div>
+          <div className="space-y-1">
+            {snapshotA.observations.slice(-3).map((obs, i) => (
+              <div key={`a-${i}`} className="text-[11px] text-lab-biology">
+                • {obs.message}
+              </div>
+            ))}
+            {snapshotB && snapshotB.observations.slice(-3).map((obs, i) => (
+              <div key={`b-${i}`} className="text-[11px] text-lab-chemistry">
+                • {obs.message}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DiscoveryTab() {
+  const experiment = useLabStore((s) => s.experiment);
+  const registry = useLabStore((s) => s.registry);
+  const sweepResult = useLabStore((s) => s.sweepResult);
+  const sweepRunning = useLabStore((s) => s.sweepRunning);
+  const sweepProgress = useLabStore((s) => s.sweepProgress);
+  const startSweep = useLabStore((s) => s.startSweep);
+  const cancelSweep = useLabStore((s) => s.cancelSweep);
+  const clearSweep = useLabStore((s) => s.clearSweep);
+  const [componentId, setComponentId] = useState(experiment.components[0]?.id ?? '');
+  const [parameterId, setParameterId] = useState('');
+  const [outcomeKey, setOutcomeKey] = useState(experiment.trackedSeries?.[0]?.key ?? '');
+  const [min, setMin] = useState(0);
+  const [max, setMax] = useState(1);
+  const [trials, setTrials] = useState(12);
+  const [optimizeFor, setOptimizeFor] = useState<'max' | 'min'>('max');
+
+  const component = experiment.components.find((item) => item.id === componentId) ?? experiment.components[0];
+  const definition = component ? registry.getDefinition(component.type) : undefined;
+  const numericParameters = definition?.parameters.filter((parameter) => parameter.kind === 'number' && parameter.id !== 'label') ?? [];
+  const parameter = numericParameters.find((item) => item.id === parameterId) ?? numericParameters[0];
+  const outcomeOptions = experiment.trackedSeries ?? [];
+
+  const run = () => {
+    if (!component || !parameter || !outcomeKey) return;
+    void startSweep({ componentId: component.id, parameterId: parameter.id, min, max, trials: Math.max(2, Math.min(48, trials)), outcomeKey, optimizeFor });
+  };
+
+  return (
+    <div className="max-h-56 overflow-y-auto px-3 pb-3 text-[12px]">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div>
+          <div className="lab-label text-lab-accent">DISCOVERY MODE</div>
+          <div className="mt-1 text-lab-dim">Sweep one model parameter locally and find a measured outcome.</div>
+        </div>
+        {sweepRunning ? (
+          <button type="button" onClick={cancelSweep} className="rounded border border-lab-electronics/50 px-2 py-1 text-[10px] text-lab-electronics">Stop</button>
+        ) : sweepResult ? (
+          <button type="button" onClick={clearSweep} className="rounded border border-lab-line px-2 py-1 text-[10px] text-lab-dim">Clear</button>
+        ) : null}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <label className="text-lab-dim">Component<select value={component?.id ?? ''} onChange={(event) => { setComponentId(event.target.value); setParameterId(''); }} className="mt-1 w-full rounded border border-lab-line bg-lab-panel-raised px-2 py-1 text-lab-text">{experiment.components.map((item) => <option key={item.id} value={item.id}>{item.label ?? item.id}</option>)}</select></label>
+        <label className="text-lab-dim">Parameter<select value={parameter?.id ?? ''} onChange={(event) => setParameterId(event.target.value)} className="mt-1 w-full rounded border border-lab-line bg-lab-panel-raised px-2 py-1 text-lab-text">{numericParameters.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label className="text-lab-dim">From<input type="number" value={min} onChange={(event) => setMin(Number(event.target.value))} className="mt-1 w-full rounded border border-lab-line bg-lab-panel-raised px-2 py-1 text-lab-text" /></label>
+        <label className="text-lab-dim">To<input type="number" value={max} onChange={(event) => setMax(Number(event.target.value))} className="mt-1 w-full rounded border border-lab-line bg-lab-panel-raised px-2 py-1 text-lab-text" /></label>
+        <label className="text-lab-dim">Outcome<select value={outcomeKey} onChange={(event) => setOutcomeKey(event.target.value)} className="mt-1 w-full rounded border border-lab-line bg-lab-panel-raised px-2 py-1 text-lab-text">{outcomeOptions.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}</select></label>
+        <label className="text-lab-dim">Trials<input type="number" min={2} max={48} value={trials} onChange={(event) => setTrials(Number(event.target.value))} className="mt-1 w-full rounded border border-lab-line bg-lab-panel-raised px-2 py-1 text-lab-text" /></label>
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <label className="text-lab-dim">Find<select value={optimizeFor} onChange={(event) => setOptimizeFor(event.target.value as 'max' | 'min')} className="ml-1 rounded border border-lab-line bg-lab-panel-raised px-2 py-1 text-lab-text"><option value="max">highest outcome</option><option value="min">lowest outcome</option></select></label>
+        <button type="button" disabled={sweepRunning || !parameter || !outcomeKey || min >= max} onClick={run} className="ml-auto rounded bg-lab-accent px-3 py-1.5 text-[10px] font-medium text-lab-text disabled:cursor-not-allowed disabled:opacity-40">{sweepRunning ? `${Math.round(sweepProgress * 100)}%` : 'Run sweep'}</button>
+      </div>
+
+      {sweepResult && (
+        <div className="mt-3 space-y-2 rounded border border-lab-accent/30 bg-lab-accent/5 p-3">
+          <div className="lab-label text-lab-accent">BEST MODEL RESULT</div>
+          <div className="flex justify-between"><span className="text-lab-dim">{parameter?.label}</span><span className="lab-value">{sweepResult.bestTrial.parameterValue.toFixed(3)}</span></div>
+          <div className="flex justify-between"><span className="text-lab-dim">{outcomeKey}</span><span className="lab-value text-lab-biology">{sweepResult.bestTrial.outcomeValue.toFixed(3)}</span></div>
+          <div className="text-[10px] text-lab-dim">{sweepResult.trials.length} deterministic trials · weakest model: {sweepResult.weakestConfidence}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type TabId = 'readings' | 'timeline' | 'measurements' | 'couplings' | 'snapshots' | 'compare' | 'discover';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'readings', label: 'Readings' },
   { id: 'timeline', label: 'Timeline' },
   { id: 'measurements', label: 'Measurements' },
   { id: 'couplings', label: 'Couplings' },
+  { id: 'snapshots', label: 'Snapshots' },
+  { id: 'compare', label: 'Compare' },
+  { id: 'discover', label: 'Discover' },
 ];
 
 /**
@@ -317,7 +570,11 @@ export function Readouts() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto border-t border-lab-line bg-lab-panel lg:flex-none lg:overflow-visible">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-lab-line px-3 pt-2">
-        <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Readouts">
+        <div
+          className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide"
+          role="tablist"
+          aria-label="Readouts"
+        >
           {TABS.map(({ id, label }) => (
             <button
               key={id}
@@ -371,6 +628,9 @@ export function Readouts() {
         {tab === 'timeline' && <TimelineTab />}
         {tab === 'measurements' && <MeasurementsTab />}
         {tab === 'couplings' && <Couplings />}
+        {tab === 'snapshots' && <SnapshotsTab />}
+        {tab === 'compare' && <CompareTab />}
+        {tab === 'discover' && <DiscoveryTab />}
       </div>
     </div>
   );

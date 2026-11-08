@@ -132,6 +132,13 @@ function createHarness(): ExperimentDefinition {
         parameters: { rate: { value: 0 } },
       },
       {
+        id: 'bio-battery',
+        type: 'biology.bio-battery',
+        label: 'Bio-battery',
+        position: { x: 0, y: 6, z: 0 },
+        parameters: { max_voltage: { value: 3.2, unit: 'V' } },
+      },
+      {
         id: 'conductor',
         type: 'materials.conductor',
         label: 'Copper wire',

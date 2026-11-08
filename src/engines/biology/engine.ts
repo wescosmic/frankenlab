@@ -495,6 +495,60 @@ export const moistureSourceBehavior: ComponentBehavior = {
   },
 };
 
+/**
+ * A teaching-scale bio-electrochemical cell. Nutrient availability controls
+ * the open-circuit voltage; the electronics solver treats it as a dynamic
+ * voltage source, so the biology is load-bearing rather than decorative.
+ */
+export const bioBatteryDefinition: ComponentDefinition = {
+  type: 'biology.bio-battery',
+  name: 'Bio-battery',
+  discipline: 'biology',
+  category: 'Transducer',
+  description: 'A living electrochemical cell that converts nutrient activity into a usable voltage.',
+  confidence: 'illustrative',
+  assumptions: [
+    'Voltage is a teaching abstraction for electrochemical potential.',
+    'The cell has no internal resistance or electrode kinetics.',
+    'Nutrient availability is the only biological driver.',
+  ],
+  ports: [
+    { id: 'nutrient', label: 'Nutrient activity', direction: 'input', channel: 'nutrient', unit: 'ratio', required: false, description: 'Available nutrient activity driving the cell.' },
+    { id: 'positive', label: 'Positive electrode', direction: 'output', channel: 'electrical-potential', unit: 'V', required: false, description: 'Positive electrical terminal.' },
+    { id: 'negative', label: 'Negative electrode', direction: 'input', channel: 'electrical-potential', unit: 'V', required: false, description: 'Return terminal.' },
+    { id: 'activity', label: 'Cell activity signal', direction: 'output', channel: 'signal', unit: 'ratio', required: false, description: 'Activity signal for an electronic indicator.' },
+  ],
+  parameters: [
+    { id: 'max_voltage', label: 'Maximum voltage', kind: 'number', unit: 'V', defaultValue: 3.2, min: 0.5, max: 12, step: 0.1, description: 'Open-circuit voltage at full nutrient activity.', confidence: 'illustrative' },
+    { id: 'label', label: 'Label', kind: 'string', defaultValue: 'Bio-cell', description: 'Name shown in the workbench.' },
+  ],
+  initialState: { outputs: { voltage: quantity(2.6, 'V'), positive: quantity(2.6, 'V'), negative: quantity(0, 'V'), activity: quantity(0.8, 'ratio') } },
+  visual: { shape: 'organic', color: '#8fd694', emissive: '#4fd1c5', label: 'BIO' },
+  readings: [
+    { id: 'voltage', label: 'Cell voltage', unit: 'V', description: 'Voltage produced by the living cell.' },
+    { id: 'activity', label: 'Cell activity', unit: 'ratio', description: 'Normalised biological activity.' },
+  ],
+};
+
+export const bioBatteryBehavior: ComponentBehavior = {
+  type: 'biology.bio-battery',
+  step(state, inputs) {
+    const s = state as { outputs?: Record<string, Quantity>; __param_max_voltage?: number };
+    const activity = Math.max(0, Math.min(1, inputs.nutrient?.value ?? 0.8));
+    const voltage = (s.__param_max_voltage ?? 3.2) * (0.35 + activity * 0.65);
+    return {
+      ...s,
+      outputs: {
+        ...(s.outputs ?? {}),
+        voltage: quantity(voltage, 'V'),
+        positive: quantity(voltage, 'V'),
+        negative: quantity(0, 'V'),
+        activity: quantity(activity, 'ratio'),
+      },
+    };
+  },
+};
+
 export const biologyRules: readonly ConnectionRule[] = [
   {
     sourceChannel: 'moisture',
@@ -538,11 +592,12 @@ export const biologyEngine: DisciplineEngine = {
   id: 'biology',
   name: 'Biology',
   version: '1.0.0',
-  components: [plantDefinition, nutrientSourceDefinition, moistureSourceDefinition],
+  components: [plantDefinition, nutrientSourceDefinition, moistureSourceDefinition, bioBatteryDefinition],
   behaviors: new Map([
     ['biology.plant', plantBehavior],
     ['biology.nutrient-source', nutrientSourceBehavior],
     ['biology.moisture-source', moistureSourceBehavior],
+    ['biology.bio-battery', bioBatteryBehavior],
   ]),
   connectionRules: biologyRules,
 };

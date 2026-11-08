@@ -81,6 +81,7 @@ export function Workbench() {
 
   const experiment = useLabStore((s) => s.experiment);
   const registry = useLabStore((s) => s.registry);
+  const status = useLabStore((s) => s.status);
   const selectedId = useLabStore((s) => s.selectedId);
   const selectedConnectionId = useLabStore((s) => s.selectedConnectionId);
   const select = useLabStore((s) => s.select);
@@ -185,6 +186,11 @@ export function Workbench() {
   useEffect(() => {
     sceneRef.current?.setSelectedConnection(selectedConnectionId);
   }, [selectedConnectionId]);
+
+  // Update the causal flow animation when the run status changes.
+  useEffect(() => {
+    sceneRef.current?.setRunning(status === 'running');
+  }, [status]);
 
   return <div ref={containerRef} className="absolute inset-0" />;
 }

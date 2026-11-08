@@ -272,6 +272,11 @@ export class LabScene {
   /** Which part each wire starts from, so it can be coloured by discipline. */
   readonly #connectionOwners = new Map<string, string>();
   #connections: THREE.Mesh[] = [];
+  /** Animated pulses travelling along active connections. */
+  #pulses: { mesh: THREE.Mesh; progress: number; speed: number; curve: THREE.Curve<THREE.Vector3> }[] = [];
+  #running = false;
+  /** Store the curves for each connection to animate pulses along them. */
+  #connectionCurves = new Map<string, THREE.Curve<THREE.Vector3>>();
   /** Where the parts of the current experiment sit, so the bench can be framed again. */
   #benchParts: readonly {
     position: { x: number; y: number; z: number };
@@ -313,7 +318,8 @@ export class LabScene {
     this.#renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.#renderer.setSize(width, height);
-    this.#renderer.shadowMap.enabled = false;
+    this.#renderer.shadowMap.enabled = true;
+    this.#renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     // The canvas and the label layer must share an origin, otherwise the
     // labels drift away from the parts they name.
     this.#renderer.domElement.style.position = 'absolute';
@@ -427,6 +433,10 @@ export class LabScene {
 
     const key = new THREE.DirectionalLight(0xffffff, 1.35);
     key.position.set(6, 9, 5);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.camera.near = 1;
+    key.shadow.camera.far = 40;
     this.#scene.add(key);
 
     const rim = new THREE.DirectionalLight(0x4fd1c5, 0.75);
@@ -439,6 +449,7 @@ export class LabScene {
     );
     bench.rotation.x = -Math.PI / 2;
     bench.position.y = -0.6;
+    bench.receiveShadow = true;
     this.#scene.add(bench);
 
     const grid = new THREE.GridHelper(40, 40, 0x1e2942, 0x141c2e);
@@ -703,10 +714,13 @@ export class LabScene {
     this.#wirePickables.length = 0;
     this.#connectionOwners.clear();
 
+    // Clear existing connections and their pulses first
+    this.#clearPulses();
     for (const line of this.#connections) {
       this.#scene.remove(line);
     }
     this.#connections = [];
+    this.#connectionCurves.clear();
 
     // Frame the bench on the experiment, so it fills the viewport whatever
     // shape the window is.
@@ -740,6 +754,12 @@ export class LabScene {
       if (definition.visual.shape === 'organic') {
         plant = buildPlant();
         group.add(plant);
+        plant.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
         // A living thing is made of meshes, and each of them has to be
         // clickable, or the plant cannot be selected.
         for (const child of plant.children) {
@@ -747,7 +767,8 @@ export class LabScene {
         }
       } else {
         const mesh = new THREE.Mesh(geometryFor(definition.visual.shape), material);
-        mesh.castShadow = false;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
         group.add(mesh);
         emissiveMaterials.push(material);
         this.#pickables.push(mesh);
@@ -850,6 +871,8 @@ export class LabScene {
       this.#connections.push(wire);
       this.#wirePickables.push(wire);
       this.#connectionOwners.set(connection.id, connection.source.componentId);
+      // Store the curve for pulse animation.
+      this.#connectionCurves.set(connection.id, curve);
     }
 
     this.#applyConnectionHighlight();
@@ -858,6 +881,8 @@ export class LabScene {
       this.#scene.remove(this.#selectionRing);
       this.#selectionRing = null;
     }
+
+    if (this.#running) this.setRunning(true);
   }
 
   /** Show the selection ring on a component. */
@@ -985,9 +1010,69 @@ export class LabScene {
 
   render(): void {
     if (this.#disposed) return;
+
+    // Animate causal flow pulses when the simulation is running.
+    if (this.#running && this.#pulses.length > 0) {
+      for (const pulse of this.#pulses) {
+        pulse.progress += pulse.speed;
+        if (pulse.progress >= 1) {
+          pulse.progress = 0; // Loop the pulse
+        }
+        const point = pulse.curve.getPoint(pulse.progress);
+        pulse.mesh.position.copy(point);
+      }
+    }
+
     this.#controls.update();
     this.#renderer.render(this.#scene, this.#camera);
     this.#labelRenderer.render(this.#scene, this.#camera);
+  }
+
+  /** Start animating causal flow pulses along active connections. */
+  setRunning(running: boolean): void {
+    this.#running = running;
+    if (!running) {
+      this.#clearPulses();
+      return;
+    }
+
+    // Create pulses for each connection that has a curve
+    for (const [connectionId, curve] of this.#connectionCurves) {
+      // Check if a pulse already exists for this connection
+      if (this.#pulses.some((p) => p.curve === curve)) continue;
+
+      const sourceId = this.#connectionOwners.get(connectionId);
+      const sourceNode = sourceId ? this.#nodes.get(sourceId) : null;
+      const colour = sourceNode
+        ? DISCIPLINE_COLOURS[sourceNode.discipline] ?? '#4fd1c5'
+        : '#4fd1c5';
+
+      const pulseGeometry = new THREE.SphereGeometry(0.08, 12, 8);
+      const pulseMaterial = new THREE.MeshBasicMaterial({
+        color: colour,
+        transparent: true,
+        opacity: 0.85,
+      });
+      const pulseMesh = new THREE.Mesh(pulseGeometry, pulseMaterial);
+      this.#scene.add(pulseMesh);
+
+      this.#pulses.push({
+        mesh: pulseMesh,
+        progress: (this.#pulses.length % 3) * 0.18, // Deterministic staggering
+        speed: 0.008, // Animation speed
+        curve,
+      });
+    }
+  }
+
+  /** Clear all animated pulses. */
+  #clearPulses(): void {
+    for (const pulse of this.#pulses) {
+      this.#scene.remove(pulse.mesh);
+      pulse.mesh.geometry.dispose();
+      (pulse.mesh.material as THREE.Material).dispose();
+    }
+    this.#pulses = [];
   }
 
   /**
