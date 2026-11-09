@@ -22,6 +22,8 @@ import { Inspector } from './Inspector';
 import { Readouts, tabKeyHandler } from './Readouts';
 import { Assistant } from './Assistant';
 import { useLabStore, type Speed } from '@/state/lab';
+import { EXPERIMENTS } from '@/scenarios';
+import { DISCIPLINE_COLOURS } from '@/world';
 
 type SideTab = 'inspector' | 'assistant';
 type Sheet = 'none' | 'parts' | SideTab;
@@ -54,12 +56,16 @@ export function Lab() {
   const pause = useLabStore((s) => s.pause);
   const reset = useLabStore((s) => s.reset);
   const setSpeed = useLabStore((s) => s.setSpeed);
+  const loadExperiment = useLabStore((s) => s.loadExperiment);
   const [tab, setTab] = useState<SideTab>('inspector');
   const [sheet, setSheet] = useState<Sheet>('none');
+  const [experimentsOpen, setExperimentsOpen] = useState(false);
 
   /** Where the focus goes back to when the sheet closes. */
   const openerRef = useRef<HTMLElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const experimentsButtonRef = useRef<HTMLButtonElement | null>(null);
+  const experimentCloseRef = useRef<HTMLButtonElement | null>(null);
 
   const running = status === 'running';
 
@@ -78,9 +84,15 @@ export function Lab() {
   // Escape closes the sheet. A rotation back to a desktop width closes it too,
   // because on a desktop the panel is already on the screen.
   useEffect(() => {
-    if (sheet === 'none') return;
+    if (sheet === 'none' && !experimentsOpen) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeSheet();
+      if (event.key !== 'Escape') return;
+      if (experimentsOpen) {
+        setExperimentsOpen(false);
+        experimentsButtonRef.current?.focus();
+      } else {
+        closeSheet();
+      }
     };
     const onResize = () => {
       if (window.matchMedia('(min-width: 1280px)').matches) setSheet('none');
@@ -91,13 +103,14 @@ export function Lab() {
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', onResize);
     };
-  }, [sheet, closeSheet]);
+  }, [sheet, experimentsOpen, closeSheet]);
 
   // Move the focus into the sheet, so a keyboard user is not left standing on
   // the button that opened it.
   useEffect(() => {
     if (sheet !== 'none') closeRef.current?.focus();
-  }, [sheet]);
+    if (experimentsOpen) experimentCloseRef.current?.focus();
+  }, [sheet, experimentsOpen]);
 
   const resetButton = (
     <button
@@ -126,6 +139,16 @@ export function Lab() {
         </h1>
 
         <div className="flex items-center gap-2 sm:gap-4">
+          <button
+            ref={experimentsButtonRef}
+            type="button"
+            onClick={() => setExperimentsOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={experimentsOpen}
+            className="rounded-md border border-lab-line bg-lab-panel-raised px-2.5 py-1.5 text-[11px] uppercase tracking-wider text-lab-muted transition-colors hover:border-lab-accent/60 hover:text-lab-text focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent sm:px-3"
+          >
+            Experiments
+          </button>
           <div className="hidden text-right lg:block">
             <div className="text-[13px] text-lab-text">{experiment.name}</div>
             <div className="text-[10px] uppercase tracking-wider text-lab-dim">
@@ -190,6 +213,55 @@ export function Lab() {
           {experiment.name} · {experiment.discipline} · model {experiment.modelVersion}
         </div>
       </header>
+
+      {experimentsOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-[#08111dcc] px-4 py-12 backdrop-blur-sm sm:py-20" role="dialog" aria-modal="true" aria-labelledby="experiments-title">
+          <button
+            type="button"
+            aria-label="Close experiments"
+            onClick={() => { setExperimentsOpen(false); experimentsButtonRef.current?.focus(); }}
+            className="absolute inset-0 cursor-default"
+          />
+          <section className="relative z-10 w-full max-w-3xl overflow-hidden rounded-xl border border-lab-line-bright bg-lab-panel shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-lab-line px-5 py-4">
+              <div>
+                <h2 id="experiments-title" className="m-0 text-[16px] font-medium text-lab-text">Choose an experiment</h2>
+                <p className="mt-1 text-[12px] text-lab-muted">Open a ready-to-run bench or switch the disciplines on the table.</p>
+              </div>
+              <button
+                ref={experimentCloseRef}
+                type="button"
+                onClick={() => { setExperimentsOpen(false); experimentsButtonRef.current?.focus(); }}
+                className="rounded-md border border-lab-line bg-lab-panel-raised px-2.5 py-1 text-[11px] text-lab-muted hover:border-lab-accent/60 hover:text-lab-text focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent"
+              >
+                Close
+              </button>
+            </div>
+            <div className="grid max-h-[70vh] gap-2 overflow-y-auto p-4 sm:grid-cols-2">
+              {EXPERIMENTS.map((entry) => {
+                const active = experiment.id === entry.id;
+                return (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    onClick={() => { loadExperiment(entry.id); setExperimentsOpen(false); experimentsButtonRef.current?.focus(); }}
+                    className={["rounded-lg border px-4 py-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lab-accent", active ? "border-lab-accent/70 bg-lab-accent/10" : "border-lab-line bg-lab-panel-raised hover:border-lab-accent/50"].join(' ')}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[13px] font-medium text-lab-text">{entry.name}</span>
+                      <span className="flex gap-1.5">
+                        {entry.disciplines.map((discipline) => <span key={discipline} className="h-2.5 w-2.5 rounded-full" style={{ background: DISCIPLINE_COLOURS[discipline] ?? '#4fd1c5' }} aria-label={discipline} />)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-[11px] leading-relaxed text-lab-muted">{entry.summary}</p>
+                    {active && <span className="mt-2 block text-[9px] uppercase tracking-widest text-lab-accent">Current experiment</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      )}
 
       <div className="flex min-h-0 flex-1">
         {/* The catalogue. A column on a desktop, a sheet on a phone. */}

@@ -14,7 +14,6 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { useLabStore } from '@/state/lab';
 import { DISCIPLINE_COLOURS, DISCIPLINE_ORDER } from '@/world';
 import { DRAG_TYPE } from '@/drag';
-import { EXPERIMENTS } from '@/scenarios';
 import { CONFIDENCE_LABEL } from '@/confidence';
 import type { ComponentDefinition } from '@/kernel/types';
 
@@ -138,8 +137,6 @@ export function Library() {
   const selectedId = useLabStore((s) => s.selectedId);
   const select = useLabStore((s) => s.select);
   const addComponentHere = useLabStore((s) => s.addComponentHere);
-  const loadExperiment = useLabStore((s) => s.loadExperiment);
-  const [experimentsOpen, setExperimentsOpen] = useState(false);
   const [collapsedDisciplines, setCollapsedDisciplines] = useState<Set<string>>(new Set());
 
   const disciplines = registry.listDisciplines().filter((d) => d.id !== '__couplings__');
@@ -152,57 +149,6 @@ export function Library() {
 
   return (
     <aside className="flex h-full min-h-0 w-full flex-col bg-lab-panel">
-      <button
-        type="button"
-        onClick={() => setExperimentsOpen((open) => !open)}
-        aria-expanded={experimentsOpen}
-        className="flex w-full items-center justify-between border-b border-lab-line px-4 py-3 text-left hover:bg-lab-panel-raised focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-lab-accent"
-      >
-        <span>
-          <span className="lab-label m-0 block">Experiments</span>
-          <span className="mt-1 block text-[11px] text-lab-dim">{EXPERIMENTS.length} ready-to-run benches</span>
-        </span>
-        <span className="text-[14px] text-lab-dim" aria-hidden>{experimentsOpen ? '−' : '+'}</span>
-      </button>
-
-      {experimentsOpen && (
-      <div className="max-h-48 overflow-y-auto border-b border-lab-line px-2 py-2">
-        {EXPERIMENTS.map((entry) => {
-          const active = experiment.id === entry.id;
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              onClick={() => loadExperiment(entry.id)}
-              title={entry.summary}
-              className={[
-                'mb-1 w-full rounded-md border px-2.5 py-2 text-left transition-colors',
-                'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent',
-                active
-                  ? 'border-lab-accent/60 bg-lab-accent/10'
-                  : 'border-transparent hover:border-lab-line hover:bg-lab-panel-raised',
-              ].join(' ')}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[13px] text-lab-text">{entry.name}</span>
-                <span className="flex gap-1">
-                  {entry.disciplines.map((discipline) => (
-                    <span
-                      key={discipline}
-                      className="h-2 w-2 rounded-full"
-                      style={{ background: DISCIPLINE_COLOURS[discipline] ?? '#4fd1c5' }}
-                      aria-hidden
-                    />
-                  ))}
-                </span>
-              </div>
-              <p className="mt-1 text-[11px] leading-snug text-lab-dim">{entry.summary}</p>
-            </button>
-          );
-        })}
-      </div>
-      )}
-
       <div className="shrink-0 border-b border-lab-line px-4 py-3">
         <h2 className="lab-label m-0">Components inventory</h2>
         <p className="mt-1 text-[13px] leading-snug text-lab-muted">
