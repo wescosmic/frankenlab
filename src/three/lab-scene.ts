@@ -567,17 +567,50 @@ export class LabScene {
       this.#scene.add(point);
     }
 
-    const bench = new THREE.Mesh(
+    const roomFloor = new THREE.Mesh(
       new THREE.PlaneGeometry(60, 60),
-      new THREE.MeshStandardMaterial({ color: 0x263443, roughness: 0.72, metalness: 0.12 }),
+      new THREE.MeshStandardMaterial({ color: 0x8b9aa5, roughness: 0.86, metalness: 0.04 }),
     );
-    bench.rotation.x = -Math.PI / 2;
-    bench.position.y = -0.6;
-    bench.receiveShadow = true;
-    this.#scene.add(bench);
+    roomFloor.rotation.x = -Math.PI / 2;
+    roomFloor.position.y = -1.8;
+    roomFloor.receiveShadow = true;
+    this.#scene.add(roomFloor);
+
+    // The simulation is staged on a real lab workstation: dark chemical-
+    // resistant counter, blue-white cabinets and a visible front edge.
+    const counterTop = new THREE.Mesh(
+      new THREE.BoxGeometry(28, 0.32, 8.5),
+      new THREE.MeshStandardMaterial({ color: 0x303d48, roughness: 0.58, metalness: 0.16 }),
+    );
+    counterTop.position.set(0, -0.58, 0);
+    counterTop.castShadow = true;
+    counterTop.receiveShadow = true;
+    this.#scene.add(counterTop);
+
+    const counterEdge = new THREE.Mesh(
+      new THREE.BoxGeometry(28, 0.12, 0.18),
+      new THREE.MeshStandardMaterial({ color: 0x16232e, roughness: 0.48, metalness: 0.3 }),
+    );
+    counterEdge.position.set(0, -0.78, 4.1);
+    counterEdge.castShadow = true;
+    this.#scene.add(counterEdge);
+
+    const cabinetMaterial = new THREE.MeshStandardMaterial({ color: 0x39719a, roughness: 0.64, metalness: 0.08 });
+    const cabinetTop = new THREE.MeshStandardMaterial({ color: 0xe6edf0, roughness: 0.42, metalness: 0.12 });
+    for (const x of [-8.5, 8.5]) {
+      const cabinet = new THREE.Mesh(new THREE.BoxGeometry(5.5, 1.7, 5.6), cabinetMaterial);
+      cabinet.position.set(x, -1.58, 0.2);
+      cabinet.castShadow = true;
+      cabinet.receiveShadow = true;
+      this.#scene.add(cabinet);
+      const top = new THREE.Mesh(new THREE.BoxGeometry(5.7, 0.08, 5.8), cabinetTop);
+      top.position.set(x, -0.68, 0.2);
+      top.castShadow = true;
+      this.#scene.add(top);
+    }
 
     const grid = new THREE.GridHelper(40, 40, 0x55738b, 0x3b5267);
-    grid.position.y = -0.59;
+    grid.position.y = -1.79;
     (grid.material as THREE.Material).transparent = true;
     (grid.material as THREE.Material).opacity = 0.4;
     this.#scene.add(grid);

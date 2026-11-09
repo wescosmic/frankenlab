@@ -42,6 +42,17 @@ function makeDefinition(
     'chemistry.heat-bath': '/assets/catalogue/heating_equipment_bunsen_burner.glb',
     'chemistry.separator': '/assets/catalogue/machine_centrifuge.glb',
     'materials.filter-media': '/assets/catalogue/bottle_glassware_filtering_flask_medium.glb',
+    'biology.root-system': '/assets/glb/substrate.glb',
+    'biology.greenhouse': '/assets/glb/greenhouse.glb',
+    'biology.compost-reactor': '/assets/catalogue/bottle_glassware_erlenmeyer_flask_medium.glb',
+    'materials.thermal-mass': '/assets/glb/thermal-mass.glb',
+    'materials.electrode': '/assets/glb/electrode.glb',
+    'environment.light-source': '/assets/glb/solar-panel.glb',
+    'environment.temperature-chamber': '/assets/glb/chamber.glb',
+    'electronics.capacitor': '/assets/glb/capacitor.glb',
+    'electronics.photovoltaic-cell': '/assets/glb/solar-panel.glb',
+    'electronics.motor': '/assets/glb/motor.glb',
+    'electronics.data-logger': '/assets/glb/logger.glb',
   };
   return {
     type, name, discipline, category, description, ports,

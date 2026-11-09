@@ -19,11 +19,19 @@ import { CONFIDENCE_LABEL } from '@/confidence';
 import type { ComponentDefinition } from '@/kernel/types';
 
 const INVENTORY_MODELS: Readonly<Record<string, string>> = {
+  'electronics.resistor': '/assets/glb/resistor.glb',
+  'electronics.voltage-source': '/assets/glb/battery.glb',
+  'electronics.led': '/assets/glb/led.glb',
+  'electronics.switch': '/assets/glb/logger.glb',
+  'electronics.sensor': '/assets/glb/logger.glb',
+  'electronics.comparator': '/assets/glb/logger.glb',
+  'biology.bio-battery': '/assets/glb/bio-battery.glb',
   'chemistry.substance': '/assets/catalogue/bottle_glassware_beaker_medium.glb',
   'chemistry.reaction-vessel': '/assets/catalogue/bottle_glassware_erlenmeyer_flask_medium.glb',
   'biology.nutrient-source': '/assets/catalogue/bottle_glassware_erlenmeyer_flask_medium.glb',
   'biology.moisture-source': '/assets/catalogue/bottle_micropipet.glb',
   'materials.substrate': '/assets/catalogue/bottle_test_tube_rack.glb',
+  'materials.conductor': '/assets/glb/resistor.glb',
 };
 
 function InventoryModelPreview({ modelPath, colour, alt }: { modelPath: string; colour: string; alt: string }) {
@@ -132,6 +140,7 @@ export function Library() {
   const addComponentHere = useLabStore((s) => s.addComponentHere);
   const loadExperiment = useLabStore((s) => s.loadExperiment);
   const [experimentsOpen, setExperimentsOpen] = useState(false);
+  const [collapsedDisciplines, setCollapsedDisciplines] = useState<Set<string>>(new Set());
 
   const disciplines = registry.listDisciplines().filter((d) => d.id !== '__couplings__');
   const ordered = [
@@ -210,17 +219,29 @@ export function Library() {
       <div className="flex-1 overflow-y-auto px-2 py-3">
         {ordered.map((discipline) => {
           const colour = DISCIPLINE_COLOURS[discipline.id] ?? '#4fd1c5';
+          const collapsed = collapsedDisciplines.has(discipline.id);
           return (
             <section key={discipline.id} className="mb-4">
-              <div className="flex items-center gap-2 px-2 pb-2">
+              <button
+                type="button"
+                onClick={() => setCollapsedDisciplines((current) => {
+                  const next = new Set(current);
+                  if (next.has(discipline.id)) next.delete(discipline.id);
+                  else next.add(discipline.id);
+                  return next;
+                })}
+                aria-expanded={!collapsed}
+                className="flex w-full items-center gap-2 px-2 pb-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lab-accent"
+              >
                 <span
                   className="h-2 w-2 rounded-full"
                   style={{ background: colour }}
                   aria-hidden
                 />
-                <h3 className="lab-label m-0">{discipline.name}</h3>
-              </div>
-              <ul className="space-y-1">
+                <span className="lab-label m-0 flex-1">{discipline.name}</span>
+                <span className="text-[14px] text-lab-dim" aria-hidden>{collapsed ? '+' : '−'}</span>
+              </button>
+              {!collapsed && <ul className="space-y-1">
                 {discipline.components.map((definition) => {
                   const used = experiment.components.filter(
                     (c) => c.type === definition.type,
@@ -285,7 +306,7 @@ export function Library() {
                     </li>
                   );
                 })}
-              </ul>
+              </ul>}
             </section>
           );
         })}
