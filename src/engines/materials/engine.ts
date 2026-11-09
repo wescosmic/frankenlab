@@ -21,6 +21,7 @@ import type {
   Quantity,
 } from '../../kernel/types';
 import { quantity } from '../../kernel/units';
+import { catalogueByDiscipline, catalogueBehaviours } from '../../kernel/catalogue-components';
 
 export interface SubstrateState extends Record<string, unknown> {
   readonly freeWater: number;
@@ -605,10 +606,11 @@ export const materialsEngine: DisciplineEngine = {
   id: 'materials',
   name: 'Materials',
   version: '1.0.0',
-  components: [substrateDefinition, conductorDefinition],
+  components: [substrateDefinition, conductorDefinition, ...catalogueByDiscipline('materials')],
   behaviors: new Map([
     ['materials.substrate', substrateBehavior],
     ['materials.conductor', conductorBehavior],
+    ...catalogueByDiscipline('materials').map((definition) => [definition.type, catalogueBehaviours.get(definition.type)!] as const),
   ]),
   connectionRules: materialsRules,
 };

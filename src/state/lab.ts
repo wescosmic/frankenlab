@@ -90,6 +90,48 @@ export function trackedSeriesFor(experiment: ExperimentDefinition): readonly Tra
 /** A port on a component, as the bench refers to it. */
 export type { PortRef } from '@/kernel/types';
 
+/** A saved run snapshot that can be compared against another. */
+export interface RunSnapshot {
+  readonly id: string;
+  readonly name: string;
+  readonly experiment: ExperimentDefinition;
+  readonly elapsed: number;
+  readonly readings: Readonly<Record<string, Quantity>>;
+  readonly series: readonly SeriesPoint[];
+  readonly observations: readonly Observation[];
+  readonly seed: number;
+  readonly createdAt: number;
+}
+
+/** Configuration for a parameter sweep in Discovery Mode. */
+export interface SweepConfig {
+  readonly componentId: string;
+  readonly parameterId: string;
+  readonly min: number;
+  readonly max: number;
+  readonly trials: number;
+  readonly outcomeKey: string; // The reading to optimize
+  readonly optimizeFor: 'max' | 'min';
+}
+
+/** Result of a single trial in a sweep. */
+export interface SweepTrial {
+  readonly trialIndex: number;
+  readonly parameterValue: number;
+  readonly outcomeValue: number;
+  readonly finalValue: number; // For ranking
+}
+
+/** Result of a complete sweep run. */
+export interface SweepResult {
+  readonly config: SweepConfig;
+  readonly trials: readonly SweepTrial[];
+  readonly bestTrial: SweepTrial;
+  readonly worstTrial: SweepTrial;
+  readonly weakestConfidence: string;
+  readonly completedAt: number;
+}
+
 export interface LabStore {
   readonly experiment: ExperimentDefinition;
   readonly registry: ComponentRegistry;
@@ -107,6 +149,17 @@ export interface LabStore {
   readonly assistantBusy: boolean;
   /** A plain-English note about the last thing the user tried to do. */
   readonly notice: string | null;
+
+  /** Saved snapshots for comparison. */
+  readonly snapshots: readonly RunSnapshot[];
+  /** IDs of snapshots currently being compared (2 max). */
+  readonly comparingSnapshots: readonly [string | null, string | null] | null;
+
+  /** Discovery Mode: parameter sweep state. */
+  readonly sweepConfig: SweepConfig | null;
+  readonly sweepResult: SweepResult | null;
+  readonly sweepRunning: boolean;
+  readonly sweepProgress: number; // 0-1
 
   select(id: string | null): void;
   /** Pick out a wire on the bench. */
@@ -140,6 +193,24 @@ export interface LabStore {
   removeConnection(id: string): void;
   dismissNotice(): void;
   ask(question: string): Promise<void>;
+
+  /** Save the current run as a named snapshot. */
+  saveSnapshot(name: string): void;
+  /** Delete a saved snapshot. */
+  deleteSnapshot(id: string): void;
+  /** Add a snapshot to the comparison view. */
+  addToComparison(id: string): void;
+  /** Remove a snapshot from the comparison view. */
+  removeFromComparison(id: string): void;
+  /** Clear all comparisons. */
+  clearComparison(): void;
+
+  /** Start a parameter sweep (Discovery Mode). */
+  startSweep(config: SweepConfig): Promise<void>;
+  /** Cancel the running sweep. */
+  cancelSweep(): void;
+  /** Clear sweep results. */
+  clearSweep(): void;
 }
 
 const registry = createWorld();
@@ -268,6 +339,14 @@ export const useLabStore = create<LabStore>((set, get) => {
     messages: [],
     assistantBusy: false,
     notice: null,
+
+    snapshots: [],
+    comparingSnapshots: null,
+
+    sweepConfig: null,
+    sweepResult: null,
+    sweepRunning: false,
+    sweepProgress: 0,
 
     select(id) {
       set({ selectedId: id, selectedConnectionId: null });
@@ -595,6 +674,212 @@ export const useLabStore = create<LabStore>((set, get) => {
           },
         ],
         assistantBusy: false,
+      });
+    },
+
+    saveSnapshot(name) {
+      const { simulation, experiment, series, observations, snapshots } = get();
+      const snap = simulation.snapshot();
+
+      // readings: all outputs keyed by component.port
+      const readings: Record<string, Quantity> = {};
+      for (const [componentId, values] of Object.entries(snap.outputs)) {
+        for (const [portId, value] of Object.entries(values)) {
+          readings[`${componentId}.${portId}`] = value;
+        }
+      }
+
+      const snapshot: RunSnapshot = {
+        id: `snapshot-${Date.now()}`,
+        name,
+        experiment: JSON.parse(JSON.stringify(experiment)), // deep clone for serialization
+        elapsed: simulation.elapsed,
+        readings,
+        series: [...series],
+        observations: [...observations],
+        seed: experiment.seed,
+        createdAt: Date.now(),
+      };
+
+      set({
+        snapshots: [...snapshots, snapshot],
+        notice: `Saved "${name}" at day ${(simulation.elapsed / 86400).toFixed(1)}.`,
+      });
+    },
+
+    deleteSnapshot(id) {
+      const { snapshots, comparingSnapshots } = get();
+      const snapshot = snapshots.find((s) => s.id === id);
+      set({
+        snapshots: snapshots.filter((s) => s.id !== id),
+        comparingSnapshots:
+          comparingSnapshots && comparingSnapshots.includes(id)
+            ? null
+            : comparingSnapshots,
+        notice: snapshot ? `Deleted "${snapshot.name}".` : null,
+      });
+    },
+
+    addToComparison(id) {
+      const { snapshots, comparingSnapshots } = get();
+      const snapshot = snapshots.find((s) => s.id === id);
+      if (!snapshot) return;
+
+      if (!comparingSnapshots) {
+        set({ comparingSnapshots: [id, null], notice: `Comparing "${snapshot.name}". Pick another snapshot.` });
+      } else if (!comparingSnapshots[1]) {
+        if (comparingSnapshots[0] === id) {
+          set({ notice: 'That snapshot is already being compared.' });
+        } else {
+          set({ comparingSnapshots: [comparingSnapshots[0], id], notice: 'Comparison ready. View it in the Compare tab.' });
+        }
+      } else {
+        // Replace the second slot
+        set({ comparingSnapshots: [comparingSnapshots[0], id], notice: 'Comparison updated.' });
+      }
+    },
+
+    removeFromComparison(id) {
+      const { comparingSnapshots } = get();
+      if (!comparingSnapshots) return;
+
+      if (comparingSnapshots[0] === id) {
+        set({ comparingSnapshots: null });
+        set({ notice: 'Comparison cleared.' });
+      } else if (comparingSnapshots[1] === id) {
+        set({ comparingSnapshots: [comparingSnapshots[0], null] });
+        set({ notice: 'Removed from comparison.' });
+      }
+    },
+
+    clearComparison() {
+      set({ comparingSnapshots: null });
+    },
+
+    async startSweep(config) {
+      const { experiment, registry } = get();
+
+      // Find the component and parameter to sweep.
+      const component = experiment.components.find((c) => c.id === config.componentId);
+      if (!component) {
+        set({ notice: `Component "${config.componentId}" not found.` });
+        return;
+      }
+
+      const definition = registry.getDefinition(component.type);
+      const paramDef = definition.parameters.find((p) => p.id === config.parameterId);
+      if (!paramDef) {
+        set({ notice: `Parameter "${config.parameterId}" not found on ${component.label ?? component.type}.` });
+        return;
+      }
+
+      // Get the weakest confidence level from the experiment components.
+      const confidenceLevels = experiment.components.map((c) => {
+        const def = registry.getDefinition(c.type);
+        return def?.confidence ?? 'illustrative';
+      });
+      const confidenceOrder = ['physical-law', 'established-simplified', 'illustrative', 'hypothetical'];
+      const weakestConfidence = confidenceLevels.slice().sort(
+        (a, b) => confidenceOrder.indexOf(b) - confidenceOrder.indexOf(a)
+      )[0] ?? 'illustrative';
+
+      set({
+        sweepConfig: config,
+        sweepRunning: true,
+        sweepProgress: 0,
+        sweepResult: null,
+        notice: `Running ${config.trials} trials...`,
+      });
+
+      const trials: SweepTrial[] = [];
+      const step = (config.max - config.min) / (config.trials - 1);
+
+      // Run each trial in a non-blocking way.
+      for (let i = 0; i < config.trials; i++) {
+        // Check if cancelled.
+        if (!get().sweepRunning) {
+          set({ notice: 'Sweep cancelled.' });
+          return;
+        }
+
+        const paramValue = config.min + step * i;
+
+        // Create a modified experiment with this parameter value.
+        const trialExperiment = {
+          ...experiment,
+          components: experiment.components.map((c) =>
+            c.id === config.componentId
+              ? {
+                  ...c,
+                  parameters: {
+                    ...c.parameters,
+                    [config.parameterId]: { value: paramValue },
+                  },
+                }
+              : c
+          ),
+          // Each trial gets a unique seed based on the base seed plus trial index.
+          seed: experiment.seed + i + 1,
+        };
+
+        // Run the simulation.
+        let outcomeValue = 0;
+        try {
+          const trialSim = new Simulation(trialExperiment, registry);
+          const result = trialSim.run();
+
+          // Get the outcome value from the final readings.
+          const outcomeQty = result.measurements[config.outcomeKey];
+          outcomeValue = outcomeQty?.value ?? 0;
+        } catch {
+          // If the simulation fails, record a null outcome.
+          outcomeValue = NaN;
+        }
+
+        trials.push({
+          trialIndex: i,
+          parameterValue: paramValue,
+          outcomeValue,
+          finalValue: outcomeValue,
+        });
+
+        set({ sweepProgress: (i + 1) / config.trials });
+
+        // Yield to the UI to stay responsive.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+
+      // Rank the trials.
+      const ranked = [...trials].sort((a, b) => b.outcomeValue - a.outcomeValue);
+      const bestTrial = config.optimizeFor === 'max' ? ranked[0]! : ranked.at(-1)!;
+      const worstTrial = config.optimizeFor === 'max' ? ranked.at(-1)! : ranked[0]!;
+
+      const result: SweepResult = {
+        config,
+        trials,
+        bestTrial,
+        worstTrial,
+        weakestConfidence,
+        completedAt: Date.now(),
+      };
+
+      set({
+        sweepResult: result,
+        sweepRunning: false,
+        sweepProgress: 1,
+        notice: `Sweep complete. Best: ${bestTrial.parameterValue.toFixed(2)} → ${bestTrial.outcomeValue.toFixed(3)}`,
+      });
+    },
+
+    cancelSweep() {
+      set({ sweepRunning: false });
+    },
+
+    clearSweep() {
+      set({
+        sweepConfig: null,
+        sweepResult: null,
+        sweepProgress: 0,
       });
     },
   };

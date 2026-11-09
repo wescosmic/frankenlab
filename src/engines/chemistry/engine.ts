@@ -23,6 +23,7 @@ import type {
   Quantity,
 } from '../../kernel/types';
 import { quantity } from '../../kernel/units';
+import { catalogueByDiscipline, catalogueBehaviours } from '../../kernel/catalogue-components';
 
 /** The molar gas constant, J per mole per kelvin. */
 const GAS_CONSTANT = 8.314;
@@ -659,10 +660,11 @@ export const chemistryEngine: DisciplineEngine = {
   id: 'chemistry',
   name: 'Chemistry',
   version: '0.1.0',
-  components: [substanceDefinition, reactionVesselDefinition],
+  components: [substanceDefinition, reactionVesselDefinition, ...catalogueByDiscipline('chemistry')],
   behaviors: new Map<string, ComponentBehavior>([
     ['chemistry.substance', substanceBehavior],
     ['chemistry.reaction-vessel', reactionVesselBehavior],
+    ...catalogueByDiscipline('chemistry').map((definition) => [definition.type, catalogueBehaviours.get(definition.type)!] as const),
   ]),
   connectionRules: chemistryRules,
 };

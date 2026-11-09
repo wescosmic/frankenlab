@@ -83,7 +83,7 @@ export function Lab() {
       if (event.key === 'Escape') closeSheet();
     };
     const onResize = () => {
-      if (window.matchMedia('(min-width: 1024px)').matches) setSheet('none');
+      if (window.matchMedia('(min-width: 1280px)').matches) setSheet('none');
     };
     window.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
@@ -174,6 +174,14 @@ export function Lab() {
               </button>
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={(event) => openSheet('parts', event.currentTarget)}
+            className="rounded-md border border-lab-accent/40 bg-lab-accent/10 px-2.5 py-1.5 text-[11px] uppercase tracking-wider text-lab-accent transition-colors hover:bg-lab-accent/20 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent xl:hidden"
+          >
+            Parts
+          </button>
         </div>
 
         {/* The experiment's name, on its own line where there is no room for
@@ -185,7 +193,7 @@ export function Lab() {
 
       <div className="flex min-h-0 flex-1">
         {/* The catalogue. A column on a desktop, a sheet on a phone. */}
-        <div className="hidden min-h-0 lg:flex lg:w-64 lg:shrink-0 lg:border-r lg:border-lab-line">
+        <div className="hidden min-h-0 xl:flex xl:w-72 xl:shrink-0 xl:border-r xl:border-lab-line">
           <Library />
         </div>
 
@@ -220,7 +228,7 @@ export function Lab() {
 
         {/* The inspector and the assistant. A column on a desktop, a sheet on
             a phone. */}
-        <aside className="hidden min-h-0 lg:flex lg:w-80 lg:shrink-0 lg:border-l lg:border-lab-line">
+        <aside className="hidden min-h-0 xl:flex xl:w-80 xl:shrink-0 xl:border-l xl:border-lab-line">
           <div className="flex h-full w-full flex-col bg-lab-panel">
             <div className="flex shrink-0 border-b border-lab-line" role="tablist" aria-label="Tools">
               {SIDE_TABS.map(({ id, label }) => (
@@ -263,7 +271,7 @@ export function Lab() {
 
       {/* The panels a phone can reach. */}
       <nav
-        className="flex shrink-0 border-t border-lab-line bg-lab-panel lg:hidden"
+        className="flex shrink-0 border-t border-lab-line bg-lab-panel xl:hidden"
         aria-label="Panels"
       >
         {SHEET_BUTTONS.map(({ id, label }) => (
@@ -294,12 +302,12 @@ export function Lab() {
             type="button"
             aria-label="Close the panel"
             onClick={closeSheet}
-            className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+            className="fixed inset-0 z-40 bg-black/60 xl:hidden"
           />
 
           <div
             id="lab-sheet"
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[80vh] flex-col overflow-hidden rounded-t-xl border-t border-lab-line bg-lab-panel shadow-2xl lg:hidden"
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[90vh] flex-col overflow-hidden rounded-t-xl border-t border-lab-line bg-lab-panel shadow-2xl xl:hidden"
           >
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-lab-line px-4 py-2.5">
               <h2 className="lab-label m-0">{SHEET_TITLES[sheet]}</h2>

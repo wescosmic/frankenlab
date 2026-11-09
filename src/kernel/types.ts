@@ -159,6 +159,15 @@ export interface ComponentDefinition {
      */
     readonly labelHeight?: number;
   };
+  /** Optional product-style artwork used by the component inventory. */
+  readonly inventoryVisual?: {
+    readonly image?: string;
+    readonly thumbnail?: string;
+    /** Local path to a GLB model for the 3D scene, e.g. '/assets/glb/plant.glb'. */
+    readonly model?: string;
+    readonly alt: string;
+    readonly kind: 'technical-render' | 'cutaway' | 'diagram' | 'silhouette';
+  };
   /** Diagnostic readings this component publishes, keyed by output id. */
   readonly readings?: readonly ReadingDefinition[];
 }

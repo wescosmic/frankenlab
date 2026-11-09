@@ -20,9 +20,10 @@ What is built, what is next, and what each piece waits for.
 | AI assistant | **Working, offline** | Five tools, a deterministic local explainer, and a trust guard on every reply. |
 | 3D workbench | **Working** | Scene, selection, animation, labels, drag-and-drop wiring. |
 | Timeline, measurements and couplings | **Working** | Four tabs under the bench. |
-| Experiment catalogue | **Three experiments** | BioCircuit, Threshold Alarm, Catalysis Comparison. |
+| Experiment catalogue | **Seven experiments** | BioCircuit, Threshold Alarm, Catalysis Comparison, Bio-Battery, Microbial Fuel Cell, Enzyme Optimisation, Water Purification. |
 | Experiment builder | **Working** | Parts are dragged onto the bench and wired by dragging. |
-| Run comparison | **Not built** | |
+| Run comparison | **Working** | Named snapshots and side-by-side tracked-series comparison. |
+| Discovery Mode | **Working, local** | Bounded deterministic parameter sweeps with ranked outcomes. |
 | Missions and notebooks | **Not built** | |
 | Persistence | **Not built** | In-memory only. |
 | Deployment | **Live** | Running at [frankenlab.vercel.app](https://frankenlab.vercel.app). No API key, no account, free. |
@@ -222,6 +223,32 @@ trust.
 - **The confidence vocabulary now lives in one place.** Four panels show a
   confidence badge and they shared three copies of the label map, which could
   and would have drifted apart. They share one now, in `src/confidence.ts`.
+
+## Phase 7 — Make discovery visible
+
+**Done on the phase-7 branch.** The workbench now supports named run snapshots,
+side-by-side comparison, a local bounded sweep, and a fourth experiment that
+makes the cross-disciplinary claim load-bearing.
+
+- **Snapshots and comparison.** A run can be saved without retaining the live
+  `Simulation` object. Two snapshots show tracked values, differences and
+  recent observations together.
+- **Discovery Mode.** The user chooses one numeric parameter, a bounded range,
+  a trial count and an outcome. Trials use deterministic seeds and yield to the
+  browser between runs so the instrument remains responsive.
+- **Bio-Battery.** Nutrient activity drives a biology-owned electrochemical
+  cell. The kernel routes its electrical-potential ports into the electronics
+  solver, where the cell drives a resistor load; its activity signal lights the
+  indicator.
+- **Visual causal flow.** The Three.js bench uses soft shadows and deterministic
+  animated pulses along active connections. The pulses stop cleanly when the
+  run pauses, and the renderer remains WebGL-compatible.
+- **Expanded catalogue.** Eighteen additional components now appear in the
+  inventory across biology, chemistry, electronics and materials. Three starter
+  showcase experiments make the new objects discoverable immediately.
+- **Inventory visuals.** Component definitions can carry local technical artwork
+  metadata. The library renders a consistent product-card silhouette when a
+  bespoke image is not present, so no external image URL is required at runtime.
 
 ---
 

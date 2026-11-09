@@ -15,6 +15,7 @@ import {
   CSS2DObject,
   CSS2DRenderer,
 } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { ComponentRegistry } from '@/kernel/registry';
 import type {
   ComponentDefinition,
@@ -222,6 +223,7 @@ interface ComponentNode {
   readonly baseColor: THREE.Color;
   readonly glow: THREE.Mesh;
   readonly plant: THREE.Group | null;
+  readonly visualRoot: THREE.Group;
   /**
    * The name floating above the part.
    *
@@ -262,6 +264,7 @@ export class LabScene {
   readonly #camera: THREE.PerspectiveCamera;
   readonly #controls: OrbitControls;
   readonly #raycaster = new THREE.Raycaster();
+  readonly #gltfLoader = new GLTFLoader();
 
   readonly #nodes = new Map<string, ComponentNode>();
   readonly #pickables: THREE.Object3D[] = [];
@@ -272,6 +275,11 @@ export class LabScene {
   /** Which part each wire starts from, so it can be coloured by discipline. */
   readonly #connectionOwners = new Map<string, string>();
   #connections: THREE.Mesh[] = [];
+  /** Animated pulses travelling along active connections. */
+  #pulses: { mesh: THREE.Mesh; progress: number; speed: number; curve: THREE.Curve<THREE.Vector3> }[] = [];
+  #running = false;
+  /** Store the curves for each connection to animate pulses along them. */
+  #connectionCurves = new Map<string, THREE.Curve<THREE.Vector3>>();
   /** Where the parts of the current experiment sit, so the bench can be framed again. */
   #benchParts: readonly {
     position: { x: number; y: number; z: number };
@@ -290,6 +298,49 @@ export class LabScene {
   #pointerHeld = false;
 
   #disposed = false;
+  #experimentGeneration = 0;
+
+  #loadModel(
+    definition: ComponentDefinition,
+    node: ComponentNode,
+    generation: number,
+  ): void {
+    const modelPath = definition.inventoryVisual?.model
+      ?? (definition.type === 'biology.plant' ? undefined : `/assets/glb/${definition.visual.shape}.glb`);
+    if (!modelPath) return;
+
+    this.#gltfLoader.load(
+      modelPath,
+      (gltf) => {
+        if (this.#disposed || generation !== this.#experimentGeneration || this.#nodes.get(node.id) !== node) return;
+        const model = gltf.scene.clone(true);
+        const bounds = new THREE.Box3().setFromObject(model);
+        const size = bounds.getSize(new THREE.Vector3());
+        const largest = Math.max(size.x, size.y, size.z, 0.001);
+        model.scale.multiplyScalar(0.95 / largest);
+        const centred = new THREE.Box3().setFromObject(model);
+        const centre = centred.getCenter(new THREE.Vector3());
+        model.position.sub(centre);
+        model.position.y += 0.12;
+        model.traverse((child) => {
+          if (!(child instanceof THREE.Mesh)) return;
+          child.castShadow = true;
+          child.receiveShadow = true;
+          child.userData.componentId = node.id;
+          if (child.material instanceof THREE.MeshStandardMaterial) {
+            child.material.roughness = Math.min(child.material.roughness || 0.6, 0.72);
+          }
+          this.#pickables.push(child);
+        });
+        node.visualRoot.clear();
+        node.visualRoot.add(model);
+      },
+      undefined,
+      () => {
+        // GLB art is optional presentation. The procedural fallback remains.
+      },
+    );
+  }
 
   constructor(options: LabSceneOptions) {
     this.#container = options.container;
@@ -304,8 +355,8 @@ export class LabScene {
     this.#labelScale = labelScaleFor(width);
 
     this.#scene = new THREE.Scene();
-    this.#scene.background = new THREE.Color(0x05070d);
-    this.#scene.fog = new THREE.Fog(0x05070d, 14, 34);
+    this.#scene.background = new THREE.Color(0x8ea1b5);
+    this.#scene.fog = new THREE.Fog(0x8ea1b5, 20, 48);
 
     this.#camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 200);
     this.#camera.position.set(8.5, 6, 12.5);
@@ -313,7 +364,8 @@ export class LabScene {
     this.#renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.#renderer.setSize(width, height);
-    this.#renderer.shadowMap.enabled = false;
+    this.#renderer.shadowMap.enabled = true;
+    this.#renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     // The canvas and the label layer must share an origin, otherwise the
     // labels drift away from the parts they name.
     this.#renderer.domElement.style.position = 'absolute';
@@ -422,29 +474,112 @@ export class LabScene {
 
   /** The bench, the lights and the floor grid. */
   #buildEnvironment(): void {
-    const hemi = new THREE.HemisphereLight(0x9fc4ff, 0x0a0d16, 0.55);
+    const hemi = new THREE.HemisphereLight(0xf4fbff, 0x667588, 1.05);
     this.#scene.add(hemi);
 
-    const key = new THREE.DirectionalLight(0xffffff, 1.35);
-    key.position.set(6, 9, 5);
+    const key = new THREE.DirectionalLight(0xfff7e8, 2.35);
+    key.position.set(5, 9, 6);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.camera.near = 1;
+    key.shadow.camera.far = 40;
     this.#scene.add(key);
 
-    const rim = new THREE.DirectionalLight(0x4fd1c5, 0.75);
-    rim.position.set(-7, 4, -6);
+    const rim = new THREE.DirectionalLight(0x8bc9ff, 1.2);
+    rim.position.set(-8, 5, -8);
     this.#scene.add(rim);
+
+    // A room gives the bench a sense of place and scale. The walls are kept
+    // outside the interaction raycast, so they can never steal selection.
+    const wallMaterial = new THREE.MeshStandardMaterial({
+      color: 0xd7e2ea,
+      roughness: 0.78,
+      metalness: 0.04,
+    });
+    const backWall = new THREE.Mesh(new THREE.PlaneGeometry(34, 14), wallMaterial);
+    backWall.position.set(0, 6, -8);
+    backWall.receiveShadow = true;
+    this.#scene.add(backWall);
+
+    const windowGlass = new THREE.Mesh(
+      new THREE.PlaneGeometry(8.5, 3.2),
+      new THREE.MeshStandardMaterial({
+        color: 0x9ed9eb,
+        emissive: 0x5689a6,
+        emissiveIntensity: 0.65,
+        roughness: 0.22,
+        metalness: 0.08,
+      }),
+    );
+    windowGlass.position.set(5.5, 5.2, -7.92);
+    this.#scene.add(windowGlass);
+    const windowFrameMaterial = new THREE.MeshStandardMaterial({ color: 0xf0f5f7, roughness: 0.4, metalness: 0.18 });
+    for (const [x, y, width, height] of [
+      [5.5, 6.8, 8.8, 0.12],
+      [5.5, 3.6, 8.8, 0.12],
+      [1.25, 5.2, 0.12, 3.3],
+      [9.75, 5.2, 0.12, 3.3],
+      [5.5, 5.2, 0.1, 3.3],
+    ] as const) {
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(width, height, 0.08), windowFrameMaterial);
+      frame.position.set(x, y, -7.84);
+      this.#scene.add(frame);
+    }
+
+    const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(22, 14), wallMaterial.clone());
+    leftWall.rotation.y = Math.PI / 2;
+    leftWall.position.set(-12, 6, 1);
+    leftWall.receiveShadow = true;
+    this.#scene.add(leftWall);
+
+    const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(22, 14), wallMaterial.clone());
+    rightWall.rotation.y = -Math.PI / 2;
+    rightWall.position.set(12, 6, 1);
+    rightWall.receiveShadow = true;
+    this.#scene.add(rightWall);
+
+    const ceiling = new THREE.Mesh(
+      new THREE.PlaneGeometry(34, 22),
+      new THREE.MeshStandardMaterial({ color: 0xc5d2dc, roughness: 0.86, metalness: 0 }),
+    );
+    ceiling.rotation.x = Math.PI / 2;
+    ceiling.position.y = 13;
+    ceiling.receiveShadow = true;
+    this.#scene.add(ceiling);
+
+    const roomTrim = new THREE.MeshStandardMaterial({ color: 0x47708d, roughness: 0.46, metalness: 0.28 });
+    const backTrim = new THREE.Mesh(new THREE.BoxGeometry(34, 0.08, 0.08), roomTrim);
+    backTrim.position.set(0, 0.05, -7.92);
+    this.#scene.add(backTrim);
+
+    const roomLightMaterial = new THREE.MeshStandardMaterial({
+      color: 0xe4f5ff,
+      emissive: 0x93d5f5,
+      emissiveIntensity: 3.4,
+      roughness: 0.35,
+    });
+    for (const x of [-5.5, 0, 5.5]) {
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.06, 0.3), roomLightMaterial);
+      panel.position.set(x, 7.5, -6.4);
+      this.#scene.add(panel);
+      const point = new THREE.PointLight(0xb9e6ff, 1.8, 14, 2);
+      point.position.set(x, 7.1, -5.5);
+      this.#scene.add(point);
+    }
 
     const bench = new THREE.Mesh(
       new THREE.PlaneGeometry(60, 60),
-      new THREE.MeshStandardMaterial({ color: 0x0a0f1a, roughness: 0.95, metalness: 0.05 }),
+      new THREE.MeshStandardMaterial({ color: 0x263443, roughness: 0.72, metalness: 0.12 }),
     );
     bench.rotation.x = -Math.PI / 2;
     bench.position.y = -0.6;
+    bench.receiveShadow = true;
     this.#scene.add(bench);
 
-    const grid = new THREE.GridHelper(40, 40, 0x1e2942, 0x141c2e);
+    const grid = new THREE.GridHelper(40, 40, 0x55738b, 0x3b5267);
     grid.position.y = -0.59;
     (grid.material as THREE.Material).transparent = true;
-    (grid.material as THREE.Material).opacity = 0.55;
+    (grid.material as THREE.Material).opacity = 0.4;
     this.#scene.add(grid);
   }
 
@@ -691,6 +826,8 @@ export class LabScene {
 
   /** Rebuild the scene for an experiment. */
   setExperiment(experiment: ExperimentDefinition, registry: ComponentRegistry): void {
+    this.#experimentGeneration += 1;
+    const generation = this.#experimentGeneration;
     for (const node of this.#nodes.values()) {
       this.#scene.remove(node.group);
       // The name has to be taken off the page too, or the bench ends up with
@@ -703,10 +840,13 @@ export class LabScene {
     this.#wirePickables.length = 0;
     this.#connectionOwners.clear();
 
+    // Clear existing connections and their pulses first
+    this.#clearPulses();
     for (const line of this.#connections) {
       this.#scene.remove(line);
     }
     this.#connections = [];
+    this.#connectionCurves.clear();
 
     // Frame the bench on the experiment, so it fills the viewport whatever
     // shape the window is.
@@ -722,6 +862,8 @@ export class LabScene {
       if (!definition) continue;
 
       const group = new THREE.Group();
+      const visualRoot = new THREE.Group();
+      group.add(visualRoot);
       const position = instance.position ?? { x: 0, y: 0, z: 0 };
       group.position.set(position.x, position.y, position.z);
 
@@ -739,7 +881,13 @@ export class LabScene {
       let plant: THREE.Group | null = null;
       if (definition.visual.shape === 'organic') {
         plant = buildPlant();
-        group.add(plant);
+        visualRoot.add(plant);
+        plant.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
         // A living thing is made of meshes, and each of them has to be
         // clickable, or the plant cannot be selected.
         for (const child of plant.children) {
@@ -747,8 +895,9 @@ export class LabScene {
         }
       } else {
         const mesh = new THREE.Mesh(geometryFor(definition.visual.shape), material);
-        mesh.castShadow = false;
-        group.add(mesh);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        visualRoot.add(mesh);
         emissiveMaterials.push(material);
         this.#pickables.push(mesh);
       }
@@ -819,8 +968,10 @@ export class LabScene {
         baseColor: colour,
         glow,
         plant,
+        visualRoot,
         labelElement,
       });
+      this.#loadModel(definition, this.#nodes.get(instance.id)!, generation);
     }
 
     // Connections are drawn as arcs between component centres.
@@ -850,6 +1001,8 @@ export class LabScene {
       this.#connections.push(wire);
       this.#wirePickables.push(wire);
       this.#connectionOwners.set(connection.id, connection.source.componentId);
+      // Store the curve for pulse animation.
+      this.#connectionCurves.set(connection.id, curve);
     }
 
     this.#applyConnectionHighlight();
@@ -858,6 +1011,8 @@ export class LabScene {
       this.#scene.remove(this.#selectionRing);
       this.#selectionRing = null;
     }
+
+    if (this.#running) this.setRunning(true);
   }
 
   /** Show the selection ring on a component. */
@@ -985,9 +1140,69 @@ export class LabScene {
 
   render(): void {
     if (this.#disposed) return;
+
+    // Animate causal flow pulses when the simulation is running.
+    if (this.#running && this.#pulses.length > 0) {
+      for (const pulse of this.#pulses) {
+        pulse.progress += pulse.speed;
+        if (pulse.progress >= 1) {
+          pulse.progress = 0; // Loop the pulse
+        }
+        const point = pulse.curve.getPoint(pulse.progress);
+        pulse.mesh.position.copy(point);
+      }
+    }
+
     this.#controls.update();
     this.#renderer.render(this.#scene, this.#camera);
     this.#labelRenderer.render(this.#scene, this.#camera);
+  }
+
+  /** Start animating causal flow pulses along active connections. */
+  setRunning(running: boolean): void {
+    this.#running = running;
+    if (!running) {
+      this.#clearPulses();
+      return;
+    }
+
+    // Create pulses for each connection that has a curve
+    for (const [connectionId, curve] of this.#connectionCurves) {
+      // Check if a pulse already exists for this connection
+      if (this.#pulses.some((p) => p.curve === curve)) continue;
+
+      const sourceId = this.#connectionOwners.get(connectionId);
+      const sourceNode = sourceId ? this.#nodes.get(sourceId) : null;
+      const colour = sourceNode
+        ? DISCIPLINE_COLOURS[sourceNode.discipline] ?? '#4fd1c5'
+        : '#4fd1c5';
+
+      const pulseGeometry = new THREE.SphereGeometry(0.08, 12, 8);
+      const pulseMaterial = new THREE.MeshBasicMaterial({
+        color: colour,
+        transparent: true,
+        opacity: 0.85,
+      });
+      const pulseMesh = new THREE.Mesh(pulseGeometry, pulseMaterial);
+      this.#scene.add(pulseMesh);
+
+      this.#pulses.push({
+        mesh: pulseMesh,
+        progress: (this.#pulses.length % 3) * 0.18, // Deterministic staggering
+        speed: 0.008, // Animation speed
+        curve,
+      });
+    }
+  }
+
+  /** Clear all animated pulses. */
+  #clearPulses(): void {
+    for (const pulse of this.#pulses) {
+      this.#scene.remove(pulse.mesh);
+      pulse.mesh.geometry.dispose();
+      (pulse.mesh.material as THREE.Material).dispose();
+    }
+    this.#pulses = [];
   }
 
   /**

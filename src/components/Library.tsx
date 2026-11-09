@@ -8,11 +8,121 @@
  * in FrankenLab — not a footnote.
  */
 
+import { useEffect, useRef, useState } from 'react';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { useLabStore } from '@/state/lab';
 import { DISCIPLINE_COLOURS, DISCIPLINE_ORDER } from '@/world';
 import { DRAG_TYPE } from '@/drag';
 import { EXPERIMENTS } from '@/scenarios';
 import { CONFIDENCE_LABEL } from '@/confidence';
+import type { ComponentDefinition } from '@/kernel/types';
+
+const INVENTORY_MODELS: Readonly<Record<string, string>> = {
+  'chemistry.substance': '/assets/catalogue/bottle_glassware_beaker_medium.glb',
+  'chemistry.reaction-vessel': '/assets/catalogue/bottle_glassware_erlenmeyer_flask_medium.glb',
+  'biology.nutrient-source': '/assets/catalogue/bottle_glassware_erlenmeyer_flask_medium.glb',
+  'biology.moisture-source': '/assets/catalogue/bottle_micropipet.glb',
+  'materials.substrate': '/assets/catalogue/bottle_test_tube_rack.glb',
+};
+
+function InventoryModelPreview({ modelPath, colour, alt }: { modelPath: string; colour: string; alt: string }) {
+  const hostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const width = 56;
+    const height = 56;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(28, width / height, 0.01, 100);
+    camera.position.set(1.8, 1.1, 2.3);
+    camera.lookAt(0, 0.1, 0);
+    scene.add(new THREE.HemisphereLight(0xf5fbff, 0x233044, 2.2));
+    const key = new THREE.DirectionalLight(0xffffff, 2.4);
+    key.position.set(2, 3, 4);
+    scene.add(key);
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' });
+    renderer.setPixelRatio(1);
+    renderer.setSize(width, height, false);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.domElement.setAttribute('aria-label', alt);
+    renderer.domElement.setAttribute('role', 'img');
+    host.replaceChildren(renderer.domElement);
+
+    const loader = new GLTFLoader();
+    loader.load(modelPath, (gltf) => {
+      if (!host.isConnected) return;
+      const model = gltf.scene;
+      const bounds = new THREE.Box3().setFromObject(model);
+      const size = bounds.getSize(new THREE.Vector3());
+      const centre = bounds.getCenter(new THREE.Vector3());
+      const largest = Math.max(size.x, size.y, size.z, 0.001);
+      model.scale.multiplyScalar(1.2 / largest);
+      model.position.sub(centre.multiplyScalar(model.scale.x));
+      model.rotation.y = -0.35;
+      model.traverse((child) => {
+        if (!(child instanceof THREE.Mesh)) return;
+        child.castShadow = true;
+        child.receiveShadow = true;
+      });
+      scene.add(model);
+      renderer.render(scene, camera);
+    });
+
+    return () => {
+      renderer.dispose();
+      host.replaceChildren();
+    };
+  }, [alt, modelPath]);
+
+  return (
+    <div
+      ref={hostRef}
+      className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-lab-line bg-[#111820]"
+      style={{ boxShadow: `inset 0 0 18px ${colour}22` }}
+      aria-label={alt}
+    />
+  );
+}
+
+function InventoryVisual({ definition, colour }: { definition: ComponentDefinition; colour: string }) {
+  const visual = definition.inventoryVisual;
+  const modelPath = visual?.model ?? INVENTORY_MODELS[definition.type];
+  const image = visual?.thumbnail ?? visual?.image;
+  if (modelPath) return <InventoryModelPreview modelPath={modelPath} colour={colour} alt={visual?.alt ?? `${definition.name} model`} />;
+  return (
+    <div
+      className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-lab-line bg-[#111820]"
+      style={{ boxShadow: `inset 0 0 18px ${colour}22` }}
+      aria-label={visual?.alt ?? `${definition.name} technical silhouette`}
+    >
+      {image ? (
+        // Local artwork is preferred, but every card has the CSS fallback below.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={image} alt={visual?.alt ?? definition.name} className="h-full w-full object-contain p-1" />
+      ) : (
+        <div className="relative h-9 w-9" aria-hidden>
+          <div
+            className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border-2 ${
+              definition.visual.shape === 'cylinder' ? 'h-8 w-5 rounded-full' :
+              definition.visual.shape === 'sphere' || definition.visual.shape === 'organic' ? 'h-8 w-8 rounded-full' :
+              definition.visual.shape === 'torus' ? 'h-8 w-8 rounded-full border-[5px]' :
+              definition.visual.shape === 'plate' ? 'h-3 w-9 rounded-sm' : 'h-6 w-8 rounded-sm'
+            }`}
+            style={{ borderColor: colour, background: `${colour}22`, boxShadow: `0 0 12px ${colour}44` }}
+          />
+          <span className="absolute bottom-0 left-1/2 h-px w-8 -translate-x-1/2 bg-lab-dim/60" />
+        </div>
+      )}
+      <span className="absolute bottom-0.5 right-1 text-[8px] uppercase tracking-widest text-lab-dim">
+        {visual?.kind === 'cutaway' ? 'CUT' : 'LAB'}
+      </span>
+    </div>
+  );
+}
 
 export function Library() {
   const registry = useLabStore((s) => s.registry);
@@ -21,6 +131,7 @@ export function Library() {
   const select = useLabStore((s) => s.select);
   const addComponentHere = useLabStore((s) => s.addComponentHere);
   const loadExperiment = useLabStore((s) => s.loadExperiment);
+  const [experimentsOpen, setExperimentsOpen] = useState(false);
 
   const disciplines = registry.listDisciplines().filter((d) => d.id !== '__couplings__');
   const ordered = [
@@ -32,14 +143,21 @@ export function Library() {
 
   return (
     <aside className="flex h-full min-h-0 w-full flex-col bg-lab-panel">
-      <div className="border-b border-lab-line px-4 py-3">
-        <h2 className="lab-label m-0">Experiments</h2>
-        <p className="mt-1 text-[13px] leading-snug text-lab-muted">
-          One bench, several sciences. Open one and run it.
-        </p>
-      </div>
+      <button
+        type="button"
+        onClick={() => setExperimentsOpen((open) => !open)}
+        aria-expanded={experimentsOpen}
+        className="flex w-full items-center justify-between border-b border-lab-line px-4 py-3 text-left hover:bg-lab-panel-raised focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-lab-accent"
+      >
+        <span>
+          <span className="lab-label m-0 block">Experiments</span>
+          <span className="mt-1 block text-[11px] text-lab-dim">{EXPERIMENTS.length} ready-to-run benches</span>
+        </span>
+        <span className="text-[14px] text-lab-dim" aria-hidden>{experimentsOpen ? '−' : '+'}</span>
+      </button>
 
-      <div className="border-b border-lab-line px-2 py-2">
+      {experimentsOpen && (
+      <div className="max-h-48 overflow-y-auto border-b border-lab-line px-2 py-2">
         {EXPERIMENTS.map((entry) => {
           const active = experiment.id === entry.id;
           return (
@@ -74,9 +192,10 @@ export function Library() {
           );
         })}
       </div>
+      )}
 
-      <div className="border-b border-lab-line px-4 py-3">
-        <h2 className="lab-label m-0">Components</h2>
+      <div className="shrink-0 border-b border-lab-line px-4 py-3">
+        <h2 className="lab-label m-0">Components inventory</h2>
         <p className="mt-1 text-[13px] leading-snug text-lab-muted">
           {/* Dragging is a pointer gesture. A phone gets the add button. */}
           <span className="hidden lg:inline">
@@ -129,16 +248,22 @@ export function Library() {
                             : 'border-transparent hover:border-lab-line hover:bg-lab-panel-raised',
                         ].join(' ')}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[13px] text-lab-text">{definition.name}</span>
-                          {used.length > 0 && (
-                            <span className="lab-value rounded bg-lab-line px-1.5 py-0.5 text-[10px] text-lab-muted">
-                              {used.length}
+                        <div className="flex items-center gap-2">
+                          <InventoryVisual definition={definition} colour={colour} />
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center justify-between gap-2">
+                              <span className="truncate text-[13px] text-lab-text">{definition.name}</span>
+                              {used.length > 0 && (
+                                <span className="lab-value rounded bg-lab-line px-1.5 py-0.5 text-[10px] text-lab-muted">
+                                  {used.length}
+                                </span>
+                              )}
                             </span>
-                          )}
-                        </div>
-                        <div className="mt-0.5 text-[10px] uppercase tracking-wider text-lab-dim">
-                          {CONFIDENCE_LABEL[definition.confidence] ?? definition.confidence}
+                            <span className="mt-0.5 block text-[10px] leading-snug text-lab-muted">{definition.description}</span>
+                            <span className="mt-1 block text-[9px] uppercase tracking-wider text-lab-dim">
+                              {CONFIDENCE_LABEL[definition.confidence] ?? definition.confidence} · {definition.inventoryVisual?.kind ?? 'technical silhouette'}
+                            </span>
+                          </span>
                         </div>
                       </button>
 

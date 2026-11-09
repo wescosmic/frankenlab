@@ -29,6 +29,7 @@ import type {
   Quantity,
 } from '../../kernel/types';
 import { quantity } from '../../kernel/units';
+import { catalogueByDiscipline, catalogueBehaviours } from '../../kernel/catalogue-components';
 
 export interface BranchState {
   resistance: Quantity;
@@ -245,12 +246,13 @@ export const electronicsNetworkSolver: NetworkSolver = {
           resistance: closed ? 1e-3 : 1e9,
           kind: 'switch',
         });
-      } else if (component.type === 'electronics.voltage-source') {
+      } else if (component.type === 'electronics.voltage-source' || component.type === 'biology.bio-battery') {
+        const dynamicVoltage = (state as { outputs?: Record<string, Quantity> }).outputs?.voltage?.value;
         sources.push({
           componentId: component.id,
           nodeA: terminals[0] ?? `${component.id}:positive`,
           nodeB: terminals[1] ?? `${component.id}:negative`,
-          voltage: params.__param_voltage ?? 5,
+          voltage: params.__param_voltage ?? dynamicVoltage ?? 5,
         });
       }
     }
@@ -1275,6 +1277,7 @@ export const electronicsEngine: DisciplineEngine = {
     switchDefinition,
     sensorDefinition,
     comparatorDefinition,
+    ...catalogueByDiscipline('electronics'),
   ],
   behaviors: new Map([
     ['electronics.resistor', resistorBehavior],
@@ -1283,6 +1286,7 @@ export const electronicsEngine: DisciplineEngine = {
     ['electronics.switch', switchBehavior],
     ['electronics.sensor', sensorBehavior],
     ['electronics.comparator', comparatorBehavior],
+    ...catalogueByDiscipline('electronics').map((definition) => [definition.type, catalogueBehaviours.get(definition.type)!] as const),
   ]),
   connectionRules: electronicsRules,
   networkSolver: electronicsNetworkSolver,

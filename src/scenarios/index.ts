@@ -10,6 +10,8 @@ import type { ExperimentDefinition } from '@/kernel/types';
 import { createBioCircuit } from './biocircuit';
 import { createCatalysis } from './catalysis';
 import { createThresholdAlarm } from './threshold-alarm';
+import { createBioBattery } from './bio-battery';
+import { createEnzymeOptimisation, createMicrobialFuelCell, createWaterPurification } from './catalogue-showcases';
 
 export interface ExperimentEntry {
   readonly id: string;
@@ -45,6 +47,34 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
       'Two reaction vessels running the same reaction, one catalysed and one not. Same destination, different speed.',
     disciplines: ['chemistry'],
     create: () => createCatalysis(),
+  },
+  {
+    id: 'bio-battery',
+    name: 'Bio-Battery',
+    summary: 'Nutrient activity powers a living cell, a real load, and an indicator LED.',
+    disciplines: ['biology', 'electronics'],
+    create: () => createBioBattery(),
+  },
+  {
+    id: 'microbial-fuel-cell',
+    name: 'Microbial Fuel Cell',
+    summary: 'A living culture, electrode and capacitor make a small biological energy system.',
+    disciplines: ['biology', 'materials', 'electronics'],
+    create: () => createMicrobialFuelCell(),
+  },
+  {
+    id: 'enzyme-optimisation',
+    name: 'Enzyme Optimisation',
+    summary: 'Use temperature and acidity as discovery variables for a catalytic system.',
+    disciplines: ['biology', 'chemistry'],
+    create: () => createEnzymeOptimisation(),
+  },
+  {
+    id: 'water-purification',
+    name: 'Water Purification',
+    summary: 'Assemble a membrane, filter and separator into a visible purification train.',
+    disciplines: ['biology', 'chemistry', 'materials'],
+    create: () => createWaterPurification(),
   },
 ];
 

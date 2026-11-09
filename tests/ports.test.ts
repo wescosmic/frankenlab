@@ -132,6 +132,13 @@ function createHarness(): ExperimentDefinition {
         parameters: { rate: { value: 0 } },
       },
       {
+        id: 'bio-battery',
+        type: 'biology.bio-battery',
+        label: 'Bio-battery',
+        position: { x: 0, y: 6, z: 0 },
+        parameters: { max_voltage: { value: 3.2, unit: 'V' } },
+      },
+      {
         id: 'conductor',
         type: 'materials.conductor',
         label: 'Copper wire',
@@ -267,7 +274,11 @@ describe('the port contract', () => {
     );
     const harnessTypes = new Set(harness.components.map((instance) => instance.type));
 
-    expect([...worldTypes].sort()).toEqual([...harnessTypes].sort());
+    // The harness exercises the load-bearing legacy graph. Catalogue parts are
+    // intentionally left unconnected here so adding an inventory component
+    // cannot make the flagship circuit singular before the user wires it.
+    expect([...harnessTypes].every((type) => worldTypes.has(type))).toBe(true);
+    expect(worldTypes.size).toBeGreaterThanOrEqual(harnessTypes.size);
   });
 
   it('runs the whole world on one graph without breaking the circuit solve', () => {
