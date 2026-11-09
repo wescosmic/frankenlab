@@ -8,7 +8,9 @@
  * in FrankenLab — not a footnote.
  */
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { useLabStore } from '@/state/lab';
 import { DISCIPLINE_COLOURS, DISCIPLINE_ORDER } from '@/world';
 import { DRAG_TYPE } from '@/drag';
@@ -16,9 +18,81 @@ import { EXPERIMENTS } from '@/scenarios';
 import { CONFIDENCE_LABEL } from '@/confidence';
 import type { ComponentDefinition } from '@/kernel/types';
 
+const INVENTORY_MODELS: Readonly<Record<string, string>> = {
+  'chemistry.substance': '/assets/catalogue/bottle_glassware_beaker_medium.glb',
+  'chemistry.reaction-vessel': '/assets/catalogue/bottle_glassware_erlenmeyer_flask_medium.glb',
+  'biology.nutrient-source': '/assets/catalogue/bottle_glassware_erlenmeyer_flask_medium.glb',
+  'biology.moisture-source': '/assets/catalogue/bottle_micropipet.glb',
+  'materials.substrate': '/assets/catalogue/bottle_test_tube_rack.glb',
+};
+
+function InventoryModelPreview({ modelPath, colour, alt }: { modelPath: string; colour: string; alt: string }) {
+  const hostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const width = 56;
+    const height = 56;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(28, width / height, 0.01, 100);
+    camera.position.set(1.8, 1.1, 2.3);
+    camera.lookAt(0, 0.1, 0);
+    scene.add(new THREE.HemisphereLight(0xf5fbff, 0x233044, 2.2));
+    const key = new THREE.DirectionalLight(0xffffff, 2.4);
+    key.position.set(2, 3, 4);
+    scene.add(key);
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' });
+    renderer.setPixelRatio(1);
+    renderer.setSize(width, height, false);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.domElement.setAttribute('aria-label', alt);
+    renderer.domElement.setAttribute('role', 'img');
+    host.replaceChildren(renderer.domElement);
+
+    const loader = new GLTFLoader();
+    loader.load(modelPath, (gltf) => {
+      if (!host.isConnected) return;
+      const model = gltf.scene;
+      const bounds = new THREE.Box3().setFromObject(model);
+      const size = bounds.getSize(new THREE.Vector3());
+      const centre = bounds.getCenter(new THREE.Vector3());
+      const largest = Math.max(size.x, size.y, size.z, 0.001);
+      model.scale.multiplyScalar(1.2 / largest);
+      model.position.sub(centre.multiplyScalar(model.scale.x));
+      model.rotation.y = -0.35;
+      model.traverse((child) => {
+        if (!(child instanceof THREE.Mesh)) return;
+        child.castShadow = true;
+        child.receiveShadow = true;
+      });
+      scene.add(model);
+      renderer.render(scene, camera);
+    });
+
+    return () => {
+      renderer.dispose();
+      host.replaceChildren();
+    };
+  }, [alt, modelPath]);
+
+  return (
+    <div
+      ref={hostRef}
+      className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-lab-line bg-[#111820]"
+      style={{ boxShadow: `inset 0 0 18px ${colour}22` }}
+      aria-label={alt}
+    />
+  );
+}
+
 function InventoryVisual({ definition, colour }: { definition: ComponentDefinition; colour: string }) {
   const visual = definition.inventoryVisual;
+  const modelPath = visual?.model ?? INVENTORY_MODELS[definition.type];
   const image = visual?.thumbnail ?? visual?.image;
+  if (modelPath) return <InventoryModelPreview modelPath={modelPath} colour={colour} alt={visual?.alt ?? `${definition.name} model`} />;
   return (
     <div
       className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-lab-line bg-[#111820]"
