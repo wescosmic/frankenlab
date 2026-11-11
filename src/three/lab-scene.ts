@@ -355,7 +355,7 @@ export class LabScene {
     this.#labelScale = labelScaleFor(width);
 
     this.#scene = new THREE.Scene();
-    this.#scene.background = new THREE.Color(0x8ea1b5);
+    this.#scene.background = new THREE.Color(0xd8dde0);
     this.#scene.fog = new THREE.Fog(0x8ea1b5, 20, 48);
 
     this.#camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 200);
@@ -492,9 +492,9 @@ export class LabScene {
     // A room gives the bench a sense of place and scale. The walls are kept
     // outside the interaction raycast, so they can never steal selection.
     const wallMaterial = new THREE.MeshStandardMaterial({
-      color: 0xd7e2ea,
-      roughness: 0.78,
-      metalness: 0.04,
+      color: 0xf2efe8,
+      roughness: 0.82,
+      metalness: 0.02,
     });
     const backWall = new THREE.Mesh(new THREE.PlaneGeometry(34, 14), wallMaterial);
     backWall.position.set(0, 6, -8);
@@ -540,14 +540,14 @@ export class LabScene {
 
     const ceiling = new THREE.Mesh(
       new THREE.PlaneGeometry(34, 22),
-      new THREE.MeshStandardMaterial({ color: 0xc5d2dc, roughness: 0.86, metalness: 0 }),
+      new THREE.MeshStandardMaterial({ color: 0xe3e0d8, roughness: 0.86, metalness: 0 }),
     );
     ceiling.rotation.x = Math.PI / 2;
     ceiling.position.y = 13;
     ceiling.receiveShadow = true;
     this.#scene.add(ceiling);
 
-    const roomTrim = new THREE.MeshStandardMaterial({ color: 0x47708d, roughness: 0.46, metalness: 0.28 });
+    const roomTrim = new THREE.MeshStandardMaterial({ color: 0xb6c0c6, roughness: 0.46, metalness: 0.18 });
     const backTrim = new THREE.Mesh(new THREE.BoxGeometry(34, 0.08, 0.08), roomTrim);
     backTrim.position.set(0, 0.05, -7.92);
     this.#scene.add(backTrim);
@@ -569,18 +569,18 @@ export class LabScene {
 
     const roomFloor = new THREE.Mesh(
       new THREE.PlaneGeometry(60, 60),
-      new THREE.MeshStandardMaterial({ color: 0x8b9aa5, roughness: 0.86, metalness: 0.04 }),
+      new THREE.MeshStandardMaterial({ color: 0xb9c0c2, roughness: 0.86, metalness: 0.02 }),
     );
     roomFloor.rotation.x = -Math.PI / 2;
     roomFloor.position.y = -1.8;
     roomFloor.receiveShadow = true;
     this.#scene.add(roomFloor);
 
-    // The simulation is staged on a real lab workstation: dark chemical-
-    // resistant counter, blue-white cabinets and a visible front edge.
+    // The simulation is staged on a light, neutral workbench so the real
+    // component models carry the visual focus, like a modern robotics lab.
     const counterTop = new THREE.Mesh(
       new THREE.BoxGeometry(28, 0.32, 8.5),
-      new THREE.MeshStandardMaterial({ color: 0x303d48, roughness: 0.58, metalness: 0.16 }),
+      new THREE.MeshStandardMaterial({ color: 0xe5dfd3, roughness: 0.62, metalness: 0.04 }),
     );
     counterTop.position.set(0, -0.58, 0);
     counterTop.castShadow = true;
@@ -589,14 +589,14 @@ export class LabScene {
 
     const counterEdge = new THREE.Mesh(
       new THREE.BoxGeometry(28, 0.12, 0.18),
-      new THREE.MeshStandardMaterial({ color: 0x16232e, roughness: 0.48, metalness: 0.3 }),
+      new THREE.MeshStandardMaterial({ color: 0x8f989c, roughness: 0.5, metalness: 0.18 }),
     );
     counterEdge.position.set(0, -0.78, 4.1);
     counterEdge.castShadow = true;
     this.#scene.add(counterEdge);
 
-    const cabinetMaterial = new THREE.MeshStandardMaterial({ color: 0x39719a, roughness: 0.64, metalness: 0.08 });
-    const cabinetTop = new THREE.MeshStandardMaterial({ color: 0xe6edf0, roughness: 0.42, metalness: 0.12 });
+    const cabinetMaterial = new THREE.MeshStandardMaterial({ color: 0x8daabd, roughness: 0.64, metalness: 0.05 });
+    const cabinetTop = new THREE.MeshStandardMaterial({ color: 0xf8f6f1, roughness: 0.42, metalness: 0.08 });
     for (const x of [-8.5, 8.5]) {
       const cabinet = new THREE.Mesh(new THREE.BoxGeometry(5.5, 1.7, 5.6), cabinetMaterial);
       cabinet.position.set(x, -1.58, 0.2);
@@ -609,7 +609,7 @@ export class LabScene {
       this.#scene.add(top);
     }
 
-    const grid = new THREE.GridHelper(40, 40, 0x55738b, 0x3b5267);
+    const grid = new THREE.GridHelper(40, 40, 0x7c8c96, 0x9eabb1);
     grid.position.y = -1.79;
     (grid.material as THREE.Material).transparent = true;
     (grid.material as THREE.Material).opacity = 0.4;
@@ -979,8 +979,8 @@ export class LabScene {
         'width: max-content',
         'max-width: 220px',
         'letter-spacing: 0.04em',
-        'color: #c8d4e8',
-        'background: rgba(8, 12, 20, 0.72)',
+        'color: #24303b',
+        'background: rgba(255, 253, 249, 0.9)',
         'border: 1px solid rgba(44, 58, 92, 0.9)',
         'border-radius: 999px',
         'white-space: nowrap',

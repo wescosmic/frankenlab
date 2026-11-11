@@ -133,7 +133,7 @@ export function Lab() {
         Skip to the laboratory
       </a>
 
-      <header className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 border-b border-lab-line bg-lab-panel px-3 py-2 sm:h-14 sm:px-4 lg:py-0">
+      <header className="relative z-30 flex shrink-0 flex-wrap items-center justify-between gap-x-3 border-b border-lab-line/80 bg-lab-panel/90 px-3 py-2 shadow-[0_1px_0_rgba(36,48,59,0.03)] backdrop-blur-xl sm:h-14 sm:px-5 lg:py-0">
         <h1 className="m-0 shrink-0 text-[13px] font-semibold tracking-[0.2em] text-lab-text sm:text-[15px] sm:tracking-[0.22em]">
           FRANKENLAB
         </h1>
@@ -145,7 +145,7 @@ export function Lab() {
             onClick={() => setExperimentsOpen(true)}
             aria-haspopup="dialog"
             aria-expanded={experimentsOpen}
-            className="rounded-md border border-lab-line bg-lab-panel-raised px-2.5 py-1.5 text-[11px] uppercase tracking-wider text-lab-muted transition-colors hover:border-lab-accent/60 hover:text-lab-text focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent sm:px-3"
+            className="rounded-full border border-lab-line bg-lab-panel-raised px-3 py-1.5 text-[11px] uppercase tracking-[0.12em] text-lab-muted transition-colors hover:border-lab-accent/60 hover:text-lab-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent sm:px-4"
           >
             Experiments
           </button>
@@ -263,13 +263,13 @@ export function Lab() {
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1">
+      <div className="relative flex min-h-0 flex-1">
         {/* The catalogue. A column on a desktop, a sheet on a phone. */}
-        <div className="hidden min-h-0 xl:flex xl:w-72 xl:shrink-0 xl:border-r xl:border-lab-line">
+        <div className="hidden min-h-0 xl:absolute xl:bottom-5 xl:left-5 xl:top-5 xl:z-20 xl:flex xl:w-72 xl:shrink-0 xl:overflow-hidden xl:rounded-2xl xl:border xl:border-white/80 xl:bg-lab-panel/90 xl:shadow-[0_18px_50px_rgba(59,68,75,0.16)] xl:backdrop-blur-xl">
           <Library />
         </div>
 
-        <main id="bench" className="flex min-w-0 flex-1 flex-col">
+        <main id="bench" className="relative flex min-w-0 flex-1 flex-col bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.9),rgba(235,232,225,0.35)_62%,rgba(219,216,208,0.55))]">
           <div className="relative h-[48vh] min-h-[220px] shrink-0 lg:h-auto lg:min-h-0 lg:flex-1">
             <Workbench />
             {notice && (
@@ -300,8 +300,8 @@ export function Lab() {
 
         {/* The inspector and the assistant. A column on a desktop, a sheet on
             a phone. */}
-        <aside className="hidden min-h-0 xl:flex xl:w-80 xl:shrink-0 xl:border-l xl:border-lab-line">
-          <div className="flex h-full w-full flex-col bg-lab-panel">
+        <aside className="hidden min-h-0 xl:absolute xl:bottom-5 xl:right-5 xl:top-5 xl:z-20 xl:flex xl:w-80 xl:overflow-hidden xl:rounded-2xl xl:border xl:border-white/80 xl:bg-lab-panel/90 xl:shadow-[0_18px_50px_rgba(59,68,75,0.16)] xl:backdrop-blur-xl">
+          <div className="flex h-full w-full flex-col">
             <div className="flex shrink-0 border-b border-lab-line" role="tablist" aria-label="Tools">
               {SIDE_TABS.map(({ id, label }) => (
                 <button

@@ -88,7 +88,7 @@ function InventoryModelPreview({ modelPath, colour, alt }: { modelPath: string; 
   return (
     <div
       ref={hostRef}
-      className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-lab-line bg-[#111820]"
+      className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-lab-line bg-[#eef1f1]"
       style={{ boxShadow: `inset 0 0 18px ${colour}22` }}
       aria-label={alt}
     />
@@ -102,7 +102,7 @@ function InventoryVisual({ definition, colour }: { definition: ComponentDefiniti
   if (modelPath) return <InventoryModelPreview modelPath={modelPath} colour={colour} alt={visual?.alt ?? `${definition.name} model`} />;
   return (
     <div
-      className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border border-lab-line bg-[#111820]"
+      className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-lab-line bg-[#eef1f1]"
       style={{ boxShadow: `inset 0 0 18px ${colour}22` }}
       aria-label={visual?.alt ?? `${definition.name} technical silhouette`}
     >
@@ -149,7 +149,7 @@ export function Library() {
 
   return (
     <aside className="flex h-full min-h-0 w-full flex-col bg-lab-panel">
-      <div className="shrink-0 border-b border-lab-line px-4 py-3">
+      <div className="shrink-0 border-b border-lab-line px-4 py-4">
         <h2 className="lab-label m-0">Components inventory</h2>
         <p className="mt-1 text-[13px] leading-snug text-lab-muted">
           {/* Dragging is a pointer gesture. A phone gets the add button. */}
@@ -208,7 +208,7 @@ export function Library() {
                         onClick={() => select(used[0]?.id ?? null)}
                         title={`Drag onto the bench to add a ${definition.name}`}
                         className={[
-                          'flex-1 cursor-grab rounded-md border px-2.5 py-2 text-left transition-colors active:cursor-grabbing',
+                          'flex-1 cursor-grab rounded-xl border px-2 py-2 text-left transition-colors active:cursor-grabbing',
                           'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-lab-accent',
                           active
                             ? 'border-lab-accent/60 bg-lab-accent/10'

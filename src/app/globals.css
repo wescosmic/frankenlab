@@ -3,27 +3,27 @@
 /**
  * FrankenLab — laboratory design tokens.
  *
- * A dark instrument panel, not a dashboard. The 3D bench is the subject; the
- * chrome stays quiet so the experiment is what the eye lands on.
+ * A bright, spatial lab UI. The 3D bench is the subject; the chrome floats
+ * above it like a calm workbench rather than reading as a dense dashboard.
  *
  * Each discipline carries its own hue, and that hue is used consistently in
  * the 3D scene, the catalogue and the readings — so a component's colour
  * always tells you what kind of science it is.
  */
 @theme {
-  --color-lab-void: #05070d;
-  --color-lab-bg: #090d16;
-  --color-lab-panel: #0e1422;
-  --color-lab-panel-raised: #141c2e;
-  --color-lab-line: #1e2942;
-  --color-lab-line-bright: #2c3a5c;
+  --color-lab-void: #f4f1eb;
+  --color-lab-bg: #ebe8e1;
+  --color-lab-panel: #fffdf9;
+  --color-lab-panel-raised: #f7f4ee;
+  --color-lab-line: #d9d5cd;
+  --color-lab-line-bright: #b8b3a9;
 
-  --color-lab-text: #e6ecf7;
-  --color-lab-muted: #8b9ab5;
-  --color-lab-dim: #76849f;
+  --color-lab-text: #24303b;
+  --color-lab-muted: #5e6b76;
+  --color-lab-dim: #7e8991;
 
-  --color-lab-accent: #4fd1c5;
-  --color-lab-accent-dim: #2a6d67;
+  --color-lab-accent: #2563a6;
+  --color-lab-accent-dim: #7da2c7;
 
   --color-lab-electronics: #ef6461;
   --color-lab-biology: #7bc96f;
