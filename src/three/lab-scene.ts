@@ -27,6 +27,7 @@ import type {
 } from '@/kernel/types';
 import { DISCIPLINE_COLOURS } from '@/world';
 import { DRAG_TYPE } from '@/drag';
+import { COMPONENT_MODEL_PATHS } from '@/visual-assets';
 
 /**
  * How far above a part its name floats, unless the part says otherwise.
@@ -306,6 +307,7 @@ export class LabScene {
     generation: number,
   ): void {
     const modelPath = definition.inventoryVisual?.model
+      ?? COMPONENT_MODEL_PATHS[definition.type]
       ?? (definition.type === 'biology.plant' ? undefined : `/assets/glb/${definition.visual.shape}.glb`);
     if (!modelPath) return;
 

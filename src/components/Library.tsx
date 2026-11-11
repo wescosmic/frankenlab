@@ -16,22 +16,7 @@ import { DISCIPLINE_COLOURS, DISCIPLINE_ORDER } from '@/world';
 import { DRAG_TYPE } from '@/drag';
 import { CONFIDENCE_LABEL } from '@/confidence';
 import type { ComponentDefinition } from '@/kernel/types';
-
-const INVENTORY_MODELS: Readonly<Record<string, string>> = {
-  'electronics.resistor': '/assets/glb/resistor.glb',
-  'electronics.voltage-source': '/assets/glb/battery.glb',
-  'electronics.led': '/assets/glb/led.glb',
-  'electronics.switch': '/assets/glb/logger.glb',
-  'electronics.sensor': '/assets/glb/logger.glb',
-  'electronics.comparator': '/assets/glb/logger.glb',
-  'biology.bio-battery': '/assets/glb/bio-battery.glb',
-  'chemistry.substance': '/assets/catalogue/bottle_glassware_beaker_medium.glb',
-  'chemistry.reaction-vessel': '/assets/catalogue/bottle_glassware_erlenmeyer_flask_medium.glb',
-  'biology.nutrient-source': '/assets/catalogue/bottle_glassware_erlenmeyer_flask_medium.glb',
-  'biology.moisture-source': '/assets/catalogue/bottle_micropipet.glb',
-  'materials.substrate': '/assets/catalogue/bottle_test_tube_rack.glb',
-  'materials.conductor': '/assets/glb/resistor.glb',
-};
+import { COMPONENT_MODEL_ALT, COMPONENT_MODEL_PATHS } from '@/visual-assets';
 
 function InventoryModelPreview({ modelPath, colour, alt }: { modelPath: string; colour: string; alt: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -97,9 +82,9 @@ function InventoryModelPreview({ modelPath, colour, alt }: { modelPath: string; 
 
 function InventoryVisual({ definition, colour }: { definition: ComponentDefinition; colour: string }) {
   const visual = definition.inventoryVisual;
-  const modelPath = visual?.model ?? INVENTORY_MODELS[definition.type];
+  const modelPath = visual?.model ?? COMPONENT_MODEL_PATHS[definition.type];
   const image = visual?.thumbnail ?? visual?.image;
-  if (modelPath) return <InventoryModelPreview modelPath={modelPath} colour={colour} alt={visual?.alt ?? `${definition.name} model`} />;
+  if (modelPath) return <InventoryModelPreview modelPath={modelPath} colour={colour} alt={visual?.alt ?? COMPONENT_MODEL_ALT[definition.type] ?? `${definition.name} model`} />;
   return (
     <div
       className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-lab-line bg-[#eef1f1]"

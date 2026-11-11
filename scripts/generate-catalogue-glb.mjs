@@ -93,6 +93,16 @@ function customModel(name) {
   } else if (name === 'substrate') {
     addBox(group, [1.0, 0.28, 0.75], [0, -0.22, 0], mat(0x8d6e63));
     for (const x of [-0.3, 0, 0.3]) addCylinder(group, 0.04, 0.45, [x, 0.15, 0], teal, 10);
+  } else if (name === 'plant') {
+    addCylinder(group, 0.28, 0.24, [0, -0.38, 0], mat(0xd8b08a), 24);
+    addCylinder(group, 0.05, 0.9, [0, 0.18, 0], mat(0x477f3c), 12);
+    for (const [x, y, z, rotation] of [[-0.25, 0.35, 0, -0.55], [0.25, 0.5, 0, 0.55], [-0.18, 0.72, 0.05, -0.45], [0.18, 0.86, -0.02, 0.45]]) {
+      const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 12), mat(0x69aa5c, 0.05, 0.72));
+      leaf.scale.set(1.6, 0.3, 0.8);
+      leaf.position.set(x, y, z);
+      leaf.rotation.z = rotation;
+      group.add(leaf);
+    }
   } else {
     addBox(group, [0.9, 0.7, 0.75], [0, 0, 0], teal);
   }
@@ -128,5 +138,5 @@ function writeThumbnail(shape) {
 }
 
 await Promise.all(['box', 'cylinder', 'sphere', 'plate', 'organic'].map(exportShape));
-await Promise.all(['resistor', 'battery', 'led', 'capacitor', 'solar-panel', 'motor', 'logger', 'electrode', 'greenhouse', 'thermal-mass', 'chamber', 'bio-battery', 'substrate'].map((name) => exportModel(name, customModel(name))));
+await Promise.all(['resistor', 'battery', 'led', 'capacitor', 'solar-panel', 'motor', 'logger', 'electrode', 'greenhouse', 'thermal-mass', 'chamber', 'bio-battery', 'substrate', 'plant'].map((name) => exportModel(name, customModel(name))));
 ['box', 'cylinder', 'sphere', 'plate', 'organic'].forEach(writeThumbnail);

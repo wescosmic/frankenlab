@@ -20,10 +20,10 @@ import type { ConnectionRule } from './kernel/types';
 export const DISCIPLINE_ORDER = ['electronics', 'biology', 'materials', 'chemistry'] as const;
 
 export const DISCIPLINE_COLOURS: Readonly<Record<string, string>> = {
-  electronics: '#ef6461',
-  biology: '#7bc96f',
-  materials: '#c2a084',
-  chemistry: '#f0b350',
+  electronics: '#b43f42',
+  biology: '#33742f',
+  materials: '#8b6244',
+  chemistry: '#9a6100',
 };
 
 /**

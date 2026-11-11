@@ -9,6 +9,7 @@
 
 import type { ComponentBehavior, ComponentDefinition, ComponentState, DisciplineId, PortDefinition, Quantity } from '../kernel/types';
 import { quantity } from '../kernel/units';
+import { COMPONENT_MODEL_ALT, COMPONENT_MODEL_PATHS } from '../visual-assets';
 
 type CatalogueDefinition = ComponentDefinition & { readonly discipline: DisciplineId };
 
@@ -32,28 +33,6 @@ function makeDefinition(
   colour: string,
   kind: NonNullable<ComponentDefinition['inventoryVisual']>['kind'] = 'technical-render',
 ): CatalogueDefinition {
-  const sourcedModels: Readonly<Record<string, string>> = {
-    'biology.microbial-culture': '/assets/catalogue/bottle_glassware_erlenmeyer_flask_medium.glb',
-    'biology.enzyme': '/assets/catalogue/bottle_micropipet.glb',
-    'biology.membrane': '/assets/catalogue/bottle_glassware_filtering_flask_medium.glb',
-    'biology.gas-exchange': '/assets/catalogue/bottle_test_tube_rack.glb',
-    'chemistry.ph-meter': '/assets/catalogue/heating_equipment_electronic_thermometer.glb',
-    'chemistry.catalyst-bed': '/assets/catalogue/bottle_glassware_beaker_medium.glb',
-    'chemistry.heat-bath': '/assets/catalogue/heating_equipment_bunsen_burner.glb',
-    'chemistry.separator': '/assets/catalogue/machine_centrifuge.glb',
-    'materials.filter-media': '/assets/catalogue/bottle_glassware_filtering_flask_medium.glb',
-    'biology.root-system': '/assets/glb/substrate.glb',
-    'biology.greenhouse': '/assets/glb/greenhouse.glb',
-    'biology.compost-reactor': '/assets/catalogue/bottle_glassware_erlenmeyer_flask_medium.glb',
-    'materials.thermal-mass': '/assets/glb/thermal-mass.glb',
-    'materials.electrode': '/assets/glb/electrode.glb',
-    'environment.light-source': '/assets/glb/solar-panel.glb',
-    'environment.temperature-chamber': '/assets/glb/chamber.glb',
-    'electronics.capacitor': '/assets/glb/capacitor.glb',
-    'electronics.photovoltaic-cell': '/assets/glb/solar-panel.glb',
-    'electronics.motor': '/assets/glb/motor.glb',
-    'electronics.data-logger': '/assets/glb/logger.glb',
-  };
   return {
     type, name, discipline, category, description, ports,
     parameters: [labelParameter(name)],
@@ -66,9 +45,9 @@ function makeDefinition(
     ],
     visual: { shape, color: colour, label: name.slice(0, 2).toUpperCase() },
     inventoryVisual: {
-      model: sourcedModels[type] ?? `/assets/glb/${shape}.glb`,
+      model: COMPONENT_MODEL_PATHS[type] ?? `/assets/glb/${shape}.glb`,
       thumbnail: `/assets/inventory/${shape}.svg`,
-      alt: `${name} technical ${kind}`,
+      alt: COMPONENT_MODEL_ALT[type] ?? `${name} technical ${kind}`,
       kind,
     },
   };

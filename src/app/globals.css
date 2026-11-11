@@ -20,17 +20,17 @@
 
   --color-lab-text: #24303b;
   --color-lab-muted: #5e6b76;
-  --color-lab-dim: #7e8991;
+  --color-lab-dim: #59646d;
 
-  --color-lab-accent: #2563a6;
-  --color-lab-accent-dim: #7da2c7;
+  --color-lab-accent: #1f5f9e;
+  --color-lab-accent-dim: #356d9e;
 
-  --color-lab-electronics: #ef6461;
-  --color-lab-biology: #7bc96f;
-  --color-lab-materials: #c2a084;
-  --color-lab-chemistry: #f0b350;
-  --color-lab-alert: #ff8f5e;
-  --color-lab-warn: #ff6b6b;
+  --color-lab-electronics: #b43f42;
+  --color-lab-biology: #33742f;
+  --color-lab-materials: #8b6244;
+  --color-lab-chemistry: #9a6100;
+  --color-lab-alert: #b74c24;
+  --color-lab-warn: #b3262e;
 
   --font-mono: 'SFMono-Regular', 'JetBrains Mono', Consolas, monospace;
 }
