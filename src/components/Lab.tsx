@@ -60,6 +60,8 @@ export function Lab() {
   const [tab, setTab] = useState<SideTab>('inspector');
   const [sheet, setSheet] = useState<Sheet>('none');
   const [experimentsOpen, setExperimentsOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(true);
+  const [judgeMode, setJudgeMode] = useState(false);
 
   /** Where the focus goes back to when the sheet closes. */
   const openerRef = useRef<HTMLElement | null>(null);
@@ -68,6 +70,11 @@ export function Lab() {
   const experimentCloseRef = useRef<HTMLButtonElement | null>(null);
 
   const running = status === 'running';
+  const experimentEntry = EXPERIMENTS.find((entry) => entry.id === experiment.id) ?? EXPERIMENTS[0]!;
+
+  const dismissGuide = () => {
+    setGuideOpen(false);
+  };
 
   const openSheet = (id: Exclude<Sheet, 'none'>, opener: HTMLElement) => {
     // The opener is remembered rather than read from the document, because a
@@ -138,7 +145,7 @@ export function Lab() {
           FRANKENLAB
         </h1>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
           <button
             ref={experimentsButtonRef}
             type="button"
@@ -155,6 +162,15 @@ export function Lab() {
               {experiment.discipline} · model {experiment.modelVersion}
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setJudgeMode((mode) => !mode)}
+            aria-pressed={judgeMode}
+            className={["hidden rounded-full border px-3 py-1.5 text-[11px] uppercase tracking-[0.12em] transition-colors xl:inline-flex", judgeMode ? "border-lab-accent bg-lab-accent text-white" : "border-lab-line bg-lab-panel-raised text-lab-muted hover:border-lab-accent/60 hover:text-lab-accent"].join(' ')}
+          >
+            {judgeMode ? 'Exit focus' : 'Judge mode'}
+          </button>
 
           <div className="flex items-center gap-1.5">
             {running ? (
@@ -237,7 +253,7 @@ export function Lab() {
                 Close
               </button>
             </div>
-            <div className="grid max-h-[70vh] gap-2 overflow-y-auto p-4 sm:grid-cols-2">
+            <div className="grid max-h-[70vh] gap-3 overflow-y-auto p-4 sm:grid-cols-2">
               {EXPERIMENTS.map((entry) => {
                 const active = experiment.id === entry.id;
                 return (
@@ -254,6 +270,14 @@ export function Lab() {
                       </span>
                     </div>
                     <p className="mt-2 text-[11px] leading-relaxed text-lab-muted">{entry.summary}</p>
+                    <p className="mt-2 text-[11px] font-medium leading-relaxed text-lab-text">{entry.question}</p>
+                    <div className="mt-2 rounded-md border border-lab-line bg-lab-panel/70 px-2.5 py-2">
+                      <div className="lab-label text-lab-accent">Watch for</div>
+                      <p className="mt-1 text-[10px] leading-relaxed text-lab-muted">{entry.watch}</p>
+                    </div>
+                    <ol className="mt-2 space-y-1 text-[10px] text-lab-muted">
+                      {entry.steps.map((step, index) => <li key={step}><span className="mr-1.5 font-mono text-lab-accent">0{index + 1}</span>{step}</li>)}
+                    </ol>
                     {active && <span className="mt-2 block text-[9px] uppercase tracking-widest text-lab-accent">Current experiment</span>}
                   </button>
                 );
@@ -265,12 +289,44 @@ export function Lab() {
 
       <div className="relative flex min-h-0 flex-1">
         {/* The catalogue. A column on a desktop, a sheet on a phone. */}
-        <div className="hidden min-h-0 xl:absolute xl:bottom-5 xl:left-5 xl:top-5 xl:z-20 xl:flex xl:w-72 xl:shrink-0 xl:overflow-hidden xl:rounded-2xl xl:border xl:border-white/80 xl:bg-lab-panel/90 xl:shadow-[0_18px_50px_rgba(59,68,75,0.16)] xl:backdrop-blur-xl">
+        <div className={[judgeMode ? 'hidden' : 'hidden xl:flex', 'min-h-0 xl:absolute xl:bottom-5 xl:left-5 xl:top-5 xl:z-20 xl:w-72 xl:shrink-0 xl:overflow-hidden xl:rounded-2xl xl:border xl:border-white/80 xl:bg-lab-panel/90 xl:shadow-[0_18px_50px_rgba(59,68,75,0.16)] xl:backdrop-blur-xl'].join(' ')}>
           <Library />
         </div>
 
         <main id="bench" className="relative flex min-w-0 flex-1 flex-col bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.9),rgba(235,232,225,0.35)_62%,rgba(219,216,208,0.55))]">
           <div className="relative h-[48vh] min-h-[220px] shrink-0 lg:h-auto lg:min-h-0 lg:flex-1">
+            {judgeMode && (
+              <div className="pointer-events-none absolute left-1/2 top-5 z-20 w-[min(520px,calc(100%-2rem))] -translate-x-1/2 rounded-2xl border border-white/80 bg-lab-panel/90 px-4 py-3 text-center shadow-[0_18px_50px_rgba(59,68,75,0.16)] backdrop-blur-xl">
+                <div className="lab-label text-lab-accent">PRESENTATION MODE</div>
+                <div className="mt-1 text-[18px] font-medium text-lab-text">{experiment.name}</div>
+                <p className="mt-1 text-[12px] text-lab-muted">{experimentEntry.question}</p>
+                <div className="mt-2 text-[10px] uppercase tracking-wider text-lab-dim">Watch: {experimentEntry.watch}</div>
+              </div>
+            )}
+            {guideOpen && !judgeMode && (
+              <section className="absolute left-1/2 top-5 z-20 w-[min(430px,calc(100%-2rem))] -translate-x-1/2 rounded-2xl border border-white/80 bg-lab-panel/95 p-4 shadow-[0_18px_50px_rgba(59,68,75,0.16)] backdrop-blur-xl" aria-labelledby="getting-started-title">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="lab-label text-lab-accent">FIRST RUN</div>
+                    <h2 id="getting-started-title" className="mt-1 text-[16px] font-medium text-lab-text">Make the causal chain move</h2>
+                  </div>
+                  <button type="button" onClick={dismissGuide} aria-label="Dismiss getting started guide" className="text-[18px] leading-none text-lab-dim hover:text-lab-text">×</button>
+                </div>
+                <p className="mt-2 text-[12px] leading-relaxed text-lab-muted">{experimentEntry.summary}</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                  {experimentEntry.steps.map((step, index) => (
+                    <div key={step} className="rounded-xl border border-lab-line bg-lab-panel-raised px-2.5 py-2">
+                      <div className="font-mono text-[10px] text-lab-accent">0{index + 1}</div>
+                      <div className="mt-1 text-[11px] leading-snug text-lab-text">{step}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                  <button type="button" onClick={() => setExperimentsOpen(true)} className="rounded-full border border-lab-line px-3 py-1.5 text-[10px] uppercase tracking-wider text-lab-muted hover:border-lab-accent/60 hover:text-lab-accent">Choose experiment</button>
+                  <button type="button" onClick={() => { if (experiment.id !== 'biocircuit') loadExperiment('biocircuit'); window.setTimeout(start, 0); }} className="rounded-full bg-lab-accent px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-white hover:bg-lab-accent/90">Run flagship</button>
+                </div>
+              </section>
+            )}
             <Workbench />
             {notice && (
               <div
@@ -300,7 +356,7 @@ export function Lab() {
 
         {/* The inspector and the assistant. A column on a desktop, a sheet on
             a phone. */}
-        <aside className="hidden min-h-0 xl:absolute xl:bottom-5 xl:right-5 xl:top-5 xl:z-20 xl:flex xl:w-80 xl:overflow-hidden xl:rounded-2xl xl:border xl:border-white/80 xl:bg-lab-panel/90 xl:shadow-[0_18px_50px_rgba(59,68,75,0.16)] xl:backdrop-blur-xl">
+        <aside className={[judgeMode ? 'hidden' : 'hidden xl:flex', 'min-h-0 xl:absolute xl:bottom-5 xl:right-5 xl:top-5 xl:z-20 xl:w-80 xl:overflow-hidden xl:rounded-2xl xl:border xl:border-white/80 xl:bg-lab-panel/90 xl:shadow-[0_18px_50px_rgba(59,68,75,0.16)] xl:backdrop-blur-xl'].join(' ')}>
           <div className="flex h-full w-full flex-col">
             <div className="flex shrink-0 border-b border-lab-line" role="tablist" aria-label="Tools">
               {SIDE_TABS.map(({ id, label }) => (
@@ -343,7 +399,7 @@ export function Lab() {
 
       {/* The panels a phone can reach. */}
       <nav
-        className="flex shrink-0 border-t border-lab-line bg-lab-panel xl:hidden"
+        className={[judgeMode ? 'hidden' : 'flex', 'shrink-0 border-t border-lab-line bg-lab-panel xl:hidden'].join(' ')}
         aria-label="Panels"
       >
         {SHEET_BUTTONS.map(({ id, label }) => (
