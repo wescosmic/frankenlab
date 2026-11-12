@@ -3,9 +3,10 @@
 Everything for the Kiroween 2026 Devpost project page, in the order the form
 asks for it.
 
-The project story is in its own file, [`DEVPOST-STORY.md`](DEVPOST-STORY.md),
-so the whole of that file can be copied straight into the "About the project"
-field without picking up any of this checklist.
+The refreshed copy-paste package is in [`DEVPOST-SUBMISSION-UPDATED.md`](DEVPOST-SUBMISSION-UPDATED.md).
+The story section can be copied straight into the "About the project" field;
+the rest of the file contains the suggested category, pitch, links and video
+description.
 
 ---
 
