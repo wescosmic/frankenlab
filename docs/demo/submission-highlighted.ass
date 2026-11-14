@@ -1,0 +1,39 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Caption,Arial,42,&H00FFFFFF,&H0064E5C0,&H66030A12,&H99030A12,-1,0,0,0,100,100,0,0,1,3,2,1,72,800,66,1
+Style: Label,Arial,16,&H009DB4BD,&H0064E5C0,&H66030A12,&H99030A12,-1,0,0,0,100,100,2,0,1,2,1,1,72,800,118,1
+Style: Title,Arial,72,&H00FFFFFF,&H0064E5C0,&H66030A12,&H99030A12,-1,0,0,0,100,100,0,0,1,3,2,5,72,72,0,1
+Style: End,Arial,64,&H00FFFFFF,&H0064E5C0,&H66030A12,&H99030A12,-1,0,0,0,100,100,0,0,1,3,2,5,72,72,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:06.20,Title,,0,0,0,,{\fad(400,500)}{\c&H00FFFFFF&}Four sciences.\N{\c&H0064E5C0&}One simulation.{\N{\fs28\c&H00B8CAD2&}Build the bench. Run the story. Challenge every assumption.}
+Dialogue: 0,0:00:06.00,0:00:18.00,Label,,0,0,0,,THE HOOK
+Dialogue: 1,0:00:06.00,0:00:18.00,Caption,,0,0,0,,{\fad(350,350)}{\c&H0064E5C0&}One bench.{\c&H00FFFFFF&} Four sciences in motion.
+Dialogue: 0,0:00:18.00,0:00:35.00,Label,,0,0,0,,TRUST IS VISIBLE
+Dialogue: 1,0:00:18.00,0:00:35.00,Caption,,0,0,0,,{\fad(350,350)}Every component carries its {\c&H00689BFF&}confidence{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:35.00,0:00:49.00,Label,,0,0,0,,A RUN TELLS A STORY
+Dialogue: 1,0:00:35.00,0:00:49.00,Caption,,0,0,0,,{\fad(350,350)}Not noise. {\c&H00FFCA83&}Events with consequences.{\c&H00FFFFFF&}
+Dialogue: 0,0:00:49.00,0:01:01.00,Label,,0,0,0,,UNITS MATTER
+Dialogue: 1,0:00:49.00,0:01:01.00,Caption,,0,0,0,,{\fad(350,350)}Every number has a {\c&H0064E5C0&}name{\c&H00FFFFFF&} and a {\c&H0064E5C0&}unit{\c&H00FFFFFF&}.
+Dialogue: 0,0:01:01.00,0:01:18.00,Label,,0,0,0,,YOU STAY IN THE LOOP
+Dialogue: 1,0:01:01.00,0:01:18.00,Caption,,0,0,0,,{\fad(350,350)}Pause. Tune irrigation. {\c&H0064E5C0&}Recover the plant.{\c&H00FFFFFF&}
+Dialogue: 0,0:01:18.00,0:01:37.00,Label,,0,0,0,,CATALYSIS COMPARISON
+Dialogue: 1,0:01:18.00,0:01:37.00,Caption,,0,0,0,,{\fad(350,350)}Speed changes. {\c&H00689BFF&}The destination does not.{\c&H00FFFFFF&}
+Dialogue: 0,0:01:37.00,0:01:48.00,Label,,0,0,0,,BUILD ON THE BENCH
+Dialogue: 1,0:01:37.00,0:01:48.00,Caption,,0,0,0,,{\fad(350,350)}Ports. Assumptions. {\c&H0064E5C0&}Confidence.{\c&H00FFFFFF&}
+Dialogue: 0,0:01:48.00,0:02:00.00,Label,,0,0,0,,THE ASSISTANT
+Dialogue: 1,0:01:48.00,0:02:00.00,Caption,,0,0,0,,{\fad(350,350)}Answers from the run — {\c&H00FFCA83&}not guesses.{\c&H00FFFFFF&}
+Dialogue: 0,0:02:00.00,0:02:10.00,Label,,0,0,0,,THE FRANKENSTEIN PART
+Dialogue: 1,0:02:00.00,0:02:10.00,Caption,,0,0,0,,{\fad(350,350)}One graph. One clock. {\c&H0064E5C0&}Plug-in sciences.{\c&H00FFFFFF&}
+Dialogue: 0,0:02:10.00,0:02:22.33,Label,,0,0,0,,THE KIRO MOMENT
+Dialogue: 1,0:02:10.00,0:02:22.33,Caption,,0,0,0,,{\fad(350,350)}{\c&H00689BFF&}Science review changed the story.{\c&H00FFFFFF&}
+Dialogue: 2,0:02:10.00,0:02:22.33,Caption,,0,0,0,,{\an3\pos(1848,930)\fs22\bord2\shad1\c&H00FFFFFF&}{\b1}KIRO SCIENCE REVIEW{\b0}\NSoil physics checked against published data.\N{\c&H0064E5C0&}Timeline moved three days.{\c&H00FFFFFF&}
+Dialogue: 0,0:02:18.50,0:02:22.33,End,,0,0,0,,{\fad(450,250)}{\c&H00FFFFFF&}Challenge the model.\N{\fs27\c&H00B8CAD2&}FrankenLab · a playable experimental universe

@@ -1,0 +1,21 @@
+This is FrankenLab: four sciences, one simulation.
+
+A plant drinks a soil dry. The soil drives a sensor. The sensor drives a comparator. And the comparator lights an alert.
+
+Every component on this bench comes from a different discipline, and every component tells you how much it can be trusted. Electronics are solved with modified nodal analysis, not looked up from a table. Change the reference resistor, and the day the alarm fires moves with it.
+
+The run is a sequence of events, not a graph of noise. On day eleven, moisture falls below the threshold and the alert fires. On day twenty, the plant's vigour drops and growth stalls.
+
+Every quantity has a name and a unit: field capacity, wilting point, saturation, biomass, signal. Nothing here is a bare float.
+
+Now the plant is failing. Pause the run, turn irrigation up in the inspector, and press Run again. The medium recovers above its wilting point. The alert clears. The simulation is deterministic, and you stay in the loop.
+
+Here is the same reaction twice. One vessel has a catalyst eight times stronger. It reaches equilibrium in twelve minutes; the other takes one hundred and ten. Speed changes. The destination does not. Both products settle at zero point six one zero.
+
+You can build on the bench too. Drag in a component and it arrives with ports, assumptions, and a confidence badge.
+
+Our assistant reads the run. It quotes only produced values, then tells you what the answer is worth and which model to trust least.
+
+Biology, electronics, materials, and chemistry share one component graph and one clock. Each discipline is a plug-in. The simulation kernel has never heard of any of them.
+
+We built this with Kiro. Its science reviewer checked our soil physics against published data, found a field capacity below the published range, and moved the whole timeline three days. That is the point: a living simulation that can be challenged, corrected, and trusted one assumption at a time.

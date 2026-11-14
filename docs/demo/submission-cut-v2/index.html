@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #08111a; font-family: Arial, sans-serif; }
+      #root { position: relative; overflow: hidden; }
+      #a-roll { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(1.08) contrast(1.03); }
+      .wash { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3,10,18,.74) 0%, rgba(3,10,18,.02) 31%, rgba(3,10,18,.05) 60%, rgba(3,10,18,.85) 100%); pointer-events: none; }
+      .brand { position: absolute; left: 72px; top: 54px; color: #e8f2f6; letter-spacing: .24em; font-size: 22px; font-weight: 800; }
+      .brand small { color: #7c9aa7; font-size: 14px; letter-spacing: .14em; margin-left: 18px; font-weight: 500; }
+      .kiro { position: absolute; right: 72px; top: 52px; color: #b9d6df; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; }
+      .kiro b { color: #ff7b51; }
+      .title-card { position: absolute; left: 72px; top: 180px; width: 720px; color: white; }
+      .title-card .kicker { color: #64e5c0; text-transform: uppercase; letter-spacing: .2em; font-size: 18px; font-weight: 700; }
+      .title-card h1 { margin: 18px 0 14px; font-size: 82px; line-height: .95; letter-spacing: -.05em; }
+      .title-card p { color: #b8cad2; font-size: 26px; line-height: 1.3; max-width: 650px; }
+      .caption-wrap { position: absolute; left: 72px; bottom: 66px; width: 980px; color: white; }
+      .caption { position: absolute; left: 0; bottom: 0; opacity: 0; transform: translateY(22px); font-size: 42px; line-height: 1.08; font-weight: 700; letter-spacing: -.025em; text-shadow: 0 4px 22px rgba(0,0,0,.7); }
+      .caption .accent { color: #63e5c0; } .caption .orange { color: #ff9b68; } .caption .blue { color: #83c9ff; }
+      .caption .label { display: block; margin-bottom: 14px; color: #9db4bd; font-size: 15px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; }
+      .proof { position: absolute; right: 72px; bottom: 72px; width: 360px; padding: 18px 20px; border-left: 3px solid #64e5c0; background: rgba(5,17,26,.7); color: #c9d8dd; font-size: 16px; line-height: 1.4; }
+      .proof strong { display: block; color: #fff; font-size: 18px; margin-bottom: 5px; }
+      .end-card { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; opacity: 0; background: radial-gradient(circle at 50% 40%, #193b43 0%, #071019 62%); color: white; }
+      .end-card h2 { font-size: 76px; margin: 0 0 16px; letter-spacing: -.05em; } .end-card p { color: #9eb9c1; font-size: 24px; }
+      .progress { position: absolute; left: 72px; right: 72px; bottom: 34px; height: 3px; background: rgba(255,255,255,.18); } .progress i { display: block; height: 100%; width: 0; background: #64e5c0; }
+      .cursor { position: absolute; right: 74px; bottom: 130px; width: 18px; height: 18px; border: 2px solid #64e5c0; border-radius: 50%; box-shadow: 0 0 20px #64e5c0; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="142.33" data-width="1920" data-height="1080">
+      <video id="a-roll" class="clip" src="frankenlab-demo.mp4" playsinline data-start="0" data-duration="142.33" data-track-index="0" data-has-audio="true" volume="0.18"></video>
+      <audio id="voiceover" class="clip" src="submission-voiceover-final.wav" data-start="0" data-duration="142.33" data-track-index="1" volume="1"></audio>
+      <div id="wash" class="wash clip" data-start="0" data-duration="142.33" data-track-index="3"></div>
+      <div id="brand" class="brand clip" data-start="0" data-duration="142.33" data-track-index="4">FRANKENLAB <small data-layout-ignore="true">THE EXPERIMENTAL UNIVERSE</small></div>
+      <div id="kiro-mark" class="kiro clip" data-start="0" data-duration="142.33" data-track-index="4"><b>KIRO</b> BUILT · CHECKED · SHIPPED</div>
+      <div id="opening" class="title-card clip" data-start="0" data-duration="6.2" data-track-index="5"><div class="kicker">A playable scientific sandbox</div><h1>Four sciences.<br><span class="accent">One simulation.</span></h1><p>Build the bench. Run the story. Challenge every assumption.</p></div>
+      <div id="captions" class="caption-wrap clip" data-start="0" data-duration="142.33" data-track-index="2">
+        <div class="caption" id="c1"><span class="label">The hook</span><span class="accent">One bench.</span> Four sciences in motion.</div>
+        <div class="caption" id="c2"><span class="label">Trust is visible</span>Every component carries its <span class="orange">confidence</span>.</div>
+        <div class="caption" id="c3"><span class="label">A run tells a story</span>Not noise. <span class="blue">Events with consequences.</span></div>
+        <div class="caption" id="c4"><span class="label">Units matter</span>Every number has a <span class="accent">name</span> and a <span class="accent">unit</span>.</div>
+        <div class="caption" id="c5"><span class="label">You stay in the loop</span>Pause. Tune irrigation. <span class="accent">Recover the plant.</span></div>
+        <div class="caption" id="c6"><span class="label">Catalysis comparison</span>Speed changes. <span class="orange">The destination does not.</span></div>
+        <div class="caption" id="c7"><span class="label">Build on the bench</span>Ports. Assumptions. <span class="accent">Confidence.</span></div>
+        <div class="caption" id="c8"><span class="label">The assistant</span>Answers from the run — <span class="blue">not guesses.</span></div>
+        <div class="caption" id="c9"><span class="label">The Frankenstein part</span>One graph. One clock. <span class="accent">Plug-in sciences.</span></div>
+        <div class="caption" id="c10"><span class="label">The Kiro moment</span><span class="orange">Science review changed the story.</span></div>
+      </div>
+      <div id="proof" class="proof clip" data-start="130" data-duration="12" data-track-index="6"><strong>KIRO SCIENCE REVIEW</strong>Soil physics checked against published data. The timeline moved three days.</div>
+      <div id="cursor" class="cursor clip" data-start="130" data-duration="12" data-track-index="6"></div>
+      <div id="ending" class="end-card clip" data-start="138.5" data-duration="3.83" data-track-index="7"><div><h2>Challenge the model.</h2><p>FrankenLab · a playable experimental universe</p></div></div>
+      <div id="progress" class="progress clip" data-start="0" data-duration="142.33" data-track-index="8"><i id="progress-bar"></i></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo('#opening', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .8, ease: 'power2.out' }, .1);
+      tl.to('#opening', { opacity: 0, y: -12, duration: .7, ease: 'power2.in' }, 5.35);
+      const captions = ['#c1','#c2','#c3','#c4','#c5','#c6','#c7','#c8','#c9','#c10'];
+      const starts = [6,18,35,49,61,78,97,108,120,130]; const ends = [18,35,49,61,78,97,108,120,130,142];
+      captions.forEach((id, i) => { tl.fromTo(id, { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: .45, ease: 'power2.out' }, starts[i]); tl.to(id, { opacity: 0, y: -10, duration: .35, ease: 'power2.in' }, ends[i] - .45); });
+      tl.fromTo('#proof', { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: .5, ease: 'power2.out' }, 130.2);
+      tl.fromTo('#cursor', { opacity: 0, scale: .6 }, { opacity: 1, scale: 1, duration: .5 }, 130.35);
+      tl.to('#proof, #cursor', { opacity: 0, duration: .4 }, 138.1);
+      tl.fromTo('#ending', { opacity: 0 }, { opacity: 1, duration: .7, ease: 'power2.out' }, 138.5);
+      tl.to('#progress-bar', { width: '100%', duration: 142.33, ease: 'none' }, 0);
+      window.__timelines['main'] = tl;
+    </script>
+  </body>
+</html>
