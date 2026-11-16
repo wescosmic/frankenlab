@@ -21,6 +21,16 @@ function reset() {
 beforeEach(reset);
 
 describe('Wiring rules', () => {
+  it('does not add the same wire twice', () => {
+    const before = useLabStore.getState().experiment.connections.length;
+    const connected = useLabStore.getState().connect(
+      { componentId: 'substrate', portId: 'moisture' },
+      { componentId: 'sensor', portId: 'sense' },
+    );
+    expect(connected).toBe(false);
+    expect(useLabStore.getState().experiment.connections).toHaveLength(before);
+    expect(useLabStore.getState().notice).toMatch(/already connected/i);
+  });
   it('allows a wire the coupling rules sanction', () => {
     const issues = validateConnection(
       pristine,
@@ -105,6 +115,7 @@ describe('Building on the bench', () => {
   });
 
   it('makes a legal wire and says so', () => {
+    useLabStore.getState().removeConnection('c-substrate-sensor');
     const made = useLabStore
       .getState()
       .connect(
@@ -112,7 +123,7 @@ describe('Building on the bench', () => {
         { componentId: 'sensor', portId: 'sense' },
       );
     expect(made).toBe(true);
-    expect(useLabStore.getState().experiment.connections.length).toBe(pristine.connections.length + 1);
+    expect(useLabStore.getState().experiment.connections.length).toBe(pristine.connections.length);
   });
 
   it('refuses an illegal wire and says why in plain English', () => {
@@ -132,6 +143,7 @@ describe('Building on the bench', () => {
   });
 
   it('takes the wires off a part that is taken off the bench', () => {
+    useLabStore.getState().removeConnection('c-substrate-sensor');
     const made = useLabStore
       .getState()
       .connect(
@@ -167,6 +179,18 @@ describe('Building on the bench', () => {
     useLabStore.getState().selectConnection('c-substrate-sensor');
     expect(useLabStore.getState().selectedConnectionId).toBe('c-substrate-sensor');
     expect(useLabStore.getState().selectedId).toBeNull();
+  });
+
+  it('clamps added and moved parts to the table without restarting a run for movement', () => {
+    const id = useLabStore.getState().addComponent('electronics.led', { x: 100, y: -5, z: 100 });
+    expect(id).not.toBeNull();
+    const added = useLabStore.getState().experiment.components.find((part) => part.id === id);
+    expect(added?.position).toEqual({ x: 13.25, y: 0, z: 3.5 });
+    useLabStore.getState().start();
+    useLabStore.getState().moveComponent(id!, { x: -100, y: 100, z: -100 });
+    const moved = useLabStore.getState().experiment.components.find((part) => part.id === id);
+    expect(moved?.position).toEqual({ x: -13.25, y: 2.5, z: -3.5 });
+    expect(useLabStore.getState().status).toBe('running');
   });
 
   it('keeps the run reproducible after a part is added', () => {

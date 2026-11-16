@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { freeSpot } from '@/state/placement';
+import { clampToTable, freeSpot, TABLE_BOUNDS } from '@/state/placement';
 import { createBioCircuit } from '../src/scenarios/biocircuit';
 
 const flagship = createBioCircuit();
 
 describe('where a part goes when there is no pointer', () => {
+  it('keeps all three coordinates inside the tabletop working area', () => {
+    expect(clampToTable({ x: 99, y: -4, z: -99 })).toEqual({ x: TABLE_BOUNDS.x.max, y: TABLE_BOUNDS.y.min, z: TABLE_BOUNDS.z.min });
+    expect(clampToTable({ x: -99, y: 99, z: 99 })).toEqual({ x: TABLE_BOUNDS.x.min, y: TABLE_BOUNDS.y.max, z: TABLE_BOUNDS.z.max });
+  });
   it('puts a part on a spot of its own', () => {
     const spot = freeSpot(flagship.components.map((c) => c.position));
 

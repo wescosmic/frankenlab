@@ -88,6 +88,7 @@ export function Workbench() {
   const selectConnection = useLabStore((s) => s.selectConnection);
   const connect = useLabStore((s) => s.connect);
   const addComponent = useLabStore((s) => s.addComponent);
+  const moveComponent = useLabStore((s) => s.moveComponent);
 
   // Build the scene once.
   useEffect(() => {
@@ -100,6 +101,7 @@ export function Workbench() {
       onConnect: (source, target) => connect(source, target),
       onDropComponent: (type, position) => addComponent(type, position),
       onSelectConnection: (id) => selectConnection(id),
+      onMoveComponent: (id, position) => moveComponent(id, position),
     });
     sceneRef.current = scene;
 
@@ -164,7 +166,7 @@ export function Workbench() {
       scene.dispose();
       sceneRef.current = null;
     };
-  }, [select, selectConnection, connect, addComponent]);
+  }, [select, selectConnection, connect, addComponent, moveComponent]);
 
   // Rebuild the bench when the bench changes. The experiment object is
   // replaced for every edit, including edits that leave the geometry alone,

@@ -35,6 +35,24 @@
   --font-mono: 'SFMono-Regular', 'JetBrains Mono', Consolas, monospace;
 }
 
+/* The light lab is the default. Dark mode keeps the same discipline colours,
+   but gives the bench and the panels a richer, low-glare presentation. */
+[data-theme='dark'] {
+  --color-lab-void: #0b1118;
+  --color-lab-bg: #111a24;
+  --color-lab-panel: #15212d;
+  --color-lab-panel-raised: #1b2a38;
+  --color-lab-line: #2d4050;
+  --color-lab-line-bright: #557083;
+  --color-lab-text: #edf6f8;
+  --color-lab-muted: #b2c2c9;
+  --color-lab-dim: #8da2ac;
+  --color-lab-accent: #64d9c1;
+  --color-lab-accent-dim: #4eafa4;
+  --color-lab-alert: #ff9b68;
+  --color-lab-warn: #ff7f83;
+}
+
 @layer base {
   html,
   body {
@@ -48,6 +66,8 @@
       ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
+    font-size: 15px;
+    transition: background-color 160ms ease, color 160ms ease;
   }
 
   ::-webkit-scrollbar {
@@ -72,7 +92,7 @@
 @layer components {
   /* Small uppercase labels under plain-English headings. */
   .lab-label {
-    font-size: 10px;
+    font-size: 11px;
     line-height: 1.2;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -88,5 +108,20 @@
   .lab-value {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
+  }
+
+  .lab-hoverable {
+    transition: background-color 160ms ease, border-color 160ms ease,
+      color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  }
+
+  @media (hover: hover) {
+    .lab-hoverable:hover {
+      background-color: color-mix(in srgb, var(--color-lab-accent) 10%, transparent);
+      border-color: color-mix(in srgb, var(--color-lab-accent) 65%, var(--color-lab-line));
+      color: var(--color-lab-accent);
+      box-shadow: 0 6px 18px color-mix(in srgb, var(--color-lab-accent) 16%, transparent);
+      transform: translateY(-1px);
+    }
   }
 }

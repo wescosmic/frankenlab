@@ -84,7 +84,7 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
         id: 'plant',
         type: 'biology.plant',
         label: 'Plant',
-        position: { x: -4.0, y: 1.6, z: 0 },
+        position: { x: -4.0, y: 0, z: 1.6 },
         parameters: {
           max_biomass: { value: 1, unit: 'ratio' },
           growth_rate: { value: 0.08 },
@@ -97,7 +97,7 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
         id: 'nutrients',
         type: 'biology.nutrient-source',
         label: 'Nutrients',
-        position: { x: -6.2, y: 0.5, z: 0 },
+        position: { x: -6.2, y: 0, z: 0.5 },
         parameters: {
           capacity: { value: 1, unit: 'ratio' },
           // The reservoir regenerates more slowly than the plant draws, so the
@@ -112,7 +112,7 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
         id: 'irrigation',
         type: 'biology.moisture-source',
         label: 'Irrigation',
-        position: { x: -6.2, y: -1.3, z: 0 },
+        position: { x: -6.2, y: 0, z: -1.3 },
         parameters: {
           rate: { value: irrigationRate },
           label: { value: 'Irrigation' },
@@ -122,7 +122,7 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
         id: 'sensor',
         type: 'electronics.sensor',
         label: 'Moisture probe',
-        position: { x: -0.4, y: -0.3, z: 0 },
+        position: { x: -0.4, y: 0, z: -0.3 },
         parameters: {
           // A resistive soil probe conducts better when wet, so its
           // resistance is highest when the medium is dry.
@@ -135,7 +135,7 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
         id: 'battery',
         type: 'electronics.voltage-source',
         label: 'Battery',
-        position: { x: -0.4, y: -2.1, z: 0 },
+        position: { x: -0.4, y: 0, z: -2.1 },
         parameters: {
           voltage: { value: 5, unit: 'V' },
           label: { value: 'V1' },
@@ -145,7 +145,7 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
         id: 'divider',
         type: 'electronics.resistor',
         label: 'Reference resistor',
-        position: { x: -0.4, y: 1.5, z: 0 },
+        position: { x: -0.4, y: 0, z: 1.5 },
         parameters: {
           resistance: { value: 10000, unit: 'ohm' },
           label: { value: 'R1' },
@@ -155,7 +155,7 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
         id: 'comparator',
         type: 'electronics.comparator',
         label: 'Threshold comparator',
-        position: { x: 3.0, y: 0.4, z: 0 },
+        position: { x: 3.0, y: 0, z: 0.4 },
         parameters: {
           threshold: { value: comparatorThreshold, unit: 'ratio' },
           // Inverted: the comparator fires when the reading falls *below* the
@@ -168,7 +168,7 @@ export function createBioCircuit(options: BioCircuitOptions = {}): ExperimentDef
         id: 'alert',
         type: 'electronics.led',
         label: 'Alert LED',
-        position: { x: 5.6, y: 0.4, z: 0 },
+        position: { x: 5.6, y: 0, z: 0.4 },
         parameters: {
           forward_voltage: { value: 2, unit: 'V' },
           max_current: { value: 20, unit: 'mA' },

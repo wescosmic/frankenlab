@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { EXPERIMENTS } from '@/scenarios';
 import { createWorld } from '@/world';
-import { COMPONENT_MODEL_PATHS } from '@/visual-assets';
+import { COMPONENT_MODEL_PATHS, COMPONENT_THUMBNAIL_PATHS } from '@/visual-assets';
 
 const ROOT = join(__dirname, '..');
 
@@ -22,6 +22,17 @@ describe('presentation assets stay judge-ready', () => {
       .filter(({ model }) => !model || !existsSync(localAsset(model)));
 
     expect(missing).toEqual([]);
+  });
+
+  it('gives every component a distinct local inventory image', () => {
+    const definitions = createWorld().listComponents();
+    const missing = definitions.filter((definition) => {
+      const image = COMPONENT_THUMBNAIL_PATHS[definition.type];
+      return !image || !existsSync(localAsset(image));
+    });
+    expect(missing.map((definition) => definition.type)).toEqual([]);
+    const images = definitions.map((definition) => COMPONENT_THUMBNAIL_PATHS[definition.type]);
+    expect(new Set(images).size).toBe(images.length);
   });
 
   it('gives every experiment a first-run story', () => {

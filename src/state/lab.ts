@@ -33,7 +33,7 @@ import { findExperiment } from '@/scenarios';
 import { createWorld } from '@/world';
 import { LocalExplainProvider, type AssistantContext, type AssistantMessage } from '@/assistant/assistant';
 import { guardResponse } from '@/assistant/trust';
-import { freeSpot } from '@/state/placement';
+import { clampToTable, freeSpot } from '@/state/placement';
 
 export interface SeriesPoint {
   readonly t: number;
@@ -166,6 +166,8 @@ export interface LabStore {
   selectConnection(id: string | null): void;
   /** Open a different experiment from the catalogue. */
   loadExperiment(id: string): void;
+  /** Start with an empty tabletop for a user-built experiment. */
+  createFreshExperiment(): void;
   /** Change one of the experiment's environment variables. */
   setEnvironmentVariable(id: string, value: number): void;
   start(): void;
@@ -185,6 +187,8 @@ export interface LabStore {
    * @returns the new component's id.
    */
   addComponentHere(type: string): string | null;
+  /** Reposition a component without changing its model or connections. */
+  moveComponent(componentId: string, position: { x: number; y: number; z: number }): void;
   /** Wire two ports together. @returns true if the connection was made. */
   connect(source: PortRef, target: PortRef): boolean;
   /** Take a part off the bench, and any wire that was attached to it. */
@@ -357,6 +361,22 @@ export const useLabStore = create<LabStore>((set, get) => {
     },
 
     loadExperiment(id) {
+      if (id === 'build-your-own') {
+        const base = createBioCircuit();
+        rebuild({
+          ...base,
+          id: 'build-your-own',
+          name: 'My Experiment',
+          description: 'A clean workbench for assembling and running your own system.',
+          discipline: 'cross-disciplinary',
+          tags: ['custom', 'user-built'],
+          components: [],
+          connections: [],
+          trackedSeries: [],
+        });
+        set({ selectedId: null, selectedConnectionId: null, notice: 'Your bench is clear. Add parts, connect compatible ports, then run the experiment.' });
+        return;
+      }
       const entry = findExperiment(id);
       if (!entry) {
         set({ notice: `There is no experiment called "${id}".` });
@@ -368,6 +388,10 @@ export const useLabStore = create<LabStore>((set, get) => {
         selectedConnectionId: null,
         notice: `${entry.name} is on the bench.`,
       });
+    },
+
+    createFreshExperiment() {
+      get().loadExperiment('build-your-own');
     },
 
     setEnvironmentVariable(id, value) {
@@ -514,7 +538,7 @@ export const useLabStore = create<LabStore>((set, get) => {
         id: uniqueComponentId(current, type),
         type,
         parameters: defaultParameters(definition),
-        position,
+        position: clampToTable(position),
       };
 
       rebuild({ ...current, components: [...current.components, instance] });
@@ -531,8 +555,27 @@ export const useLabStore = create<LabStore>((set, get) => {
       return get().addComponent(type, spot);
     },
 
+    moveComponent(componentId, position) {
+      const { experiment: current } = get();
+      if (!current.components.some((component) => component.id === componentId)) return;
+      const components = current.components.map((component) =>
+        component.id === componentId ? { ...component, position: clampToTable(position) } : component,
+      );
+      // Moving a part is a presentation edit, so preserve the current run and
+      // readings instead of rebuilding the simulation underneath the pointer.
+      set({ experiment: { ...current, components } });
+    },
+
     connect(source, target) {
       const { experiment: current, registry: reg } = get();
+
+      if (current.connections.some((wire) =>
+        wire.source.componentId === source.componentId && wire.source.portId === source.portId &&
+        wire.target.componentId === target.componentId && wire.target.portId === target.portId
+      )) {
+        set({ notice: 'Those ports are already connected.' });
+        return false;
+      }
 
       // The bench and the simulator must agree about what a legal wire is, so
       // the bench asks the kernel's own validator.

@@ -20,9 +20,9 @@ export function createBioBattery(): ExperimentDefinition {
     ],
     components: [
       { id: 'nutrients', type: 'biology.nutrient-source', label: 'Nutrient feed', position: { x: -4, y: 0, z: 0 }, parameters: { capacity: { value: 1, unit: 'ratio' }, regeneration: { value: 0, unit: 'ratio' }, label: { value: 'Feed' } } },
-      { id: 'cell', type: 'biology.bio-battery', label: 'Bio-cell', position: { x: -1.5, y: 0.8, z: 0 }, parameters: { max_voltage: { value: 3.2, unit: 'V' }, label: { value: 'BIO-1' } } },
-      { id: 'load', type: 'electronics.resistor', label: 'Load resistor', position: { x: 1.5, y: 0.8, z: 0 }, parameters: { resistance: { value: 220, unit: 'ohm' }, label: { value: 'RLOAD' } } },
-      { id: 'indicator', type: 'electronics.led', label: 'Indicator LED', position: { x: 4.2, y: 0.8, z: 0 }, parameters: { forward_voltage: { value: 2, unit: 'V' }, max_current: { value: 20, unit: 'mA' }, label: { value: 'LED1' } } },
+      { id: 'cell', type: 'biology.bio-battery', label: 'Bio-cell', position: { x: -1.5, y: 0, z: 0.8 }, parameters: { max_voltage: { value: 3.2, unit: 'V' }, label: { value: 'BIO-1' } } },
+      { id: 'load', type: 'electronics.resistor', label: 'Load resistor', position: { x: 1.5, y: 0, z: 0.8 }, parameters: { resistance: { value: 220, unit: 'ohm' }, label: { value: 'RLOAD' } } },
+      { id: 'indicator', type: 'electronics.led', label: 'Indicator LED', position: { x: 4.2, y: 0, z: 0.8 }, parameters: { forward_voltage: { value: 2, unit: 'V' }, max_current: { value: 20, unit: 'mA' }, label: { value: 'LED1' } } },
     ],
     connections: [
       { id: 'c-feed-cell', source: { componentId: 'nutrients', portId: 'availability' }, target: { componentId: 'cell', portId: 'nutrient' }, channel: 'nutrient', transfer: { kind: 'identity' }, label: 'Nutrient activity' },

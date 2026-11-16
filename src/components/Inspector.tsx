@@ -12,6 +12,8 @@ import React from 'react';
 import { useLabStore } from '@/state/lab';
 import { DISCIPLINE_COLOURS } from '@/world';
 import { CONFIDENCE_BLURB, CONFIDENCE_LABEL } from '@/confidence';
+import { clampToTable, TABLE_BOUNDS } from '@/state/placement';
+import { validateConnection } from '@/kernel/validate';
 
 /**
  * The experiment's environment.
@@ -75,11 +77,15 @@ export function Inspector() {
   const selectedConnectionId = useLabStore((s) => s.selectedConnectionId);
   const setParameter = useLabStore((s) => s.setParameter);
   const setSubstrate = useLabStore((s) => s.setSubstrate);
+  const moveComponent = useLabStore((s) => s.moveComponent);
+  const connect = useLabStore((s) => s.connect);
   const removeComponent = useLabStore((s) => s.removeComponent);
   const removeConnection = useLabStore((s) => s.removeConnection);
 
   // Track whether the last parameter change caused a restart.
   const [lastRestarted, setLastRestarted] = React.useState(false);
+  const [wireOutput, setWireOutput] = React.useState('');
+  const [wireTarget, setWireTarget] = React.useState('');
 
   const instance = experiment.components.find((c) => c.id === selectedId) ?? null;
   const definition = instance ? registry.tryGetDefinition(instance.type) : null;
@@ -161,6 +167,26 @@ export function Inspector() {
   const attachedWires = experiment.connections.filter(
     (c) => c.source.componentId === instance.id || c.target.componentId === instance.id,
   );
+  const outputPorts = definition.ports.filter((port) => port.direction === 'output');
+  const selectedOutput = outputPorts.find((port) => port.id === wireOutput) ?? outputPorts[0];
+  const wireOptions = selectedOutput ? experiment.components.flatMap((other) => {
+    if (other.id === instance.id) return [];
+    const otherDefinition = registry.tryGetDefinition(other.type);
+    if (!otherDefinition) return [];
+    return otherDefinition.ports.filter((port) => port.direction === 'input').flatMap((port) => {
+      const source = { componentId: instance.id, portId: selectedOutput.id };
+      const target = { componentId: other.id, portId: port.id };
+      if (experiment.connections.some((wire) => wire.source.componentId === source.componentId && wire.source.portId === source.portId && wire.target.componentId === target.componentId && wire.target.portId === target.portId)) return [];
+      const issues = validateConnection(experiment, registry, source, target);
+      const rule = registry.findRule(
+        { discipline: definition.discipline, channel: selectedOutput.channel },
+        { discipline: otherDefinition.discipline, channel: port.channel },
+      );
+      return issues.some((issue) => issue.severity === 'error') || !rule
+        ? [] : [{ key: `${other.id}:${port.id}`, label: `${other.label ?? otherDefinition.name} → ${port.label}`, target }];
+    });
+  }) : [];
+  const chosenWire = wireOptions.find((option) => option.key === wireTarget) ?? wireOptions[0];
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
@@ -177,6 +203,60 @@ export function Inspector() {
           {definition.description}
         </p>
       </div>
+
+      <div className="border-b border-lab-line px-4 py-3">
+        <div className="lab-label">Position on table</div>
+        <p className="mt-1 text-[12px] leading-snug text-lab-muted">Drag the part on the bench, or set its coordinates here. Y raises it above the surface.</p>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {(['x', 'y', 'z'] as const).map((axis) => (
+            <label key={axis} className="text-[12px] font-medium uppercase text-lab-muted">
+              {axis}
+              <input
+                key={`${instance.id}-${axis}-${instance.position?.[axis] ?? 0}`}
+                type="number"
+                min={TABLE_BOUNDS[axis].min}
+                max={TABLE_BOUNDS[axis].max}
+                step="0.1"
+                defaultValue={Number((instance.position?.[axis] ?? 0).toFixed(2))}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') event.currentTarget.blur();
+                  if (event.key === 'Escape') { event.currentTarget.value = String(instance.position?.[axis] ?? 0); event.currentTarget.blur(); }
+                }}
+                onBlur={(event) => {
+                  const value = Number(event.currentTarget.value);
+                  const next = clampToTable({ ...instance.position, [axis]: Number.isFinite(value) ? value : instance.position?.[axis] ?? 0 });
+                  event.currentTarget.value = String(next[axis]);
+                  moveComponent(instance.id, next);
+                }}
+                aria-label={`${axis.toUpperCase()} coordinate for ${instance.label ?? definition.name}`}
+                className="mt-1 block w-full rounded-md border border-lab-line bg-lab-panel-raised px-2 py-2 text-[13px] text-lab-text focus-visible:outline-2 focus-visible:outline-lab-accent"
+              />
+            </label>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] text-lab-dim">X −13.25 to 13.25 · Y 0 to 2.5 · Z −3.5 to 3.5</p>
+      </div>
+
+      {outputPorts.length > 0 && <div className="border-b border-lab-line px-4 py-3">
+        <div className="lab-label">Connect a wire</div>
+        <p className="mt-1 text-[12px] leading-snug text-lab-muted">Choose an output and a compatible input. You can also drag between the colored dots on the bench.</p>
+        <div className="mt-3 space-y-2">
+          <label className="block text-[12px] text-lab-muted">From output
+            <select value={selectedOutput?.id ?? ''} onChange={(event) => { setWireOutput(event.target.value); setWireTarget(''); }} className="mt-1 w-full rounded-md border border-lab-line bg-lab-panel-raised px-2 py-2 text-[13px] text-lab-text">
+              {outputPorts.map((port) => <option key={port.id} value={port.id}>{port.label}</option>)}
+            </select>
+          </label>
+          <label className="block text-[12px] text-lab-muted">To input
+            <select value={chosenWire?.key ?? ''} onChange={(event) => setWireTarget(event.target.value)} disabled={wireOptions.length === 0} className="mt-1 w-full rounded-md border border-lab-line bg-lab-panel-raised px-2 py-2 text-[13px] text-lab-text disabled:opacity-50">
+              {wireOptions.length === 0 && <option value="">No compatible inputs available</option>}
+              {wireOptions.map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}
+            </select>
+          </label>
+          <button type="button" disabled={!chosenWire || !selectedOutput} onClick={() => {
+            if (chosenWire && selectedOutput) connect({ componentId: instance.id, portId: selectedOutput.id }, chosenWire.target);
+          }} className="w-full rounded-md bg-lab-accent px-3 py-2 text-[13px] font-semibold text-white hover:bg-lab-accent-dim disabled:cursor-not-allowed disabled:opacity-50">Connect parts</button>
+        </div>
+      </div>}
 
       <div className="border-b border-lab-line px-4 py-3">
         <div className="lab-label">How much to trust it</div>

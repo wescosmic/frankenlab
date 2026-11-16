@@ -54,7 +54,7 @@ export function createThresholdAlarm(options: ThresholdAlarmOptions = {}): Exper
         id: 'battery',
         type: 'electronics.voltage-source',
         label: 'Battery',
-        position: { x: -3.2, y: -1.2, z: 0 },
+        position: { x: -3.2, y: 0, z: -1.2 },
         parameters: {
           voltage: { value: 5, unit: 'V' },
           label: { value: 'V1' },
@@ -64,7 +64,7 @@ export function createThresholdAlarm(options: ThresholdAlarmOptions = {}): Exper
         id: 'probe',
         type: 'electronics.sensor',
         label: 'Probe',
-        position: { x: -3.2, y: 0.6, z: 0 },
+        position: { x: -3.2, y: 0, z: 0.6 },
         parameters: {
           // A fixed probe: the same resistance wet or dry, so the only thing
           // the user can move is the reference resistor and the threshold.
@@ -79,7 +79,7 @@ export function createThresholdAlarm(options: ThresholdAlarmOptions = {}): Exper
         id: 'reference',
         type: 'electronics.resistor',
         label: 'Reference resistor',
-        position: { x: 0.4, y: 0.6, z: 0 },
+        position: { x: 0.4, y: 0, z: 0.6 },
         parameters: {
           resistance: { value: referenceResistance, unit: 'ohm' },
           label: { value: 'R1' },
