@@ -1,22 +1,19 @@
 # FrankenLab
 
 **The experimental universe.** An interactive scientific sandbox where
-electronics, biology, materials and chemistry share one component graph and
-one simulation kernel.
+electronics, biology, materials, chemistry and environmental controls share
+one component graph and one simulation kernel.
 
 Build it. Break it. Discover it.
-
-![The bench, the alert lit and the timeline showing the alert firing](docs/images/the-bench-alert.png)
 
 **Try it now:** [frankenlab.vercel.app](https://frankenlab.vercel.app) — no install,
 no API key, nothing to sign up for. It works on a phone: the bench and its
 readings stay on the screen, and the catalogue, the inspector and the assistant
 slide up from the bottom when you want them.
 
-**Watch it work:** [the 2:22 demo](docs/demo/frankenlab-demo.mp4)
-— the run, the recovery, the catalyst, the assistant, the named rules that
-carry the experiment, and the Kiro moment that moved the whole story three
-days.
+**Watch it work:** [the 2:02 submission film](docs/demo/submission-cut-v7/frankenlab-submission-v10.mp4)
+— the flagship run, experiment picker, inspector, discovery tools, and a fresh
+battery-and-LED build.
 
 ---
 
@@ -27,8 +24,7 @@ the interesting experiments live in the gaps between subjects.
 
 So FrankenLab has a **shared simulation kernel** that knows nothing about any
 science. A discipline is a plugin that supplies component definitions and a
-step function. Adding a fifth discipline — chemistry — touched no kernel
-code at all.
+step function. Adding chemistry touched no kernel code.
 
 That is what makes the Frankenstein claim structurally true rather than
 aspirational. An electrical netlist and a logistic growth curve genuinely do
@@ -78,12 +74,34 @@ rule leaves out. It is derived from the live graph, so cutting a wire removes
 the rule that wire was carrying. Open the Threshold Alarm and it says nothing
 crosses over, because in that experiment nothing does.
 
-![The couplings panel, listing the declared rules carrying the flagship](docs/images/couplings.png)
+## The current workbench
+
+The desktop interface puts the experiment on a Three.js tabletop, with the
+component inventory on the left and the Inspector or Assistant on the right.
+The first-run guide introduces the flagship. The top bar holds the experiment
+picker, Judge Mode, a persistent light/dark icon toggle, run/pause, reset, and
+slow/fast controls. Both side panels can collapse into floating buttons; Judge
+Mode clears them away for a focused view.
+
+![Current FrankenLab workbench with the component inventory, first-run guide, inspector, and run controls](docs/images/workbench-current.png)
+
+**Experiments** opens a modal with seven ready-to-run experiments and a
+**Build your own experiment** option. The parts inventory is grouped by
+discipline, with collapsible sections, product-style thumbnails where
+available, and add controls. Selecting a component on the tabletop opens its
+Inspector, where settings, assumptions, confidence, connections, and table
+position can be reviewed. On phones, Parts, Inspect, and Ask open in bottom
+sheets while the bench and readings remain visible.
+
+The results strip has seven tabs: **Readings**, **Timeline**,
+**Measurements**, **Couplings**, **Snapshots**, **Compare**, and **Discover**.
+Snapshots can be named and compared during the current session. Discover
+sweeps a bounded parameter range locally and ranks the resulting measurements.
 
 ## Seven experiments, not one
 
-The bench opens with a catalogue, because a sandbox with a single experiment
-in it is a demonstration.
+The top-bar **Experiments** picker offers seven ready-to-run benches, because
+a sandbox with a single experiment in it is a demonstration.
 
 | Experiment | What it shows |
 | ---------- | ------------- |
@@ -95,16 +113,20 @@ in it is a demonstration.
 | **Enzyme Optimisation** | Explore how temperature and acidity shape a catalytic system. |
 | **Water Purification** | Assemble a membrane, filter media and separator into a purification train. |
 
-Runs can be saved as named snapshots and compared side by side. **Discovery
-Mode** sweeps a bounded model parameter locally, ranks the trials, and reports
-the best outcome with the experiment's weakest confidence level.
+Runs can be saved as named snapshots and compared side by side in the current
+session. **Discover** sweeps a bounded model parameter locally, ranks the
+trials, and reports the best outcome with the experiment's weakest confidence
+level.
 
-The component inventory now spans living cultures, enzymes, membranes, gas
+The component inventory spans electronics, biology, chemistry, materials, and
+environmental controls. It includes living cultures, enzymes, membranes, gas
 exchange, pH measurement, catalyst beds, heat baths, separators, capacitors,
 photovoltaic cells, motors, data loggers, roots, greenhouses, compost reactors,
-filter media, thermal mass, electrodes, light sources and temperature chambers.
-Each part carries a confidence level, physical ports and a technical inventory
-visual with an accessible fallback silhouette.
+filter media, thermal mass, electrodes, light sources, and temperature
+chambers. Catalogue entries use distinct product-style thumbnails where
+available. The Three.js bench uses local GLB assets for many components and
+procedural representations for others; scene appearance is illustrative.
+Every component declares physical ports, model confidence, and assumptions.
 
 The catalysis comparison is the sharpest of the three. The equilibrium is not
 guessed at from a rate that looks small: the mass-action law gives a quadratic
@@ -120,15 +142,17 @@ heading. Measured by `scripts/measure-catalysis.ts`:
 The two vessels finish 0.000043 mol/L apart. The catalyst changed the speed
 and not the destination, and the numbers say so.
 
-![Two reaction vessels, one catalysed and one not, with their measurements](docs/images/catalysis.png)
-
 ## Build it yourself
 
-Parts are dragged from the catalogue onto the bench and wired by dragging
-between the dots on them. The bench and the simulator share one validator, so
-a wire refused on the bench is refused for exactly the same reason. A refused
-wire explains itself in plain English: *"Trigger" is an input on LED, so
-nothing comes out of it.*
+Choose **Build your own experiment** in the top-bar Experiments modal to start
+with a clear tabletop. Add a battery and LED from the inventory, then connect
+the battery's output to the LED's input. Place parts by dragging them onto the
+bench or using the add button, reposition them within the table bounds, and
+set their X, Y, and Z coordinates in the Inspector. Wires can be drawn between
+compatible port dots or made from the Inspector's guided **Connect parts**
+controls. The same port validator checks both paths, and rejected connections
+explain why they are incompatible. Press **Run** to see the result; pause, edit,
+and run again to explore another setup.
 
 ## Principles
 
@@ -152,8 +176,6 @@ And the guard runs on every reply, whoever wrote it. A number the simulation
 did not produce is removed from the answer, and the removal is stated. A whole
 number at or below 1 is left alone, because "day 1" and "one step" are far more
 often writing than a measurement. A decimal is checked however small it is.
-
-![The assistant's reply, ending with what it is worth](docs/images/assistant.png)
 
 **Scientific honesty is a product feature.** Every component carries a
 confidence level and states its own assumptions in plain English:
@@ -182,25 +204,18 @@ npm install
 npm run dev          # http://localhost:4310
 ```
 
-Then open the laboratory, press **Run**, and watch the plant drink the medium
-dry while the readout falls and the alarm lights. The run takes about a
-minute at the default speed, which is slow enough to follow: the alert goes
-off on day 11, growth stalls on day 20 and the medium wilts on day 21.
-**Fast** gets to the end state in about six seconds.
+Open **Experiments**, choose **Project BioCircuit**, then press **Run**. Watch
+the medium dry, the probe reading fall, and the alert light when its comparator
+threshold is crossed. **Slow** takes about a minute for the full run;
+**Fast** finishes in a few seconds. Pause at any point, adjust irrigation in
+the Inspector, and resume to see the medium recover and the alert switch off.
 
-And it can be saved. Pause the run, turn the irrigation up in the inspector,
-and carry on: the medium comes back above its wilting point, the timeline
-records the recovery, and the LED goes out. The simulation computes, the
-timeline shows what happened, and you decide what to do about it.
-
-Under the bench there are four tabs. **Readings** shows the headline numbers
-for whichever experiment is open and their history. **Timeline** lists every
-moment the simulation reported, in order, with a severity and a plain-English
-explanation. **Measurements** lists every quantity the kernel produced,
-grouped by the part it came from, with its unit. **Couplings** lists the named
-rules carrying the experiment across its disciplines.
-
-![Every quantity the simulation produced, named and with its unit](docs/images/measurements.png)
+Use **Readings** for headline values and history, **Timeline** for ordered
+observations, **Measurements** for model outputs with units, and **Couplings**
+for the named cross-discipline rules represented by the live graph. **Snapshots**
+stores named run states in the current browser session; **Compare** displays
+two saved snapshots; **Discover** runs a bounded local sweep over a component
+parameter. These snapshots are not synced to an account or saved to a server.
 
 Other commands:
 
@@ -216,7 +231,8 @@ npm run measure      # re-measure every day this project quotes
 npm run measure:nutrients # the nutrient reservoir's balance
 ```
 
-Requires Node 20.9 or newer. No API key. No database. No network calls.
+Requires Node 20.9 or newer. Local simulation and discovery need no API key or
+backend service; experiment results are computed in the browser.
 
 Source: [github.com/wescosmic/frankenlab](https://github.com/wescosmic/frankenlab),
 MIT licensed.
@@ -244,8 +260,9 @@ skills in `.kiro/` will load.
 | ------------------- | --------------------------------------------------------- |
 | Specs               | `.kiro/specs/frankenlab/` — requirements, design, tasks     |
 | Steering            | `.kiro/steering/` — product, architecture, standards, integrity |
-| Specialist agents   | `.kiro/agents/` — kernel guardian, engine builder, science reviewer, UI integrator, and the lead that delegates to them |
+| Specialist agents   | `.kiro/agents/` — kernel guardian, engine builder, science and judge reviewers, UI integrator, and lab lead |
 | Hooks               | `.kiro/hooks/` — session context, lint on save, destructive-shell guard, verify on stop |
+| MCP and powers      | `.kiro/settings/mcp.json` and `.kiro/powers/frankenlab/` — workspace tools and reusable engineering workflows |
 
 ```bash
 /spec view frankenlab tasks      # read the spec
@@ -253,11 +270,14 @@ skills in `.kiro/` will load.
 /agent swap kernel-guardian      # or work with a specialist
 ```
 
-**Kiro drives MiniMax.** MiniMax M2.5 is in Kiro's own model catalogue at
-0.25x credit cost. Pick it with `/model`. You cannot supply your own MiniMax
-API key to Kiro: there is no custom provider or base URL setting. If you want
-another agent driving Kiro, that is ACP or the headless JSON-lines mode, not a
-provider setting.
+The CLI was the main implementation surface: briefs were run headlessly
+through `scripts/kiro-run.mjs`, with agents and verification hooks. Kiro IDE
+was used for spec work and visual review of the 3D bench. Kiro Web was
+evaluated but did not implement this local project, and Crew runs were
+attempted but did not complete. After the Kiro account reached its monthly
+request limit, some phases were finished by hand. The linked write-up records
+the outcomes and limits of each surface rather than presenting incomplete
+runs as completed work.
 
 Full procedure, including the scripted one-shot pass and the ACP wiring, in
 [docs/CLI-WORKFLOW.md](docs/CLI-WORKFLOW.md).
@@ -285,7 +305,8 @@ React + Three.js  ──▶  workbench store  ──▶  KERNEL  ──▶  disc
    (UI layer)          (application)       (domain-      (electronics,
                                            agnostic)      biology,
                                                             materials,
-                                                            chemistry)
+                                                            chemistry,
+                                                            environment)
 ```
 
 The rule that makes it work: **dependencies point downward only.** The kernel
@@ -342,8 +363,7 @@ appears in the catalogue, the validator and the workbench.
 npm test
 ```
 
-182 tests across fifteen files. The interesting ones are the property-based
-invariants in `tests/properties/`:
+The test suite includes property-based invariants in `tests/properties/`:
 
 - The source delivers exactly the power the resistors dissipate.
 - A divider output always lies between the rails.
@@ -389,12 +409,15 @@ And the contracts that keep the product honest:
 - The biology is a teaching model, not a crop simulator.
 - The electronics solver is DC resistive nodal analysis. There is no
   capacitance, no inductance and no transient behaviour.
-- The assistant uses a deterministic local explainer. A live model provider
-  is not wired up, though the trust guard is already in front of it.
-- Runs are not persisted and cannot be compared side by side yet.
-- Most of this was built with Kiro agents, but two phases were built by hand
-  because the Kiro account's monthly quota ran out. The full account is in
-  [docs/KIRO-WRITEUP.md](docs/KIRO-WRITEUP.md).
+- The assistant uses a deterministic local explainer; a live language-model
+  provider is not wired up.
+- Named snapshots and comparisons work in the current session, but are not
+  synced or persisted to an account or server.
+- Simulation and discovery run locally in the browser. There is no connector
+  for rented cloud CPU/GPU compute.
+- Some phases were completed by hand after the Kiro account's monthly request
+  quota was exhausted. The full, candid account of Kiro's use and the work
+  that did not complete is in [docs/KIRO-WRITEUP.md](docs/KIRO-WRITEUP.md).
 - FrankenLab is a learning environment. It does not replace a laboratory.
 
 ## Licence
