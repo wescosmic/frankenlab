@@ -33,7 +33,7 @@ describe('Wiring rules', () => {
   });
   it('allows a wire the coupling rules sanction', () => {
     const issues = validateConnection(
-      pristine,
+      { ...pristine, connections: pristine.connections.filter(wire => !(wire.target.componentId === 'sensor' && wire.target.portId === 'sense')) },
       registry,
       { componentId: 'substrate', portId: 'moisture' },
       { componentId: 'sensor', portId: 'sense' },

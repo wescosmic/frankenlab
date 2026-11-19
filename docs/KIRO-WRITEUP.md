@@ -96,7 +96,7 @@ surface. The same steering files, hooks, custom agents and skills that the CLI
 loads in this repository are the ones the Web surface loads. We did not have to
 maintain a second copy of anything.
 
-### The Crew surface did the unattended work
+### The Crew surface was attempted for unattended work
 
 Kiro Crew was installed from the Windows desktop installer and runs a Gateway
 on `localhost:5476`. It is not a separate product from the CLI. Crew starts
@@ -501,8 +501,10 @@ So two phases were built by hand instead of by an agent:
   port contract test, the assistant's confidence footer and the ungrounded
   number guard in the UI.
 
-Everything else was built by Kiro agents, and the `.kiro/` directory is the
-evidence for that.
+The early Kiro workflow is recorded in `.kiro/` and the briefs referenced above.
+Later UI, media, integration and regression work also used Codex. In particular,
+the November 17 catalogue audit and solver fixes were implemented with Codex,
+not a completed Kiro Crew run. See `docs/COMPONENT-AUDIT.md` for that scope.
 
 The honest cost is worth stating plainly. The hand-built phases are the two
 that most needed a second pair of eyes, and the second pair of eyes was

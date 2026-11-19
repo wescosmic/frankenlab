@@ -6,7 +6,7 @@
  * ambitious version on the shared workbench.
  */
 
-import type { ExperimentDefinition } from '@/kernel/types';
+import type { Connection, ExperimentDefinition, PortChannel } from '@/kernel/types';
 
 const part = (id: string, type: string, label: string, x: number, y: number) => ({
   id,
@@ -14,6 +14,11 @@ const part = (id: string, type: string, label: string, x: number, y: number) => 
   label,
   position: { x, y, z: 0 },
   parameters: { label: { value: label } },
+});
+
+const wire = (source: string, output: string, target: string, input: string, channel: PortChannel): Connection => ({
+  id: `${source}-${output}-${target}-${input}`, source: { componentId: source, portId: output },
+  target: { componentId: target, portId: input }, channel, transfer: { kind: 'identity' },
 });
 
 export function createMicrobialFuelCell(): ExperimentDefinition {
@@ -32,12 +37,19 @@ export function createMicrobialFuelCell(): ExperimentDefinition {
       { key: 'electrode.activity', label: 'Electrode activity', colour: '#c2a084' },
     ],
     components: [
+      part('feed', 'biology.nutrient-source', 'Nutrient feed', -6, 0),
       part('culture', 'biology.microbial-culture', 'Culture flask', -3.5, 0),
       part('electrode', 'materials.electrode', 'Bio-electrode', -0.5, 0),
       part('capacitor', 'electronics.capacitor', 'Storage capacitor', 2.5, 0),
       part('logger', 'electronics.data-logger', 'Data logger', 5, 0),
     ],
-    connections: [],
+    connections: [
+      wire('feed', 'availability', 'culture', 'nutrient', 'nutrient'),
+      wire('culture', 'waste', 'electrode', 'electrolyte', 'concentration'),
+      wire('electrode', 'positive', 'capacitor', 'terminal_a', 'electrical-potential'),
+      wire('electrode', 'negative', 'capacitor', 'terminal_b', 'electrical-potential'),
+      wire('electrode', 'activity', 'logger', 'signal', 'signal'),
+    ],
     environment: { variables: [] },
   };
 }
@@ -46,7 +58,7 @@ export function createEnzymeOptimisation(): ExperimentDefinition {
   return {
     id: 'enzyme-optimisation',
     name: 'Enzyme Optimisation',
-    description: 'Explore how substrate, pH and temperature shape a catalytic system.',
+    description: 'Explore substrate conversion and temperature-dependent enzyme activity; the probe reports normalised sample acidity.',
     discipline: 'biology + chemistry',
     tags: ['biology', 'chemistry', 'discovery'],
     modelVersion: '1.0.0',
@@ -58,12 +70,18 @@ export function createEnzymeOptimisation(): ExperimentDefinition {
       { key: 'ph.measurement', label: 'pH measurement', colour: '#f0b350' },
     ],
     components: [
+      part('feed', 'chemistry.substance', 'Substrate feed', -6, 0),
       part('enzyme', 'biology.enzyme', 'Catalytic enzyme', -3.5, 0),
       part('ph', 'chemistry.ph-meter', 'pH meter', -0.5, 0),
       part('bath', 'chemistry.heat-bath', 'Heat bath', 2.5, 0),
       part('logger', 'electronics.data-logger', 'Data logger', 5, 0),
     ],
-    connections: [],
+    connections: [
+      wire('feed', 'concentration', 'enzyme', 'substrate', 'concentration'),
+      wire('feed', 'concentration', 'ph', 'sample', 'concentration'),
+      wire('bath', 'temperature', 'enzyme', 'temperature', 'temperature'),
+      wire('enzyme', 'activity', 'logger', 'signal', 'signal'),
+    ],
     environment: { variables: [] },
   };
 }
@@ -85,12 +103,18 @@ export function createWaterPurification(): ExperimentDefinition {
       { key: 'separator.separated', label: 'Separated fraction', colour: '#f0b350' },
     ],
     components: [
+      part('feed', 'chemistry.substance', 'Mixture feed', -7, 0),
       part('membrane', 'biology.membrane', 'Selective membrane', -4, 0),
       part('filter', 'materials.filter-media', 'Filter media', -1, 0),
       part('separator', 'chemistry.separator', 'Separator', 2, 0),
-      part('logger', 'electronics.data-logger', 'Data logger', 5, 0),
+      part('probe', 'chemistry.ph-meter', 'Filtrate probe', 5, 0),
     ],
-    connections: [],
+    connections: [
+      wire('feed', 'concentration', 'membrane', 'feed', 'concentration'),
+      wire('membrane', 'permeate', 'filter', 'mixture', 'concentration'),
+      wire('filter', 'filtrate', 'separator', 'mixture', 'concentration'),
+      wire('separator', 'separated', 'probe', 'sample', 'concentration'),
+    ],
     environment: { variables: [] },
   };
 }

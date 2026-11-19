@@ -64,7 +64,6 @@ export function Lab() {
   const [judgeMode, setJudgeMode] = useState(false);
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
   const [toolsCollapsed, setToolsCollapsed] = useState(false);
-  const selectedId = useLabStore((s) => s.selectedId);
   // Keep the first render identical on the server and in the browser. The
   // persisted preference is applied after hydration so localStorage and
   // matchMedia can never change the server-rendered markup.
@@ -111,11 +110,14 @@ export function Lab() {
     window.localStorage.setItem('frankenlab-tools-collapsed', String(collapsed));
   };
 
-  useEffect(() => {
-    if (!selectedId) return;
+  useEffect(() => useLabStore.subscribe((state, previous) => {
+    if (!state.selectedId || state.selectedId === previous.selectedId) return;
     setTab('inspector');
-    if (window.matchMedia('(min-width: 1280px)').matches) collapseTools(false);
-  }, [selectedId]);
+    if (window.matchMedia('(min-width: 1280px)').matches) {
+      setToolsCollapsed(false);
+      window.localStorage.setItem('frankenlab-tools-collapsed', 'false');
+    }
+  }), []);
 
   const running = status === 'running';
   const experimentEntry = EXPERIMENTS.find((entry) => entry.id === experiment.id) ?? EXPERIMENTS[0]!;

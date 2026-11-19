@@ -128,6 +128,7 @@ function validateConnections(
   for (const connection of experiment.connections) {
     if (issues.length > MAX_CONNECTION_ERRORS) break;
     checkConnection(connection, byId, registry, issues);
+    checkOccupiedInput(experiment, registry, connection.target, connection.id, issues);
   }
 
   // Required ports must be connected.
@@ -291,6 +292,8 @@ export function validateConnection(
     experiment.components.map((c) => [c.id, c]),
   );
 
+  checkOccupiedInput(experiment, registry, target, undefined, issues);
+
   checkConnection(
     {
       id: 'proposed',
@@ -305,6 +308,21 @@ export function validateConnection(
   );
 
   return issues;
+}
+
+function checkOccupiedInput(
+  experiment: ExperimentDefinition, registry: ComponentRegistry, target: Connection['target'],
+  exclude: string | undefined, issues: ValidationIssue[],
+): void {
+  const part = experiment.components.find(part => part.id === target.componentId);
+  const port = part && registry.tryGetDefinition(part.type)?.ports.find(port => port.id === target.portId);
+  // Bidirectional circuit terminals are shared nodes. Scalar inputs have no
+  // mixing rule: accepting two drivers silently discarded the first value.
+  if (port?.direction !== 'input' || port.channel === 'electrical-potential') return;
+  if (experiment.connections.some(wire => wire.id !== exclude && wire.target.componentId === target.componentId && wire.target.portId === target.portId)) {
+    issues.push({ severity: 'error', code: 'input-already-connected', componentId: target.componentId,
+      message: `"${port.label}" already has a source. Disconnect it before adding another.` });
+  }
 }
 
 function validateEnvironment(environment: Environment, issues: ValidationIssue[]): void {

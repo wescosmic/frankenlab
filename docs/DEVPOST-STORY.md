@@ -1,99 +1,93 @@
-## Inspiration
+### Inspiration
 
-Most science simulators teach one subject. You open a circuit simulator, a
-plant growth model, or a soil chemistry tool. Each is good at its own thing
-and stops dead at its edge. The interesting experiments live in the gaps
-between subjects, so FrankenLab's software has no edges.
+Most science simulators teach one subject at a time and stop at their
+discipline boundary. FrankenLab explores the experiments between those
+boundaries by putting the plant, growing medium, circuit and chemistry in one
+inspectable model.
 
-## What it does
+### What it does
 
-FrankenLab is a playable scientific sandbox. Electronics, biology, materials
-and chemistry share one component graph and one simulation kernel. No API key,
-no network calls.
+FrankenLab is a playable scientific sandbox. Users choose an experiment, drag
+components onto a 3D laboratory bench, connect ports, run the simulation, change
+parameters, inspect readings, and compare outcomes.
 
-The flagship, **Project BioCircuit**, is a plant, a soil, a probe, a comparator
-and an LED. A plant drinks the soil dry, the moisture changes the probe's
-resistance, the probe sits on the tap of a voltage divider, and when the tap
-voltage crosses the comparator's threshold the LED lights.
+In **Project BioCircuit**, a plant transpires, the medium dries, moisture
+changes a resistive probe, and the probe changes a voltage divider. A comparator
+turns the solved divider voltage into an LED alert. The electronics uses
+modified nodal analysis, so changing the reference resistor changes the real
+operating point instead of changing a scripted threshold.
 
-None of those parts know about each other. The chain is real because the
-electronics is **solved**, not scripted: modified nodal analysis. Change the
-reference resistor and the day the alarm fires moves with it. That is the test
-of an honest simulator.
+The catalogue has seven ready-to-run experiments: Project BioCircuit, Threshold
+Alarm, Catalysis Comparison, Bio-Battery, Microbial Fuel Cell, Enzyme
+Optimisation, and Water Purification. It also includes discovery mode, snapshots,
+run comparison, timeline and measurement tabs, a Couplings panel, and an
+assistant. Start an empty bench to build your own experiment, connect a battery
+to an LED, and reposition parts with bounded XYZ controls. Dark/light mode,
+collapsible panels and a presentation mode support exploration and demos.
 
-The assistant is never the source of a number. Every answer ends with what it
-is worth: the weakest model in the experiment, named. A number the simulation
-did not produce is removed, and the removal stated.
+The assistant is grounded in simulation output. It removes unsupported numbers
+and ends with the confidence limit of the weakest model on the bench.
 
-## How we built it
+The interface is a spatial lab: a bright room, neutral grid work surface,
+floating panels, local GLB models, and animated signal pulses make causality
+visible. CC0 beaker, pipette, cell-membrane and benchtop pH-meter models are
+credited in the repository.
 
-The kernel knows about components, ports, connections, parameters, state and
-time, and nothing about electricity, plants, soil or chemistry. A discipline is
-a plugin that supplies component definitions and a step function, and never
-imports another discipline. Cross-discipline behaviour lives in named coupling
-rules, and the **Couplings** tab shows the ones carrying the experiment right
-now, derived from the live graph.
+### How we built it
 
-The **Kiro CLI** was the build surface: most implementation work was a brief
-in `.kiro/briefs/` and a headless run against it. The IDE was the spec desk;
-Kiro Crew drove the CLI over the Agent Client Protocol. Five custom agents,
-four working hooks, a numbered spec, four steering documents, an MCP server,
-property-based tests and custom powers live in `.kiro/`.
+The kernel knows components, ports, connections, parameters, state, time and
+units, but not plants, electricity or chemistry. Each discipline is a plugin
+with deterministic behaviour. Cross-discipline behaviour lives in named
+coupling rules, so the app can show exactly what quantity crosses a boundary.
 
-There are three experiments, not one: a sandbox with a single experiment is a
-demonstration. **Threshold Alarm** is the same circuit with the biology
-removed; **Catalysis Comparison** solves equilibrium from the mass-action law,
-and a catalyst moves the speed and provably not the destination: after four
-hours the two vessels hold 0.609569 and 0.609612 mol/L apart.
+The frontend uses Next.js, React, TypeScript, Tailwind and Three.js. Vitest and
+fast-check protect the simulation contracts.
 
-## Challenges we ran into
+Kiro CLI was the main implementation surface, with specs, steering, specialist
+agents and verification hooks committed in `.kiro/`. Kiro IDE supported spec
+work and review. Web was evaluated; Crew runs were attempted but did not
+complete. Codex assisted with later UI, media, integration and regression fixes.
+The repository documents these contributions and limitations explicitly.
 
-The **guard hook** was written to exit `1` to block a destructive shell
-command, because the documentation says any non-zero exit code blocks. It does
-not: we tested it against a real `git reset --hard HEAD` and the reset
-happened. The exit code is now `2`, which does block. Exit code `1` only warns.
+Kiro's science reviewer checked the soil parameters against published references
+and caught a field-capacity value that was too low for sand. Correcting it moved
+the observable story: the alert fires on day 11, growth stalls on day 20, and
+the medium wilts on day 21. Those values come from measurement scripts and
+tests, not presentation copy.
 
-Part-way through, the Kiro account's monthly request quota ran out
-(`MONTHLY_REQUEST_COUNT`, model-independent, which is how you tell a request
-count from a spend limit). Two phases were built by hand instead: the
-drag-and-drop bench, and the chemistry work with the trust guard. Those two
-phases most needed a second pair of eyes.
+### Challenges we ran into
 
-## Accomplishments that we're proud of
+The hardest problem was making disciplines interact without turning the kernel
+into special cases. Explicit ports, channels and coupling rules let one
+validator power both the UI and simulator.
 
-**An agent found our soil physics was wrong.** The `science-reviewer` agent
-checked the substrate presets against the Minnesota PCA Stormwater Manual and
-Cornell's soil water notes. Sand's field capacity was 0.12, below the published
-range of 0.17 to 0.25. The `engine-builder` agent applied the decision table
-and re-measured every day the project quoted, because changing the physics
-moves the timeline. Before the audit the alert fired on day 8 and the medium
-wilted on day 16. After it, the alert fires on day 11, growth stalls on day 20
-and the medium wilts on day 21. Those days are in the Timeline tab, the spec,
-the code and the README, and they agree because a measurement script measures
-them.
+Visual plausibility also hid a broken model: the comparator once used a raw
+sensed value instead of the solved divider voltage. Contract tests and browser
+review made the electronics genuinely load-bearing.
 
-## What we learned
+### Accomplishments that we're proud of
 
-That a guard is worth nothing until it is tested against the thing it is
-supposed to stop. We learned it the expensive way, with a real `git reset`.
+- Four sciences share one deterministic component graph and simulation kernel.
+- Biology and materials drive solved electronics in the flagship experiment.
+- The Couplings panel makes the Frankenstein claim inspectable.
+- Catalysis changes reaction speed without changing equilibrium.
+- Discovery mode turns the sandbox into a reproducible exploration tool.
+- The local assistant cites simulation data and filters unsupported numbers.
+- The catalogue uses recognizable local GLB models instead of generic shapes.
+- The public MIT repository contains the Kiro configuration and 225 automated
+  tests.
 
-That "reproducible" has to mean a measurement script and not a claim in a
-README: we now have `measure`, `measure:catalysis` and `measure:nutrients`, and
-182 tests across fifteen files asserting the days the project quotes.
+### What's next for FrankenLab
 
-That the confidence of an experiment is the confidence of its weakest model,
-and saying so beats a number with no caveat. A model off the bench cannot
-weaken your experiment.
+The submission includes a guided first-run path, presentation mode, experiment
+story cards and a 2:02 walkthrough. The audit covers all 34 component types and
+515 compatible directed port pairs. Expanded catalogue models are illustrative
+teaching models, not calibrated scientific predictions; limitations are visible
+in the app and documented in the repository.
 
-## What's next for FrankenLab
+After the hackathon, the open-source local simulator remains the free core. A
+paid education tier can add saved experiments, classroom workspaces, missions
+and lab reports. A professional tier can add private component libraries, team
+collaboration, versioned notebooks, audit trails, APIs and larger sweeps.
 
-Runs are not persisted yet, so two runs cannot be compared side by side. That is
-next, and it would answer "what if the soil had been sand".
-
-A conductor cannot yet sit inside a circuit, so a material does not decide an
-operating point. The electronics solver is DC resistive nodal analysis with no
-capacitance and no transients. The chemistry model is one reversible reaction
-and the biology is a teaching model.
-
-**[Try it live](https://frankenlab.vercel.app)** or read
-**[the code](https://github.com/wescosmic/frankenlab)**.
+Persistence and workspaces come before cloud CPU/GPU execution.

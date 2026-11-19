@@ -2,7 +2,18 @@
 
 What is built, what is next, and what each piece waits for.
 
-**Last updated:** 2026-11-01.
+**Release status updated:** 2026-11-18.
+
+The hackathon feature set is frozen: 34 component types, seven connected presets,
+an empty-bench builder, XYZ placement, guided wiring, dark/light mode, collapsible
+panels, presentation mode and a 2:02 final film. The component audit passes 225
+tests and exercises 515 compatible directed port pairs. See
+[COMPONENT-AUDIT.md](COMPONENT-AUDIT.md) for scope and model limitations.
+
+Remaining release gates are deployment smoke checks and completing the Devpost
+entry with a public YouTube URL. Persistence, classroom workspaces, billing and
+cloud compute are post-hackathon work. The phase notes below are development
+history; they do not supersede the release status or audit.
 
 ---
 
@@ -19,7 +30,7 @@ What is built, what is next, and what each piece waits for.
 | Observations | **Working** | The kernel collects them; the four engines report them. |
 | AI assistant | **Working, offline** | Five tools, a deterministic local explainer, and a trust guard on every reply. |
 | 3D workbench | **Working** | Scene, selection, animation, labels, drag-and-drop wiring. |
-| Timeline, measurements and couplings | **Working** | Four tabs under the bench. |
+| Timeline, measurements and couplings | **Working** | Readings, timeline, measurements, couplings, snapshots, compare and discovery. |
 | Experiment catalogue | **Seven experiments** | BioCircuit, Threshold Alarm, Catalysis Comparison, Bio-Battery, Microbial Fuel Cell, Enzyme Optimisation, Water Purification. |
 | Experiment builder | **Working** | Parts are dragged onto the bench and wired by dragging. |
 | Run comparison | **Working** | Named snapshots and side-by-side tracked-series comparison. |
@@ -61,7 +72,7 @@ in the ten seconds a judge spends deciding whether the project is real.
 | 1 | The run tells a story: observations, a timeline, every measurement | Medium | Done |
 | 2 | The user builds experiments: drag-and-drop wiring, live parameters | High | Done |
 | 3 | More science: chemistry end to end, a catalyst, three experiments | Medium-high | Done |
-| 4 | The assistant earns trust: the guard, the confidence badge | Medium | Done, except run comparison |
+| 4 | The assistant earns trust: the guard, the confidence badge | Medium | Done; run comparison is implemented |
 | 5 | Ship and present: deployment, video, README, screenshots, public repo | Medium | Done. Live at frankenlab.vercel.app |
 | 6 | Make the thesis visible: the couplings panel | Medium | Done |
 
@@ -154,7 +165,7 @@ solve, which is a larger change than the remaining time allows.
 
 ## Phase 4 — The assistant earns trust
 
-**Done, except run comparison.**
+**Done; run comparison is implemented.**
 
 - **Every answer ends with what to trust.** The confidence of an experiment
   is the confidence of its weakest model, so the answer names the part that

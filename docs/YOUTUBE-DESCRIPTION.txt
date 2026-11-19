@@ -1,0 +1,10 @@
+FrankenLab is a playable scientific sandbox where biology, materials, electronics and chemistry share one simulation graph.
+
+In Project BioCircuit, a plant drinks a growing medium dry. The medium changes a resistive probe, the probe changes a voltage divider, and a comparator turns the solved circuit voltage into an LED alert. Change the reference resistor or irrigation and the result changes for a physical reason.
+
+The demo shows the current 3D lab, cross-discipline simulation, inspectable results, Kiro-assisted development and the ability to build your own experiments. Models carry explicit confidence limits; this is a teaching sandbox, not a calibrated prediction tool.
+
+Try it: https://frankenlab.vercel.app
+Code: https://github.com/wescosmic/frankenlab
+
+#KiroweenHackathon26

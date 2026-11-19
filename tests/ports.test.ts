@@ -264,7 +264,13 @@ function createHarness(): ExperimentDefinition {
 }
 
 describe('the port contract', () => {
-  const harness = createHarness();
+  const legacy = createHarness();
+  const included = new Set(legacy.components.map(part => part.type));
+  const harness: ExperimentDefinition = { ...legacy, components: [...legacy.components,
+    ...registry.listComponents().filter(def => !included.has(def.type)).map(def => ({
+      id: def.type, type: def.type, parameters: {}, position: { x: 0, y: 0, z: 0 },
+    })),
+  ] };
 
   it('covers every component type in the world', () => {
     const worldTypes = new Set(
@@ -274,11 +280,7 @@ describe('the port contract', () => {
     );
     const harnessTypes = new Set(harness.components.map((instance) => instance.type));
 
-    // The harness exercises the load-bearing legacy graph. Catalogue parts are
-    // intentionally left unconnected here so adding an inventory component
-    // cannot make the flagship circuit singular before the user wires it.
-    expect([...harnessTypes].every((type) => worldTypes.has(type))).toBe(true);
-    expect(worldTypes.size).toBeGreaterThanOrEqual(harnessTypes.size);
+    expect(harnessTypes).toEqual(worldTypes);
   });
 
   it('runs the whole world on one graph without breaking the circuit solve', () => {

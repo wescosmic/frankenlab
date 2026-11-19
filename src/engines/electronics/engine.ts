@@ -246,12 +246,14 @@ export const electronicsNetworkSolver: NetworkSolver = {
           resistance: closed ? 1e-3 : 1e9,
           kind: 'switch',
         });
-      } else if (component.type === 'electronics.voltage-source' || component.type === 'biology.bio-battery') {
-        const dynamicVoltage = (state as { outputs?: Record<string, Quantity> }).outputs?.voltage?.value;
+      } else if (['electronics.voltage-source', 'biology.bio-battery', 'electronics.photovoltaic-cell', 'materials.electrode', 'electronics.capacitor'].includes(component.type)) {
+        const published = (state as { outputs?: Record<string, Quantity> }).outputs;
+        const dynamicVoltage = published?.voltage?.value ?? published?.positive?.value;
+        const storage = component.type === 'electronics.capacitor';
         sources.push({
           componentId: component.id,
-          nodeA: terminals[0] ?? `${component.id}:positive`,
-          nodeB: terminals[1] ?? `${component.id}:negative`,
+          nodeA: storage ? `${component.id}:voltage` : terminals[0] ?? `${component.id}:positive`,
+          nodeB: storage ? `${component.id}:reference` : terminals[1] ?? `${component.id}:negative`,
           voltage: params.__param_voltage ?? dynamicVoltage ?? 5,
         });
       }
@@ -319,13 +321,20 @@ export const electronicsNetworkSolver: NetworkSolver = {
 
     // --- Ground ----------------------------------------------------------
     // The negative terminal of the first source is the reference node.
-    const groundTerminal = sources[0]?.nodeB;
-    const groundIndex = groundTerminal !== undefined ? nodeOf(groundTerminal) : -1;
+    // Each disconnected powered circuit needs its own reference. A spare
+    // battery must not make the other circuit's matrix singular.
+    const islandGrounds = new Map<number, number>();
+    for (const source of sources) {
+      const node = nodeOf(source.nodeB);
+      const island = islands.find(node);
+      if (!islandGrounds.has(island)) islandGrounds.set(island, node);
+    }
+    const groundIndices = new Set(islandGrounds.values());
 
     // Map node indices onto the reduced (non-ground) unknown set.
     const reducedIndex = new Map<number, number>();
     for (const index of liveNodes) {
-      if (index === groundIndex) continue;
+      if (groundIndices.has(index)) continue;
       reducedIndex.set(index, reducedIndex.size);
     }
 
@@ -396,7 +405,7 @@ export const electronicsNetworkSolver: NetworkSolver = {
 
     const voltageAt = (node: number): number => {
       if (!solved) return 0;
-      if (node === groundIndex) return 0;
+      if (groundIndices.has(node)) return 0;
       const index = reducedIndex.get(node);
       if (index === undefined) return 0;
       return solution[index] ?? 0;
@@ -414,6 +423,10 @@ export const electronicsNetworkSolver: NetworkSolver = {
     }
 
     sources.forEach((source, index) => {
+      const sourceType = input.components.find(part => part.id === source.componentId)?.type;
+      // Catalogue sources own their bounded dynamic outputs; only use their
+      // previous operating point to solve the connected circuit this tick.
+      if (sourceType && ['electronics.photovoltaic-cell', 'materials.electrode', 'electronics.capacitor'].includes(sourceType)) return;
       const branch = nodeCount + index;
       const current = solved ? (solution[branch] ?? 0) : 0;
       // The terminals are published under their own port ids. An ideal source

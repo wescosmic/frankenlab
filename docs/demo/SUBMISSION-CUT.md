@@ -1,23 +1,23 @@
-# FrankenLab submission cut
+# Final submission film
 
-`frankenlab-submission-cut.mp4` is the 2:22, 1920×1080 submission video.
+The approved final film is **`submission-cut-v7/frankenlab-submission-v10.mp4`**.
+It is 2:02 (122 seconds), with the updated UI, build-your-own experiment segment,
+aligned highlighted captions, one male narration track and an original local
+instrumental bed. Older cuts in this directory are historical, not upload targets.
 
-It keeps the existing product walkthrough and adds:
+Upload title: **FrankenLab | Four sciences. One bench. | Kiroween 2026**
 
-- an opening hook and closing card;
-- voiceover mixed with the original product audio at a low bed level;
-- highlighted captions with teal, blue, and orange proof-point emphasis;
-- an explicit Kiro science-review beat in the final twelve seconds.
+Use the suggested demo description in `docs/DEVPOST-SUBMISSION-UPDATED.md`.
+Publish to YouTube with Public visibility, then copy the watch URL into Devpost.
+A repository video file alone does not replace the required public YouTube link.
 
-The HyperFrames source composition is in `submission-cut-v2/`. The final encode
-was produced from the same checked composition design with FFmpeg because this
-machine's low-memory HyperFrames renderer is limited to roughly one to two
-frames per second for this long 1080p capture.
+## Source and provenance
 
-## Files
+- Editable composition: `submission-cut-v7/index.html`.
+- Narration/caption timing: `submission-cut-v7/word-timestamps.json`.
+- Instrumental source: `submission-cut-v7/assets/frankenlab-ambient.wav`.
+- Local music generation: `scripts/generate-frankenlab-music.py`.
+- Final audio mix: `scripts/mix-submission-music.py`.
+- Narration uses the local Kokoro male voice; no HeyGen login was used.
 
-- `frankenlab-submission-cut.mp4` — upload this to YouTube/Devpost.
-- `submission-cut-v2/index.html` — editable HyperFrames composition.
-- `submission-highlighted.ass` — editable highlighted-caption source.
-- `submission-voiceover.txt` — narration script.
-- `submission-voiceover-final.wav` — generated narration source.
+The final MP4 is already tracked in Git. Do not replace it with an older cut.
