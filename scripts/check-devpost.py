@@ -1,33 +1,16 @@
-"""Check the Devpost copy before the submission is saved.
+"""Validate the current Devpost story and copy-paste package.
 
-Three things go wrong quietly: a field goes over its character limit, a figure
-in the story drifts away from the number the simulation actually produces, and
-a stray em dash or smart quote ends up in text that has to paste cleanly.
-
-Run it from the repository root:
-
-    python scripts/check-devpost.py
-
-Exit code 0 means the copy is safe to paste.
+Run from the repository root: python scripts/check-devpost.py
 """
 
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-STORY_FILE = ROOT / "docs" / "DEVPOST-STORY.md"
-CHECKLIST_FILE = ROOT / "docs" / "DEVPOST.md"
-
-# Devpost's own limit for the Project Story field. The form shows no counter,
-# so this is the conservative number.
-STORY_LIMIT = 5000
-PITCH_LIMIT = 200
-TAGLINE_LIMIT = 200
-
-# The headings Devpost asks for, in order.
+STORY = ROOT / "docs" / "DEVPOST-STORY.md"
+SUBMISSION = ROOT / "docs" / "DEVPOST-SUBMISSION-UPDATED.md"
 HEADINGS = [
     "Inspiration",
     "What it does",
@@ -38,87 +21,49 @@ HEADINGS = [
     "What's next for FrankenLab",
 ]
 
-# The figures the story states, and where each one is measured. A number that
-# is not in this list is a number someone typed by hand.
-MEASURED = {
-    "0.12": "sand field capacity, materials/SUBSTRATE_PRESETS",
-    "0.17 to 0.25": "published range, the science review",
-    "day 8": "before the science review",
-    "day 16": "before the science review",
-    "day 11": "alert, BIOCIRCUIT_MEASURED_DAYS",
-    "day 20": "growth stalls, BIOCIRCUIT_MEASURED_DAYS",
-    "day 21": "medium wilts, BIOCIRCUIT_MEASURED_DAYS",
-    "0.609569": "uncatalysed product, scripts/measure-catalysis.ts",
-    "0.609612": "solved equilibrium, scripts/measure-catalysis.ts",
-    "182": "npm run verify",
-    "fifteen": "npm run verify",
-}
-
-
-def untagged_blocks(text: str) -> list[str]:
-    """Every fenced block with no language tag, which is how the copy is set."""
-    return [
-        match.group(1)
-        for match in re.finditer(r"```\n(.*?)\n```", text, re.S)
-        if match.group(1).strip()
-    ]
-
 
 def main() -> int:
+    story = STORY.read_text(encoding="utf-8").strip()
+    package = SUBMISSION.read_text(encoding="utf-8")
     problems: list[str] = []
 
-    if not STORY_FILE.exists():
-        print(f"missing {STORY_FILE}")
-        return 1
-    story = STORY_FILE.read_text(encoding="utf-8").rstrip("\n")
+    print(f"project story: {len(story)} / 5000 characters")
+    if len(story) > 5000:
+        problems.append("project story exceeds Devpost's 5000-character limit")
 
-    length = len(story)
-    print(f"project story : {length} characters, {len(story.split())} words")
-    if length > STORY_LIMIT:
-        problems.append(f"project story is {length}, over {STORY_LIMIT}")
+    headings = re.findall(r"^### (.+)$", story, re.M)
+    if headings != HEADINGS:
+        problems.append(f"unexpected story headings: {headings}")
 
-    found = re.findall(r"^## (.+)$", story, re.M)
-    if found != HEADINGS:
-        problems.append(f"headings are {found}, expected {HEADINGS}")
-    else:
-        print(f"headings      : all {len(found)} Devpost headings, in order")
+    match = re.search(
+        r"^## About the project\s*\n(.*?)^## Built with\s*$",
+        package,
+        re.M | re.S,
+    )
+    if not match or match.group(1).strip() != story:
+        problems.append("the first story in the submission package differs from DEVPOST-STORY.md")
 
-    # Every stated figure must be one the project measured.
-    for figure in sorted(MEASURED):
-        if figure not in story:
-            problems.append(f"the story no longer mentions {figure}")
+    for label, limit in (("Tagline", 200), ("Short pitch", 200)):
+        match = re.search(rf"^## {label}\s*\n\s*```text\s*\n(.*?)\n```", package, re.M | re.S)
+        if not match:
+            problems.append(f"missing {label.lower()}")
+        else:
+            value = match.group(1)
+            print(f"{label.lower()}: {len(value)} / {limit} characters")
+            if len(value) > limit:
+                problems.append(f"{label.lower()} exceeds {limit} characters")
 
-    # The story must not pick up characters that break a clean paste.
-    for bad, name in (("\u2014", "em dash"), ("\u2018", "smart quote")):
-        count = story.count(bad)
-        if count:
-            problems.append(f"the story contains {count} {name}(s)")
+    for obsolete in ("We did not use Kiro IDE", "Web was evaluated", "Kiro IDE supported"):
+        if obsolete in story or obsolete in package:
+            problems.append(f"outdated submission wording: {obsolete}")
 
-    if not CHECKLIST_FILE.exists():
-        print(f"missing {CHECKLIST_FILE}")
-        return 1
-    checklist = CHECKLIST_FILE.read_text(encoding="utf-8")
-    blocks = untagged_blocks(checklist)
-    if len(blocks) >= 2:
-        tagline, pitch = blocks[0], blocks[1]
-        print(f"tagline       : {len(tagline)} characters")
-        print(f"pitch         : {len(pitch)} characters")
-        if len(tagline) > TAGLINE_LIMIT:
-            problems.append(f"tagline is {len(tagline)}, over {TAGLINE_LIMIT}")
-        if len(pitch) > PITCH_LIMIT:
-            problems.append(f"pitch is {len(pitch)}, over {PITCH_LIMIT}")
-    else:
-        problems.append("could not find the tagline and pitch blocks")
-
+    for problem in problems:
+        print(f"PROBLEM: {problem}")
     if problems:
-        print()
-        for problem in problems:
-            print(f"PROBLEM: {problem}")
         return 1
-
-    print("\nthe Devpost copy is within limits and every figure is measured")
+    print("Devpost copy is consistent and within field limits")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

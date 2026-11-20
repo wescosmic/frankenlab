@@ -7,8 +7,7 @@ surface for the hackathon.
 
 ## 1. The decision
 
-**Use the Kiro CLI as the primary surface. Keep the IDE for spec authoring and
-anything visual.**
+**Use the Kiro CLI as the primary Kiro surface. Review visual work in the browser.**
 
 This is not a downgrade, and it is not a workaround. Three reasons:
 
@@ -29,7 +28,7 @@ shape that falls out of the actual tooling:
 
 | Surface | What it is genuinely good at in this build |
 | ------- | ------------------------------------------ |
-| IDE    | Authoring specs, the 3D scene, the inspector |
+| IDE    | Not used for this project |
 | CLI    | The build loop, parallel sub-agents, the scripted sweep |
 | Crew   | Unattended overnight runs, schedules |
 | Web    | A second machine, if you have one |

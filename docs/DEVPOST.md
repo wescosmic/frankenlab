@@ -1,7 +1,9 @@
 # Devpost submission
 
-Everything for the Kiroween 2026 Devpost project page, in the order the form
-asks for it.
+Earlier submission preparation notes. The current submitted copy is in
+[`DEVPOST-SUBMISSION-UPDATED.md`](DEVPOST-SUBMISSION-UPDATED.md), and the current
+film is `docs/demo/submission-cut-v7/frankenlab-submission-v10.mp4`. The older
+pitch and upload instructions below are retained as history.
 
 The refreshed copy-paste package is in [`DEVPOST-SUBMISSION-UPDATED.md`](DEVPOST-SUBMISSION-UPDATED.md).
 The story section can be copied straight into the "About the project" field;
@@ -103,10 +105,8 @@ Regenerate them with `python scripts/make-gallery.py`.
 *Project details, step 3. YouTube only, public or unlisted, and only the first
 three minutes are reviewed.*
 
-The file is `docs/demo/frankenlab-demo.mp4`, 2 minutes 22 seconds, which is
-inside the limit. It has to be uploaded to YouTube by hand because there is no
-YouTube connector in this environment, and then the URL goes in the field and
-the `Demo:` line of the social post.
+This section documents the earlier cut. The submitted film is the 2:02 cut at
+`docs/demo/submission-cut-v7/frankenlab-submission-v10.mp4`.
 
 ### The upload, ready to make
 
@@ -157,12 +157,9 @@ Once the video is up, paste the URL into the `Demo:` line of both versions in
 
 ## Notes
 
-- The story covers all eight Kiro surfaces the rules ask about: CLI, IDE, Web
-  (evaluated and honestly not used, for the reasons in `docs/KIRO-WRITEUP.md`),
-  Crew, custom agents, hooks, spec-driven development, steering documents, MCP,
-  property-based testing and powers. The stage one gate is a pass or fail on
-  applying Kiro, so it is named in the first line of the Kiro section rather
-  than buried.
+- The submitted story describes Kiro CLI use, the committed specs, steering,
+  agents and hooks, and the incomplete Crew runs. The Kiro write-up records the
+  broader workflow and its limits.
 - Every number in the story is measured by a script in `scripts/`, not written
   by hand, and the tests assert them. Do not hand-edit a figure in the story
   without re-running the script that produced it.

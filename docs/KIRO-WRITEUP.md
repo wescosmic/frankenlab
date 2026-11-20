@@ -15,8 +15,8 @@ four **configuration surfaces** — custom agents, hooks, MCP and Kiro powers, i
 sections 5 to 8. Spec-driven development and steering docs, the other two things
 the rules name, have their own sections at 3 and 4.
 
-Every claim here is checkable against the repository. The `.kiro/` directory is
-the evidence.
+The repository contains the configuration and code described here. It does not
+prove that every configured feature was invoked in a Kiro session.
 
 > **One thing to read first.** Part-way through the build, the Kiro account's
 > monthly request quota was exhausted. Every agent run after that failed with
@@ -35,10 +35,10 @@ shared between them. What changes is where the work runs and who approves it.
 
 | Surface | Where it ran | What it was used for here | The thing that made it different |
 | ------- | ------------ | ------------------------ | --------------------------------- |
-| Kiro IDE | The developer's machine | Authoring the spec, reviewing the 3D scene | It is a live, collaborative surface. You watch the agent work in the same window as the code. |
+| Kiro IDE | The developer's machine | Not used for this project | No IDE use is claimed. |
 | Kiro CLI | The developer's machine | Almost every implementation task | It has a headless mode. `kiro-cli chat --v3 --no-interactive --output-format stream-json` returns machine-readable events, so a build can be scripted and a run can be resumed. The IDE has no equivalent. |
 | Kiro Web | Kiro's cloud sandboxes | Evaluated, not used to build | It clones from GitHub or GitLab, runs in an isolated sandbox and delivers a pull request. It is for delegating, not for a local checkout that is not yet public. |
-| Kiro Crew | The developer's machine | Unattended multi-step task runs | It is a layer on top of the CLI. Crew starts `kiro-cli acp` and drives it over the Agent Client Protocol. What it adds is persistence: runs survive a closed laptop, and each step is verified by a command. |
+| Kiro Crew | The developer's machine | Attempted; runs did not complete | It is a layer on top of the CLI. Crew starts `kiro-cli acp` and drives it over the Agent Client Protocol. |
 
 ### The CLI was the build surface
 
@@ -69,13 +69,10 @@ kiro-cli chat --v3 --no-interactive --output-format stream-json "<prompt>"
 runs the agent headlessly in the repository, streams the events, and reports
 which hooks fired. It is how every phase of this build was executed.
 
-### The IDE was the spec desk
+### The IDE was not used
 
-The IDE was used for what it is good at: reading the spec alongside the code,
-and looking at the 3D workbench while the agent changed it. The camera framing
-work, where the bench had to fit the frustum at two different window sizes,
-was done by looking at the render and adjusting it. That loop needs eyes on a
-picture, and the browser was the wrong window for it.
+The spec is committed in `.kiro/specs/`. Visual review of the 3D workbench
+was done in the browser, outside Kiro IDE.
 
 ### The Web surface was evaluated
 

@@ -44,9 +44,9 @@ The frontend uses Next.js, React, TypeScript, Tailwind and Three.js. Vitest and
 fast-check protect the simulation contracts.
 
 Kiro CLI was the main implementation surface, with specs, steering, specialist
-agents and verification hooks committed in `.kiro/`. Kiro IDE supported spec
-work and review. Web was evaluated; Crew runs were attempted but did not
-complete. Codex assisted with later UI, media, integration and regression fixes.
+agents and verification hooks committed in `.kiro/`. Crew runs were attempted
+but did not complete. Codex assisted with later UI, media, integration and
+regression fixes.
 The repository documents these contributions and limitations explicitly.
 
 ### Challenges we ran into

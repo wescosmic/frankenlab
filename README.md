@@ -271,14 +271,11 @@ skills in `.kiro/` will load.
 ```
 
 The CLI was the main implementation surface: briefs were run headlessly
-through `scripts/kiro-run.mjs`, with agents and verification hooks. Kiro IDE
-was used for spec work and visual review of the 3D bench. Kiro Web was
-evaluated but did not implement this local project, and Crew runs were
-attempted but did not complete. After the Kiro account reached its monthly
+through `scripts/kiro-run.mjs`, with agents and verification hooks. Crew runs
+were attempted but did not complete. After the Kiro account reached its monthly
 request limit, some phases were finished by hand. Codex also assisted with later
-UI, media, integration and regression work, including the final component audit. The linked write-up records
-the outcomes and limits of each surface rather than presenting incomplete
-runs as completed work.
+UI, media, integration and regression work, including the final component audit.
+The linked write-up records the outcomes and limits of each surface.
 
 Full procedure, including the scripted one-shot pass and the ACP wiring, in
 [docs/CLI-WORKFLOW.md](docs/CLI-WORKFLOW.md).
