@@ -67,27 +67,30 @@ review made the electronics genuinely load-bearing.
 
 ### Accomplishments that we're proud of
 
-- Four sciences share one deterministic component graph and simulation kernel.
-- Biology and materials drive solved electronics in the flagship experiment.
-- The Couplings panel makes the Frankenstein claim inspectable.
-- Catalysis changes reaction speed without changing equilibrium.
-- Discovery mode turns the sandbox into a reproducible exploration tool.
-- The local assistant cites simulation data and filters unsupported numbers.
-- The catalogue uses recognizable local GLB models instead of generic shapes.
-- The public MIT repository contains the Kiro configuration and 225 automated
-  tests.
+Four sciences share one deterministic graph. Biology and materials affect a
+solved circuit; named couplings make that chain inspectable. Discovery runs are
+reproducible, the assistant filters unsupported numbers, and the MIT repository
+ships the Kiro workflow with 225 passing tests.
+
+### What we learned
+
+1. **Measure the story.** Kiro's science review found that sand's field capacity
+   was too low. Correcting it changed the alert day, so scripts and tests now
+   verify every quoted milestone.
+2. **Test the interfaces between sciences.** A believable animation hid a
+   comparator using raw moisture instead of solved voltage. Port contracts and
+   circuit tests exposed the error.
+3. **Show model limits.** A simulation can be reproducible without being a
+   calibrated prediction. Every component declares assumptions and confidence;
+   the assistant grounds its numbers in actual readings.
+4. **Make the builder prove the product.** An empty bench, clear wiring feedback,
+   and component movement matter as much as presets. Auditing all 34 parts and
+   515 compatible port pairs found inert catalogue behaviours and conflicting
+   inputs before submission.
 
 ### What's next for FrankenLab
 
-The submission includes a guided first-run path, presentation mode, experiment
-story cards and a 2:02 walkthrough. The audit covers all 34 component types and
-515 compatible directed port pairs. Expanded catalogue models are illustrative
-teaching models, not calibrated scientific predictions; limitations are visible
-in the app and documented in the repository.
+The next step is saved experiments and classroom workspaces. The current
+catalogue models are illustrative teaching tools, not calibrated predictions.
 
-After the hackathon, the open-source local simulator remains the free core. A
-paid education tier can add saved experiments, classroom workspaces, missions
-and lab reports. A professional tier can add private component libraries, team
-collaboration, versioned notebooks, audit trails, APIs and larger sweeps.
-
-Persistence and workspaces come before cloud CPU/GPU execution.
+After the hackathon, education plans could add classrooms and reports; professional plans could add private libraries and larger sweeps.
