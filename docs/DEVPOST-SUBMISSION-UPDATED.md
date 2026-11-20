@@ -95,8 +95,6 @@ ships the Kiro workflow with 225 passing tests.
 - I learned that Kiro CLI can do much more than answer questions in a terminal. I used it to work directly in the repo, turn briefs into working features, and check the result with real commands. That made an idea as broad as FrankenLab feel possible to build.
 - I learned how much better the CLI works when it has a proper map. The spec gave it the goal, steering files kept the science and architecture consistent, and specialist agents let me bring the right perspective to each task. I could ask for a new component without explaining the whole project again.
 - Kiro's hooks and reviews changed how I worked. The science reviewer caught a wrong sand value that shifted the whole experiment's timeline. Verification hooks and property tests then gave me a way to check the fix instead of just trusting a convincing-looking simulation.
-- I also learned where the limits are. Crew was promising for longer unattended work, but our runs did not finish, and the CLI quota eventually ran out. I had to finish some parts with Codex and manual review. The useful lesson was to keep the work inspectable so another tool, or I, could pick it up without losing the thread.
-
 ### What's next for FrankenLab
 
 The next step is saved experiments and classroom workspaces. The current
