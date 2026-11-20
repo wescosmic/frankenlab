@@ -73,12 +73,6 @@ work and review. Web was evaluated; Crew runs were attempted but did not
 complete. Codex assisted with later UI, media, integration and regression fixes.
 The repository documents these contributions and limitations explicitly.
 
-Kiro's science reviewer checked the soil parameters against published references
-and caught a field-capacity value that was too low for sand. Correcting it moved
-the observable story: the alert fires on day 11, growth stalls on day 20, and
-the medium wilts on day 21. Those values come from measurement scripts and
-tests, not presentation copy.
-
 ### Challenges we ran into
 
 The hardest problem was making disciplines interact without turning the kernel
@@ -98,19 +92,10 @@ ships the Kiro workflow with 225 passing tests.
 
 ### What we learned
 
-1. **Measure the story.** Kiro's science review found that sand's field capacity
-   was too low. Correcting it changed the alert day, so scripts and tests now
-   verify every quoted milestone.
-2. **Test the interfaces between sciences.** A believable animation hid a
-   comparator using raw moisture instead of solved voltage. Port contracts and
-   circuit tests exposed the error.
-3. **Show model limits.** A simulation can be reproducible without being a
-   calibrated prediction. Every component declares assumptions and confidence;
-   the assistant grounds its numbers in actual readings.
-4. **Make the builder prove the product.** An empty bench, clear wiring feedback,
-   and component movement matter as much as presets. Auditing all 34 parts and
-   515 compatible port pairs found inert catalogue behaviours and conflicting
-   inputs before submission.
+- I learned that Kiro CLI can do much more than answer questions in a terminal. I used it to work directly in the repo, turn briefs into working features, and check the result with real commands. That made an idea as broad as FrankenLab feel possible to build.
+- I learned how much better the CLI works when it has a proper map. The spec gave it the goal, steering files kept the science and architecture consistent, and specialist agents let me bring the right perspective to each task. I could ask for a new component without explaining the whole project again.
+- Kiro's hooks and reviews changed how I worked. The science reviewer caught a wrong sand value that shifted the whole experiment's timeline. Verification hooks and property tests then gave me a way to check the fix instead of just trusting a convincing-looking simulation.
+- I also learned where the limits are. Crew was promising for longer unattended work, but our runs did not finish, and the CLI quota eventually ran out. I had to finish some parts with Codex and manual review. The useful lesson was to keep the work inspectable so another tool, or I, could pick it up without losing the thread.
 
 ### What's next for FrankenLab
 
